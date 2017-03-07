@@ -4,6 +4,105 @@
 
 #include <cfloat>
 #include <cstdint>
+
+
+namespace apt { namespace refactor {
+
+enum DataType
+{
+	DataType_Invalid,
+
+ // integer types
+	DataType_Sint8,
+	DataType_Uint8,
+	DataType_Sint16,
+	DataType_Uint16,
+	DataType_Sint32,
+	DataType_Uint32,
+	DataType_Sint64,		
+	DataType_Uint64,
+
+ // normalized integer types
+	DataType_Sint8N,
+	DataType_Uint8N,
+	DataType_Sint16N,
+	DataType_Uint16N,
+	DataType_Sint32N,
+	DataType_Uint32N,
+	DataType_Sint64N,
+	DataType_Uint64N,
+
+ // float types
+	DataType_Float16,
+	DataType_Float32,
+	DataType_Float64
+};
+
+template <typename tBaseType> struct DataTypeBase;
+template <typename tBaseType> struct DataTypeInt;
+template <typename tBaseType> struct DataTypeNormalizedInt;
+template <typename tBaseType> struct DataTypeFloat;
+
+template <typename tBase>
+struct DataTypeBase
+{
+	typedef tBase BaseType;
+
+	static const BaseType kMin;
+	static const BaseType kMax;
+
+	operator BaseType&()             { return m_value; }
+	operator const BaseType&() const { return m_value; }
+
+protected:
+	BaseType m_value;
+};
+
+template <typename tBase>
+struct DataTypeInt: public DataTypeBase<tBase>
+{
+	DataTypeInt()
+	{
+	}
+
+	template <typename tValueBase>
+	DataTypeInt(DataTypeInt<tValueBase> _value)
+		: m_value((BaseType)_value)
+	{
+	}
+
+	template <typename tValueBase>
+	DataTypeInt(DataTypeNormalizedInt<tValueBase> _value)
+		: m_value((BaseType)_value)
+	{
+	}
+
+	template <typename tValueBase>
+	DataTypeInt(DataTypeFloat<tValueBase> _value)
+		: m_value((BaseType)_value)
+	{
+	}
+};
+
+template <typename tBase>
+struct DataTypeNormalizedInt: public DataTypeBase<tBase>
+{
+};
+
+template <typename tBase>
+struct DataTypeFloat: public DataTypeBase<tBase>
+{
+};
+
+typedef DataTypeInt<std::uint8_t>           uint8;
+typedef DataTypeNormalizedInt<std::uint8_t> uint8N;
+typedef DataTypeFloat<float>                float32;
+
+} } // namespace apt
+
+// --
+#include <cfloat>
+#include <cstdint>
 #include <cstddef>
 #include <cmath>
 #include <limits>

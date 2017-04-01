@@ -5,7 +5,7 @@
 #include <apt/def.h>
 #include <apt/String.h>
 
-#include <vector>
+#include <EASTL/vector.h>
 
 namespace apt {
 
@@ -126,9 +126,9 @@ private:
 		uint16     m_keyOffset;      
 	};
 
-	std::vector<Section> m_sections;
-	std::vector<Key>     m_keys;
-	std::vector<Value>   m_values;
+	eastl::vector<Section> m_sections;
+	eastl::vector<Key>     m_keys;
+	eastl::vector<Value>   m_values;
 
 	bool parse(const char* _str);
 

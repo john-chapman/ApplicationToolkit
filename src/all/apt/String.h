@@ -10,11 +10,11 @@
 namespace apt {
 
 ////////////////////////////////////////////////////////////////////////////////
-/// StringBase
-/// Base for string class with an optional local buffer. If/when the local 
-/// buffer overflows it is replaced with a heap-allocated buffer. Once the 
-/// buffer is heap-allocated it never returns to using the local buffer.
-/// All `const char*` interfaces expect null-terminated strings.
+// StringBase
+// Base for string class with an optional local buffer. If/when the local 
+// buffer overflows it is replaced with a heap-allocated buffer. Once the 
+// buffer is heap-allocated it never returns to using the local buffer.
+// All `const char*` interfaces expect null-terminated strings.
 ////////////////////////////////////////////////////////////////////////////////
 class StringBase
 {
@@ -25,7 +25,7 @@ public:
 	// (like strncpy). Unlike strncpy, an implicit null char is appended to the
 	// end of the result. Return the new length of the string, excluding the null 
 	// terminator.
-	uint set(const char* _src, uint _count = 0u);
+	uint set(const char* _src, uint _count = 0);
 	// Set formatted content. Return the new length of the string, excluding the 
 	// null terminator.
 	uint setf(const char* _fmt, ...);
@@ -37,7 +37,7 @@ public:
 	// written (like strncpy). Unlike strncpy, an implicit null char is appended 
 	// to the end of the result. Return the new length of the string, excluding 
 	// the null terminator.
-	uint append(const char* _src, uint _count = 0u);
+	uint append(const char* _src, uint _count = 0);
 	// Append formatted content. Return the new length of the string, excluding the 
 	// null terminator.
 	uint appendf(const char* _fmt, ...);
@@ -63,16 +63,16 @@ public:
 	//    a constant time operation.
 	uint getLength() const;
 
-	void clear()                    { m_buf[0] = '\0'; }
+	void clear()                                { m_buf[0] = '\0'; }
 
-	bool isEmpty() const            { return m_buf[0] == '\0'; }
-	bool isLocal() const            { return m_buf == getLocalBuf(); }
-	uint getCapacity() const        { return m_capacity; }
+	bool isEmpty() const                        { return m_buf[0] == '\0'; }
+	bool isLocal() const                        { return m_buf == getLocalBuf(); }
+	uint getCapacity() const                    { return m_capacity; }
 	void setCapacity(uint _capacity);
 
 	bool operator==(const char* _rhs) const;
-	operator const char*() const    { return m_buf; }
-	operator char*()                { return m_buf; }
+	operator const char*() const                { return m_buf; }
+	operator char*()                            { return m_buf; }
 	
 	friend void swap(StringBase& _a, StringBase& _b);
 
@@ -82,9 +82,11 @@ protected:
 	StringBase();
 	// String has a local buffer of _localBufferSize chars.
 	StringBase(uint _localBufferSize);
-	/// Move ctor. If _rhs is local it *must* have the same capacity as this 
-	// (because we don't store the local buffer size). 
+	// Move ctor. If _rhs is local it *must* have the same capacity as this (because the local buffer 
+	// size isn't stored). This is enforced by the deriving String class move ctors.
 	StringBase(StringBase&& _rhs);
+	// Move assignment. As move ctor.
+	StringBase& operator=(StringBase&& _rhs);
 
 	~StringBase();
 
@@ -114,7 +116,7 @@ public:
 	String(const String<kCapacity>& _rhs): StringBase(kCapacity)       { set(_rhs); }
 	String<kCapacity>& operator=(const String<kCapacity>& _rhs)        { set(_rhs); return *this; }
 	String(String<kCapacity>&& _rhs):      StringBase(std::move(_rhs)) {}
-	String<kCapacity>& operator=(String<kCapacity>&& _rhs)             { swap(*this, _rhs); return *this; }
+	String<kCapacity>& operator=(String<kCapacity>&& _rhs)             { StringBase::operator=(std::move(_rhs)); return *this; }
 	String(const char* _fmt, ...):         StringBase(kCapacity)
 	{
 		if (_fmt) {
@@ -134,7 +136,7 @@ public:
 	String(const String<0>& _rhs): StringBase()                { set(_rhs); }
 	String<0>& operator=(const String<0>& _rhs)                { set(_rhs); return *this; }
 	String(String<0>&& _rhs):      StringBase(std::move(_rhs)) {}
-	String<0>& operator=(String<0>&& _rhs)                     { swap(*this, _rhs); return *this; }
+	String<0>& operator=(String<0>&& _rhs)                     { (String<0>)StringBase::operator=(std::move(_rhs)); return *this; }
 	String(const char* _fmt, ...): StringBase()
 	{
 		if (_fmt) {

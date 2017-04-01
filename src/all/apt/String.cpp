@@ -20,12 +20,12 @@ static char* g_emptyString = (char*)"\0NULL";
 uint StringBase::set(const char* _src, uint _count)
 {
 	uint len = strlen(_src);
-	len = (_count == 0u) ? len : APT_MIN(len, _count);
-	len += 1u;
+	len = (_count == 0) ? len : APT_MIN(len, _count);
+	len += 1;
 	if (m_capacity < len) {
 		alloc(len);
 	}
-	len -= 1u;
+	len -= 1;
 	strncpy(m_buf, _src, len);
 	m_buf[len] = '\0';
 	return len;
@@ -46,8 +46,8 @@ uint StringBase::setfv(const char* _fmt, va_list _args)
 	va_copy(args, _args);
 
 #ifdef APT_COMPILER_MSVC
- // vsnprintf returns -1 on overflow, forces use to always do 2 passes
-	int len = vsnprintf(0, 0u, _fmt, args);
+ // vsnprintf returns -1 on overflow, requires 2 passes
+	int len = vsnprintf(0, 0, _fmt, args);
 	APT_ASSERT(len >= 0);
 	len += 1;
 	if (m_capacity < len) {
@@ -55,7 +55,7 @@ uint StringBase::setfv(const char* _fmt, va_list _args)
 	}
 	APT_VERIFY(vsnprintf(m_buf, m_capacity, _fmt, args) >= 0);
 #else
-	int len = vsnprintf(m_isOwned ? m_buf : 0, m_capacity, _fmt, args);
+	int len = vsnprintf(m_buf, m_capacity, _fmt, args);
 	APT_ASSERT(len >= 0);
 	len += 1;
 	if (m_capacity < len) {
@@ -64,19 +64,19 @@ uint StringBase::setfv(const char* _fmt, va_list _args)
 	}
 #endif
 	
-	return (uint)len - 1u;
+	return (uint)len - 1;
 }
 
 uint StringBase::append(const char* _src, uint _count)
 {
 	uint len = getLength();
 	uint srclen = strlen(_src);
-	srclen = _count == 0u ? srclen : APT_MIN(srclen, _count);
-	srclen += 1u;
+	srclen = _count == 0 ? srclen : APT_MIN(srclen, _count);
+	srclen += 1;
 	if (m_capacity < len + srclen) {
 		realloc(len + srclen);
 	}
-	srclen -= 1u;
+	srclen -= 1;
 	strncpy(m_buf + len, _src, srclen);
 	len += srclen;
 	m_buf[len] = '\0';
@@ -98,7 +98,7 @@ uint StringBase::appendfv(const char* _fmt, va_list _args)
 	va_copy(args, _args);
 
 	uint len = getLength();
-	int srclen = vsnprintf(0, 0u, _fmt, args);
+	int srclen = vsnprintf(0, 0, _fmt, args);
 	APT_ASSERT(srclen > 0);
 	srclen += 1;
 	if (m_capacity < len + srclen) {
@@ -106,7 +106,7 @@ uint StringBase::appendfv(const char* _fmt, va_list _args)
 	}
 	APT_VERIFY(vsnprintf(m_buf + len, (uint)srclen, _fmt, args) >= 0);
 	
-	return (uint)srclen + len - 1u;;
+	return (uint)srclen + len - 1;;
 }
 
 const char* StringBase::findFirst(const char* _list) const
@@ -174,7 +174,6 @@ void StringBase::setCapacity(uint _capacity)
 	}
 }
 
-
 void apt::swap(StringBase& _a, StringBase& _b)
 {
 	using std::swap;
@@ -227,7 +226,7 @@ void apt::swap(StringBase& _a, StringBase& _b)
 
 StringBase::StringBase()
 	: m_buf(g_emptyString)
-	, m_capacity(0u)
+	, m_capacity(0)
 {
 }
 
@@ -242,7 +241,25 @@ StringBase::StringBase(StringBase&& _rhs)
 	: m_buf(getLocalBuf())
 	, m_capacity(_rhs.m_capacity)
 {
-	swap(_rhs, *this);
+	if (_rhs.isLocal()) {
+		strncpy(m_buf, getLocalBuf(), m_capacity);
+	} else {
+		m_buf = _rhs.m_buf;
+		_rhs.m_buf = _rhs.getLocalBuf();
+	}
+}
+
+StringBase& StringBase::operator=(StringBase&& _rhs)
+{
+	if (&_rhs != this) {
+		if (_rhs.isLocal()) {
+			strncpy(m_buf, getLocalBuf(), m_capacity);
+		} else {
+			m_buf = _rhs.m_buf;
+			_rhs.m_buf = _rhs.getLocalBuf();
+		}
+	}
+	return *this;
 }
 
 StringBase::~StringBase()

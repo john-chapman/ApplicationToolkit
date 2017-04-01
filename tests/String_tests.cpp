@@ -27,9 +27,20 @@ static void VectorTest()
 	}
 }
 
-TEST_CASE("Vector push/pop", "[String]")
+TEST_CASE("Vector", "[String]")
 {
 	VectorTest<0>();
 	VectorTest<16>();
 	VectorTest<64>();
+}
+
+TEST_CASE("toUpperCase, toLowerCase", "[String]")
+{
+	static const char* lower = "abcdefghijklmnopqrstuvwxyz1234567890";
+	static const char* upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+	String<0> str(lower);
+	str.toUpperCase();
+	REQUIRE((str == upper) == true);
+	str.toLowerCase();
+	REQUIRE((str == lower) == true);
 }

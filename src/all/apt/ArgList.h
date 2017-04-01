@@ -4,7 +4,7 @@
 
 #include <apt/def.h>
 
-#include <vector>
+#include <EASTL/vector.h>
 
 namespace apt {
 
@@ -42,7 +42,7 @@ public:
 	
 private:
 	const char* m_name;
-	std::vector<const char*> m_values;
+	eastl::vector<const char*> m_values;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@ public:
 	const Arg* find(const char* _name) const;
 
 private:
-	std::vector<Arg> m_args;
+	eastl::vector<Arg> m_args;
 };
 
 } // namespace apt

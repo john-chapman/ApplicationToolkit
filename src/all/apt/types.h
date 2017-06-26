@@ -10,6 +10,8 @@
 	- Look below you'll find some DataType* structs. Something like this is required
 	  so that you can have e.g. sint8N as a real type and not just a typedef (e.g. to
 	  allow function overloading).
+	- Focus on creating a single templated Convert function - use branching, it will be
+	  much clearer, and let the compiler optimize (or not).
 */
 namespace apt { namespace refactor {
 
@@ -80,7 +82,7 @@ namespace internal {
 	#undef APT_DataType_decl
 }
 
-#define APT_DataType_FROM_ENUM(_enum) typename apt::internal::DataTypeFromEnum<_enum>::Type
+#define APT_DATA_TYPE_FROM_ENUM(_enum) typename apt::internal::DataTypeFromEnum<_enum>::Type
 
 
 /*template <typename tBaseType> struct DataTypeBase;

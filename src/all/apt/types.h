@@ -3,9 +3,14 @@
 #define apt_types_h
 
 #include <cfloat>
+#include <cstddef>
 #include <cstdint>
 
-
+/*	TODO:
+	- Look below you'll find some DataType* structs. Something like this is required
+	  so that you can have e.g. sint8N as a real type and not just a typedef (e.g. to
+	  allow function overloading).
+*/
 namespace apt { namespace refactor {
 
 enum DataType
@@ -35,10 +40,50 @@ enum DataType
  // float types
 	DataType_Float16,
 	DataType_Float32,
-	DataType_Float64
+	DataType_Float64,
+
+	DataType_Count,
+	DataType_Sint  = DataType_Sint64,
+	DataType_Uint  = DataType_Uint64,
+	DataType_Float = DataType_Float32,
 };
 
-template <typename tBaseType> struct DataTypeBase;
+namespace internal {
+	// Helper macro; instantiate _macro for all enum-type pairs
+	#define APT_DataType_decl(_macro) \
+		_macro(DataType_Sint8,   sint8)   \
+		_macro(DataType_Uint8,   uint8)   \
+		_macro(DataType_Sint16,  sint16)  \
+		_macro(DataType_Uint16,  uint16)  \
+		_macro(DataType_Sint32,  sint32)  \
+		_macro(DataType_Uint32,  uint32)  \
+		_macro(DataType_Sint64,  sint64)  \
+		_macro(DataType_Uint64,  uint64)  \
+		_macro(DataType_Sint8N,  sint8N)  \
+		_macro(DataType_Uint8N,  uint8N)  \
+		_macro(DataType_Sint16N, sint16N) \
+		_macro(DataType_Uint16N, uint16N) \
+		_macro(DataType_Sint32N, sint32N) \
+		_macro(DataType_Uint32N, uint32N) \
+		_macro(DataType_Sint64N, sint64N) \
+		_macro(DataType_Uint64N, uint64N) \
+		_macro(DataType_Float16, float16) \
+		_macro(DataType_Float32, float32) \
+		_macro(DataType_Float64, float64)
+
+	template <DataType kEnum> struct DataTypeFromEnum {};
+		#define APT_DataType_DataTypeFromEnum(_enum, _type) \
+			template<> struct DataTypeFromEnum<_enum> { typedef _type Type; };
+		APT_DataType_decl(APT_DataType_DataTypeFromEnum)
+		#undef APT_DataType_DataTypeFromEnum
+
+	#undef APT_DataType_decl
+}
+
+#define APT_DataType_FROM_ENUM(_enum) typename apt::internal::DataTypeFromEnum<_enum>::Type
+
+
+/*template <typename tBaseType> struct DataTypeBase;
 template <typename tBaseType> struct DataTypeInt;
 template <typename tBaseType> struct DataTypeNormalizedInt;
 template <typename tBaseType> struct DataTypeFloat;
@@ -97,13 +142,13 @@ struct DataTypeFloat: public DataTypeBase<tBase>
 typedef DataTypeInt<std::uint8_t>           uint8;
 typedef DataTypeNormalizedInt<std::uint8_t> uint8N;
 typedef DataTypeFloat<float>                float32;
+*/
 
 } } // namespace apt
 
 // --
 #include <cfloat>
 #include <cstdint>
-#include <cstddef>
 #include <cmath>
 #include <limits>
 
@@ -126,6 +171,7 @@ typedef float           float32;
 typedef double          float64;
 typedef std::ptrdiff_t  sint;
 typedef std::size_t     uint;
+
 
 struct float16 
 { 

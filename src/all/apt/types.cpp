@@ -5,12 +5,14 @@
 
 namespace apt { namespace refactor
 {
+/*
 	#define APT_DataType_Constants(_baseType) \
 		const _baseType DataTypeBase<_baseType>::kMin = std::numeric_limits<_baseType>::min(); \
 		const _baseType DataTypeBase<_baseType>::kMax = std::numeric_limits<_baseType>::max()
 
 	APT_DataType_Constants(std::uint8_t);
 	APT_DataType_Constants(float);
+*/
 } }
 
 using std::numeric_limits;

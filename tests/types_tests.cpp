@@ -7,11 +7,7 @@ using namespace apt;
 
 TEST_CASE("Validate type sizes", "[types]")
 {
-	REQUIRE(sizeof(refactor::uint8)  == 1);
-	REQUIRE(sizeof(refactor::uint8N) == 1);
-	refactor::float32 f;
-	refactor::uint8   i(f);
-	
+	APT_DATA_TYPE_FROM_ENUM(apt::refactor::DataType_Sint16) x;
 
 	REQUIRE(sizeof(sint8)    == 1);
 	REQUIRE(sizeof(uint8)    == 1);

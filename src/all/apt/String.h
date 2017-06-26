@@ -5,46 +5,41 @@
 #include <apt/def.h>
 
 #include <cstdarg> // va_list
-#include <utility> // std::move
 
 namespace apt {
 
 ////////////////////////////////////////////////////////////////////////////////
-/// StringBase
-/// Base for string class with an optional local buffer. If/when the local 
-/// buffer overflows it is replaced with a heap-allocated buffer. Once the 
-/// buffer is heap-allocated it never returns to using the local buffer.
-/// All `const char*` interfaces expect null-terminated strings.
+// StringBase
+// Base for string class with an optional local buffer. If/when the local 
+// buffer overflows it is replaced with a heap-allocated buffer. Once the 
+// buffer is heap-allocated it never returns to using the local buffer.
+// All `const char*` interfaces expect null-terminated strings.
 ////////////////////////////////////////////////////////////////////////////////
 class StringBase
 {
 public:
-	// Copy _count characters from _src. If _count == 0, all of _src is copied
-	// If the end of _src is found  before _count characters have been copied,
-	// the result is padded with zeros until _count characters have been written
-	// (like strncpy). Unlike strncpy, an implicit null char is appended to the
-	// end of the result. Return the new length of the string, excluding the null 
-	// terminator.
-	uint set(const char* _src, uint _count = 0u);
-	// Set formatted content. Return the new length of the string, excluding the 
-	// null terminator.
+	// Copy _count characters from _src. If _count == 0, all of _src is copied. If the end of 
+	// _src is found  before _count characters have been copied, the result is padded with zeros 
+	// until _count characters have been written (like strncpy). Unlike strncpy, an implicit null 
+	// char is appended to the end of the result. 
+	// Return the new length of the string, excluding the null terminator.
+	uint set(const char* _src, uint _count = 0);
+	// Set formatted content. Return the new length of the string, excluding the null terminator.
 	uint setf(const char* _fmt, ...);
 	uint setfv(const char* _fmt, va_list _args);
 
-	// Append _count characters from _src. If _count == 0, all of _src is
-	// appended. If the end of _src is found  before _count characters have been 
-	// appended, the result is padded with zeros until _count characters have been 
-	// written (like strncpy). Unlike strncpy, an implicit null char is appended 
-	// to the end of the result. Return the new length of the string, excluding 
-	// the null terminator.
-	uint append(const char* _src, uint _count = 0u);
-	// Append formatted content. Return the new length of the string, excluding the 
-	// null terminator.
+	// Append _count characters from _src. If _count == 0, all of _src is appended. If the end of 
+	// _src is found  before _count characters have been appended, the result is padded with zeros 
+	// until _count characters have been  written (like strncpy). Unlike strncpy, an implicit null 
+	// char is appended to the end of the result. 
+	// Return the new length of the string, excluding the null terminator.
+	uint append(const char* _src, uint _count = 0);
+	// Append formatted content. Return the new length of the string, excluding the null terminator.
 	uint appendf(const char* _fmt, ...);
 	uint appendfv(const char* _fmt, va_list _args);
 
-	// Find the first (or last) occurence of any character in _list (which is 
-	// null-terminated). If no match is found return null.
+	// Find the first (or last) occurence of any character in _list (null-terminated). 
+	// If no match is found return null.
 	const char* findFirst(const char* _list) const;
 	const char* findLast(const char* _list) const;
 
@@ -59,22 +54,20 @@ public:
 	void toLowerCase();
 
 	// String length, excluding the terminating null.
-	// \note String length is not stored internally, hence getLength() is **not**
-	//    a constant time operation.
+	// \note String length is not stored internally, hence getLength() is not a constant time operation.
 	uint getLength() const;
 
-	void clear()                    { m_buf[0] = '\0'; }
-
-	bool isEmpty() const            { return m_buf[0] == '\0'; }
-	bool isLocal() const            { return m_buf == getLocalBuf(); }
-	uint getCapacity() const        { return m_capacity; }
+	void clear()                                { *m_buf = '\0'; }
+	bool isEmpty() const                        { return *m_buf == '\0'; }
+	bool isLocal() const                        { return m_buf == getLocalBuf(); }
+	uint getCapacity() const                    { return m_capacity; }
 	void setCapacity(uint _capacity);
 
 	bool operator==(const char* _rhs) const;
-	operator const char*() const    { return m_buf; }
-	operator char*()                { return m_buf; }
+	operator const char*() const                { return m_buf; }
+	operator char*()                            { return m_buf; }
 	
-	friend void swap(StringBase& _a, StringBase& _b);
+	friend void swap(StringBase& _a_, StringBase& _b_);
 
 protected:
 	
@@ -82,9 +75,11 @@ protected:
 	StringBase();
 	// String has a local buffer of _localBufferSize chars.
 	StringBase(uint _localBufferSize);
-	/// Move ctor. If _rhs is local it *must* have the same capacity as this 
-	// (because we don't store the local buffer size). 
-	StringBase(StringBase&& _rhs);
+	// Move ctor. If _rhs is local it *must* have the same capacity as this (because the local buffer 
+	// size isn't stored). This is enforced by the deriving String class move ctors.
+	StringBase(StringBase&& _rhs_);
+	// Move assignment. As move ctor.
+	StringBase& operator=(StringBase&& _rhs_);
 
 	~StringBase();
 
@@ -110,11 +105,11 @@ class String: public StringBase
 	char m_localBuf[kCapacity];
 
 public:
-	String():                              StringBase(kCapacity)       {}
-	String(const String<kCapacity>& _rhs): StringBase(kCapacity)       { set(_rhs); }
-	String<kCapacity>& operator=(const String<kCapacity>& _rhs)        { set(_rhs); return *this; }
-	String(String<kCapacity>&& _rhs):      StringBase(std::move(_rhs)) {}
-	String<kCapacity>& operator=(String<kCapacity>&& _rhs)             { swap(*this, _rhs); return *this; }
+	String():                              StringBase(kCapacity)           {}
+	String(const String<kCapacity>& _rhs): StringBase(kCapacity)           { set(_rhs); }
+	String<kCapacity>& operator=(const String<kCapacity>& _rhs)            { if (&_rhs != this) set(_rhs); return *this; }
+	String(String<kCapacity>&& _rhs):      StringBase((StringBase&&)_rhs)  {}
+	String<kCapacity>& operator=(String<kCapacity>&& _rhs)                 { StringBase::operator=((StringBase&&)_rhs); return *this; }
 	String(const char* _fmt, ...):         StringBase(kCapacity)
 	{
 		if (_fmt) {
@@ -130,11 +125,11 @@ template <>
 class String<0>: public StringBase
 {
 public:
-	String():                      StringBase()                {}
-	String(const String<0>& _rhs): StringBase()                { set(_rhs); }
-	String<0>& operator=(const String<0>& _rhs)                { set(_rhs); return *this; }
-	String(String<0>&& _rhs):      StringBase(std::move(_rhs)) {}
-	String<0>& operator=(String<0>&& _rhs)                     { swap(*this, _rhs); return *this; }
+	String():                      StringBase()                   {}
+	String(const String<0>& _rhs): StringBase()                   { set(_rhs); }
+	String<0>& operator=(const String<0>& _rhs)                   { if (&_rhs != this) set(_rhs); return *this; }
+	String(String<0>&& _rhs):      StringBase((StringBase&&)_rhs) {}
+	String<0>& operator=(String<0>&& _rhs)                        { (String<0>)StringBase::operator=((StringBase&&)_rhs); return *this; }
 	String(const char* _fmt, ...): StringBase()
 	{
 		if (_fmt) {

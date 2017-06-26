@@ -46,9 +46,9 @@ workspace "ApplicationTools"
 		uuid "6ADD11F4-56D6-3046-7F08-16CB6B601052"
 		
 		vpaths({
-			["*"]      = ALL_SRC_DIR .. "apt/**",
-			["extern"] = ALL_EXTERN_DIR .. "**", 
-			["win"]    = WIN_SRC_DIR .. "apt/**",
+			["*"]        = ALL_SRC_DIR .. "apt/**",
+			["extern/*"] = ALL_EXTERN_DIR .. "**", 
+			["win"]      = WIN_SRC_DIR .. "apt/**",
 			})
 		
 		files({ 
@@ -58,10 +58,11 @@ workspace "ApplicationTools"
 			ALL_SRC_DIR    .. "**.cpp",
 			ALL_EXTERN_DIR .. "**.c",
 			ALL_EXTERN_DIR .. "**.cpp",
+			ALL_EXTERN_DIR .. "**.natvis",
 			})
 		removefiles({ 
 			ALL_EXTERN_DIR .. "glm/**", 
-			ALL_EXTERN_DIR .. "rapidjson/**" 
+			ALL_EXTERN_DIR .. "rapidjson/**",
 			})
 		filter { "platforms:Win*" }
 			files({ 

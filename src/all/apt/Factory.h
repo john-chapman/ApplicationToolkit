@@ -5,7 +5,7 @@
 #include <apt/def.h>
 #include <apt/StringHash.h>
 
-#include <vector>
+#include <EASTL/vector_map.h>
 
 namespace apt {
 
@@ -54,16 +54,13 @@ namespace apt {
 //
 //
 // It is also possible to iterate over the registered subclasses (useful for
-// generating drop down boxes for a UI):
+// generating drop down lists for a UI):
 //
 //    for (int i = 0; i < Entity::GetClassRefCount(); ++i) {
 //       const Entity::ClassRef* cref = Entity::GetClassRef(i);
 //       cref->getName(); // returns a const char* matching the class name
 //       Entity* inst = Entity::Create(cref); // use the cref directly with Create().
 //    }
-//
-//
-// \todo Use a hash map instead of std::vector.
 ////////////////////////////////////////////////////////////////////////////////
 template <typename tType>
 class Factory
@@ -84,14 +81,14 @@ public:
 			, destroy(_destroy)
 		{
 			if_unlikely (!s_registry) {
-				s_registry = new std::vector<ClassRef*>;
+				s_registry = new eastl::vector_map<StringHash, ClassRef*>;
 			}
 			APT_ASSERT(FindClassRef(m_nameHash) == nullptr); // multiple registrations, or name was not unique
-			s_registry->push_back(this);
+			s_registry->insert(eastl::make_pair(m_nameHash, this));
 		}
 
-		const char* getName() const     { return m_name; }
-		StringHash  getNameHash() const { return m_nameHash; }
+		const char* getName() const        { return m_name;     }
+		StringHash  getNameHash() const    { return m_nameHash; }
 
 	private:
 		const char*  m_name;
@@ -115,13 +112,11 @@ public:
 	// Find ClassRef corresponding to _nameHash, or 0 if not found.
 	static const ClassRef* FindClassRef(StringHash _nameHash)
 	{
-		for (auto it = s_registry->begin(); it != s_registry->end(); ++it) {
-			const ClassRef* cref = *it;
-			if (cref->m_nameHash == _nameHash) {
-				return cref;
-			}
+		auto ret = s_registry->find(_nameHash);
+		if (ret != s_registry->end()) {
+			return ret->second;
 		}
-		return 0;
+		return nullptr;
 	}
 
 	// Get number of classes registered with the factory.
@@ -131,10 +126,11 @@ public:
 	}
 
 	// Get _ith ClassRef registered with the factory.
+	// \note The result for a value of _i may change if more ClassRefs are registered.
 	static const ClassRef* GetClassRef(int _i)
 	{
 		APT_ASSERT(_i < GetClassRefCount());
-		return (*s_registry)[_i];
+		return (s_registry->begin() + _i)->second;
 	}
 
 	// Return ptr to a new instance of the class specified by _name, or nullptr if an error occurred.
@@ -168,11 +164,11 @@ public:
 	const ClassRef* getClassRef() const { return m_cref; }
 
 private:
-	static std::vector<ClassRef*>* s_registry; // \todo hash map
+	static eastl::vector_map<StringHash, ClassRef*>* s_registry;
 	const ClassRef* m_cref;
 };
 #define APT_FACTORY_DEFINE(_baseClass) \
-	std::vector<apt::Factory<_baseClass>::ClassRef*>* apt::Factory<_baseClass>::s_registry
+	eastl::vector_map<apt::StringHash, apt::Factory<_baseClass>::ClassRef*>* apt::Factory<_baseClass>::s_registry
 #define APT_FACTORY_REGISTER(_baseClass, _subClass, _createFunc, _destroyFunc) \
 	static apt::Factory<_baseClass>::ClassRef s_ ## _subClass(#_subClass, _createFunc, _destroyFunc);
 #define APT_FACTORY_REGISTER_DEFAULT(_baseClass, _subClass) \

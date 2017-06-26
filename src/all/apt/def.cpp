@@ -22,7 +22,7 @@ apt::AssertCallback* apt::GetAssertCallback() {
 apt::AssertBehavior apt::DefaultAssertCallback(const char* _e, const char* _msg, const char* _file, int _line) 
 {
 	APT_LOG_ERR("APT_ASSERT (%s, line %d)\n\t'%s' %s", _file, _line, _e ? _e : "", _msg ? _msg : "");
-	return AssertBehavior::kBreak;
+	return AssertBehavior_Break;
 }
 
 apt::AssertBehavior apt::internal::AssertAndCallback(const char* _e, const char* _file, int _line, const char* _msg, ...) 
@@ -36,10 +36,10 @@ apt::AssertBehavior apt::internal::AssertAndCallback(const char* _e, const char*
 		va_end(args);
 	}
 
-	if (g_AssertCallback != 0) {
+	if (g_AssertCallback) {
 		return g_AssertCallback(_e, buf, apt::internal::StripPath(_file), _line);
 	}
-	return AssertBehavior::kBreak;
+	return AssertBehavior_Break;
 }
 
 const char* apt::internal::StripPath(const char* _path) 

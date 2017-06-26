@@ -81,9 +81,11 @@ namespace apt {
 
 // Forward declarations
 
+class ArgList;
 class File;
 class FileSystem;
 class Image;
+class Ini;
 class Json;
 class JsonSerializer;
 class MemoryPool;
@@ -94,31 +96,22 @@ template <uint kCapacity> class String;
 class StringHash;
 class TextParser;
 
-
-// Assert callback
-
-enum class AssertBehavior
+enum AssertBehavior
 {
-	kBreak, 
-	kContinue
+	AssertBehavior_Break, 
+	AssertBehavior_Continue
 };
 
-/// Typedef for assert callbacks. See DefaultAssertCallback for a description
-/// of the function arguments.
+// Typedef for assert callbacks. See DefaultAssertCallback for a description of the function arguments.
 typedef AssertBehavior (AssertCallback)(const char* _e, const char* _msg, const char* _file, int _line);
 
-/// \return Current assert callback. Default is DefaultAssertCallback().
-/// \note This may return 0, if 0 was previously passed to SetAssertCallback().
+// Return the current assert callback. Default is DefaultAssertCallback.
 AssertCallback* GetAssertCallback();
 
-/// Set the function to be called when asserts fail, which may be 0.
+// Set the function to be called when asserts fail, which may be 0.
 void SetAssertCallback(AssertCallback* _callback);
 
-/// Default assert callback, print message via APT_LOG_ERR().
-/// \param e Stringified version of the assert expression.
-/// \param msg Optional message (passed from APT_ASSERT_MSG,APT_VERIFY_MSG macros).
-/// \param file, line Location of the assert.
-/// \return Always AssertBehaviour::kBreak.
+// Default assert callback, print message via APT_LOG_ERR(). Always returns AssertBehavior_Break.
 AssertBehavior DefaultAssertCallback(const char* _e, const char* _msg,  const char* _file,  int _line);
 
 } // namespace apt
@@ -130,7 +123,7 @@ AssertBehavior AssertAndCallback(const char* _e, const char* _file, int _line, c
 const char* StripPath(const char* _path);
 
 template <typename tType, unsigned kCount>
-inline unsigned ArrayCount(const tType (&)[kCount]) { return kCount; }
+inline constexpr unsigned ArrayCount(const tType (&)[kCount]) { return kCount; }
 
 template <typename tType>
 inline tType Min(tType a, tType b) { return a < b ? a : b; }
@@ -151,7 +144,7 @@ inline tType Max(tType a, tType b) { return a > b ? a : b; }
 	#define APT_ASSERT_MSG(e, msg, ...) \
 		do { \
 			if_unlikely (!(e)) { \
-				if (apt::internal::AssertAndCallback(#e, __FILE__, __LINE__, msg, ## __VA_ARGS__) == apt::AssertBehavior::kBreak) \
+				if (apt::internal::AssertAndCallback(#e, __FILE__, __LINE__, msg, ## __VA_ARGS__) == apt::AssertBehavior_Break) \
 				{ APT_BREAK(); } \
 			} \
 		} while(0)

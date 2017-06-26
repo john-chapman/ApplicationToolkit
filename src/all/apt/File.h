@@ -30,12 +30,6 @@ public:
 	// Return true if _path exists.
 	static bool Exists(const char* _path);
 
-	// Create the directory specified by _path, plus all parent directories if they do not 
-	// exist. Return false if an error occurred.
-	// \note If _path contains only directory names, it must be appended by a path delimiter 
-	//   (e.g. "dir0/dir1/").
-	static bool CreateDir(const char* _path);
-
 	// Read file into memory from _path, or file_.getPath() if _path is 0. Use getData() to
 	// access the resulting buffer. Return false if an error occurred, in which case file_ 
 	// remains unchanged. On success, any resources already associated with file_ are released.

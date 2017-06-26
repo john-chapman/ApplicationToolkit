@@ -6,9 +6,11 @@
 	//#define GLM_MESSAGES
 #endif
 
-// \hack glm typedefs sized ints with the same names as apt; to get around the
-// ensuing conflict we #define them with glm_ prefixes, then #undef them again
-// below
+// \todo 
+//#define APT_MATH_SIMD
+
+// \hack glm typedefs sized ints with the same names as apt; to get around the ensuing conflict we #define them with glm_ prefixes, 
+// then #undef them again below
 #define aligned glm_hack_aligned
 #define int8    glm_hack_int8
 #define int16   glm_hack_int16
@@ -21,10 +23,6 @@
 #define uint    glm_hack_uint
 #define float32 glm_hack_float32
 #define float64 glm_hack_float64
-
-// \hack \todo need to disable SSE intrinsics because the glm types are not always 
-// correctly aligned (they should be, did the hack above break this?)
-#define GLM_FORCE_PURE
 
 #define GLM_FORCE_SIZE_FUNC
 #define GLM_FORCE_NO_CTOR_INIT
@@ -39,6 +37,11 @@
 
 #define GLM_GTX_norm
 #include <glm/gtx/norm.hpp>
+
+#ifdef APT_MATH_SIMD
+	#include <glm/gtx/simd_vec4.hpp>
+	#include <glm/gtx/simd_mat4.hpp>
+#endif
 
 #undef aligned
 #undef int8
@@ -58,8 +61,28 @@
 
 namespace apt {
 
-	using namespace glm;
+	using namespace glm; // import glm
+
+
+	// Transformation matrix helpers.
+	mat4 Translation(const vec3& _translation);
+	mat4 Rotation(const vec3& _axis, float _radians);
+	mat4 Scale(const vec3& _scale);
+	vec3 GetTranslation(const mat4& _m);
+	mat3 GetRotation(const mat4& _m);
+	vec3 GetScale(const mat4& _m);
+	vec3 ToEulerXYZ(const mat3& _m);
+	mat3 FromEulerXYZ(const vec3& _euler);
+
+	// Get an orthonormal bases with X/Y/Z aligned with _axis.
+	mat4 AlignX(const vec3& _axis, const vec3& _up = vec3(0.0f, 1.0f, 0.0f));
+	mat4 AlignY(const vec3& _axis, const vec3& _up = vec3(0.0f, 1.0f, 0.0f));
+	mat4 AlignZ(const vec3& _axis, const vec3& _up = vec3(0.0f, 1.0f, 0.0f));
 	
+	// Matrix with position = _from and +Z = (_to - _from).
+	mat4 LookAt(const vec3& _from, const vec3& _to, const vec3& _up = vec3(0.0f, 1.0f, 0.0f));
+
+	// \todo Rename, add a templated interface for integral types, plus interface for e.g. random rotations
 	class LCG
 	{
 		static const uint kMultiplier  = 48271u;

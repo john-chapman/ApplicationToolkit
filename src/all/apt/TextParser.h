@@ -10,7 +10,7 @@ namespace apt {
 // TextParser
 // Common text parsing operations; advance a string ptr with character
 // classification, check if a region of the string contains characters, keep
-// a count of line endings, etc. Basically wraps cctype and cstring.
+// a count of line endings, etc. Wraps cctype and cstring.
 // \note Only line feed '\n' are counted as line endings; carriage return '\r'
 //   are treated as whitespace only.
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,15 +44,15 @@ public:
 	char advanceToNextAlphaNum();
 	char advanceToNextNonAlphaNum();
 	char skipLine();
-	char skipWhitespace();
+	char skipWhitespace(); // include empty lines
 
-	void reset() { m_pos = m_start; }
-	
+	void reset(const char* _pos = nullptr) { m_pos = _pos ? _pos : m_start; }
+
 	// Return the first occurence of any characters from _list in the region between _beg and 
 	// the current position, or 0 if none.
 	char containsAny(const char* _beg, const char* _list);
 
-	/// Return true if the region between _beg and the current position exactly matches _str.
+	// Return true if the region between _beg and the current position exactly matches _str.
 	bool matches(const char *_beg, const char* _str);
 
 	// Return # occurences of '\n' up to and including _pos (or the current position if _pos is 0).
@@ -62,6 +62,16 @@ public:
 	int getCharCount() const { return (int)(m_pos - m_start); }
 
 	operator const char*()   { return m_pos; }
+
+
+	// readNext*() and compareNext*() functions operate on the next region of non-whitespace characters,
+	// returning true if the conversion/comparison succeeded in which case the current position is the
+	// first whitespace character immediately after the region. If the functions return false the current
+	// position is unchanged.
+	bool readNextBool(bool& out_);      // accepts 't', 'f', 'true', 'false', '1', '0'  
+	bool readNextDouble(double& out_);  // strtod
+	bool readNextInt(long int& out_);   // strtol
+	bool compareNext(const char* _str);
 
 private:
 	const char* m_start;

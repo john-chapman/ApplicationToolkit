@@ -33,8 +33,10 @@ void apt::internal::Log(const char* _fmt, ...)
 {
 	va_list args;
 	va_start(args, _fmt);
-	APT_VERIFY((vfprintf(stdout, _fmt, args)) > 0);
-	APT_VERIFY((fprintf(stdout, "\n")) > 0);
+	#ifndef APT_LOG_CALLBACK_ONLY
+		APT_VERIFY((vfprintf(stdout, _fmt, args)) > 0);
+		APT_VERIFY((fprintf(stdout, "\n")) > 0);
+	#endif
 	DispatchLogCallback(_fmt, args, LogType_Log);
 	va_end(args);
 }
@@ -43,8 +45,10 @@ void apt::internal::LogError(const char* _fmt, ...)
 {
 	va_list args;
 	va_start(args, _fmt);
-	APT_VERIFY((vfprintf(stderr, _fmt, args)) > 0);
-	APT_VERIFY((fprintf(stderr, "\n")) > 0);
+	#ifndef APT_LOG_CALLBACK_ONLY
+		APT_VERIFY((vfprintf(stderr, _fmt, args)) > 0);
+		APT_VERIFY((fprintf(stderr, "\n")) > 0);
+	#endif
 	DispatchLogCallback(_fmt, args, LogType_Error);
 	va_end(args);
 }
@@ -53,8 +57,10 @@ void apt::internal::LogDebug(const char* _fmt, ...)
 {
 	va_list args;
 	va_start(args, _fmt);
-	APT_VERIFY((vfprintf(stdout, _fmt, args)) > 0);
-	APT_VERIFY((fprintf(stdout, "\n")) > 0);
+	#ifndef APT_LOG_CALLBACK_ONLY
+		APT_VERIFY((vfprintf(stdout, _fmt, args)) > 0);
+		APT_VERIFY((fprintf(stdout, "\n")) > 0);
+	#endif
 	DispatchLogCallback(_fmt, args, LogType_Debug);
 	va_end(args);
 }

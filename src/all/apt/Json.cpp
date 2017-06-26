@@ -4,6 +4,7 @@
 #include <apt/math.h>
 #include <apt/FileSystem.h>
 #include <apt/String.h>
+#include <apt/Time.h>
 
 #include <cstring>
 
@@ -90,6 +91,7 @@ bool Json::Read(Json& json_, const File& _file)
 
 bool Json::Read(Json& json_, const char* _path, FileSystem::RootType _rootHint)
 {
+	APT_AUTOTIMER("Json::Read(%s)", _path);
 	File f;
 	if (!FileSystem::ReadIfExists(f, _path, _rootHint)) {
 		return false;
@@ -110,6 +112,7 @@ bool Json::Write(const Json& _json, File& file_)
 
 bool Json::Write(const Json& _json, const char* _path, FileSystem::RootType _rootHint)
 {
+	APT_AUTOTIMER("Json::Write(%s)", _path);
 	File f;
 	if (Write(_json, f)) {
 		return FileSystem::Write(f, _path, _rootHint);
@@ -118,7 +121,7 @@ bool Json::Write(const Json& _json, const char* _path, FileSystem::RootType _roo
 }
 
 Json::Json(const char* _path, FileSystem::RootType _rootHint)
-	: m_impl(0)
+	: m_impl(nullptr)
 {
 	m_impl = new Impl;
 	m_impl->m_dom.SetObject();
@@ -724,10 +727,12 @@ bool JsonSerializer::beginObject(const char* _name)
 				return false;
 			}
 		}
-		if (m_json->getType() == Json::ValueType_Object) { // \todo assert if it's not an object?
+
+		if (m_json->getType() == Json::ValueType_Object) {
 			m_json->enterObject();
 			return true;
 		}
+
 	} else {
 		m_json->beginObject(_name);
 		return true;
@@ -755,11 +760,13 @@ bool JsonSerializer::beginArray(const char* _name)
 			if (!m_json->find(_name)) {
 				return false;
 			}
-			if (m_json->getType() == Json::ValueType_Array) { // \todo assert if it's not an array?
-				m_json->enterArray();
-				return true;
-			}
 		}
+				
+		if (m_json->getType() == Json::ValueType_Array) {
+			m_json->enterArray();
+			return true;
+		}
+
 	} else {
 		m_json->beginArray(_name);
 		return true;

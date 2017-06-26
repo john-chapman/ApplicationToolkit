@@ -3,6 +3,7 @@
 #include <apt/def.h>
 #include <apt/log.h>
 #include <apt/File.h>
+#include <apt/FileSystem.h>
 #include <apt/Time.h>
 
 #include <cmath>
@@ -44,6 +45,24 @@ static void ConvertCopyImage(const void* _src, void* _dst, uint _srcCount, uint 
 	}
 }
 
+static uint GetImageSize(uint _w, uint _h, uint _d, Image::CompressionType _compression, uint _bytesPerTexel)
+{
+	switch (_compression) {
+		case Image::Compression_BC1:
+		case Image::Compression_BC4:
+			return APT_MAX(((_w + 3) / 4) * ((_h + 3) / 4) * 8, (uint)1) * _d;
+		case Image::Compression_BC2:
+		case Image::Compression_BC3:
+		case Image::Compression_BC5:
+		case Image::Compression_BC6:
+		case Image::Compression_BC7:
+			return APT_MAX(((_w + 3) / 4) * ((_h + 3) / 4) * 16, (uint)1) * _d;
+		default:
+			break;
+	};
+	return _w * _h * _d * _bytesPerTexel;
+}
+
 /*******************************************************************************
 
                                    Image
@@ -52,33 +71,35 @@ static void ConvertCopyImage(const void* _src, void* _dst, uint _srcCount, uint 
 
 // PUBLIC
 
-Image* Image::Create1d(uint _width, Layout _layout, DataType _dataType, uint _mipmapCount, CompressionType _compressionType)
+Image* Image::Create1d(uint _width, Layout _layout, DataType _dataType, uint _mipmapCount, uint _arrayCount, CompressionType _compressionType)
 {
 	Image* ret = new Image;
 	APT_ASSERT(ret);
 	ret->init();
-	ret->m_type        = Type_1d;
+	ret->m_type        = _arrayCount > 1 ? Type_1dArray : Type_1d;
 	ret->m_width       = _width;
 	ret->m_layout      = _layout;
 	ret->m_dataType    = _dataType;
 	ret->m_mipmapCount = _mipmapCount;
+	ret->m_arrayCount  = _arrayCount;
 	ret->m_compression = _compressionType;
 	ret->alloc();
 
 	return ret;
 }
 
-Image* Image::Create2d(uint _width, uint _height, Layout _layout, DataType _dataType, uint _mipmapCount, CompressionType _compressionType)
+Image* Image::Create2d(uint _width, uint _height, Layout _layout, DataType _dataType, uint _mipmapCount, uint _arrayCount, CompressionType _compressionType)
 {
 	Image* ret = new Image;
 	APT_ASSERT(ret);
 	ret->init();
-	ret->m_type        = Type_2d;
+	ret->m_type        = _arrayCount > 1 ? Type_2dArray : Type_2d;
 	ret->m_width       = _width;
 	ret->m_height      = _height;
 	ret->m_layout      = _layout;
 	ret->m_dataType    = _dataType;
 	ret->m_mipmapCount = _mipmapCount;
+	ret->m_arrayCount  = _arrayCount;
 	ret->m_compression = _compressionType;
 	ret->alloc();
 
@@ -86,18 +107,37 @@ Image* Image::Create2d(uint _width, uint _height, Layout _layout, DataType _data
 }
 
 
-Image* Image::Create3d(uint _width, uint _height, uint _depth, Layout _layout, DataType _dataType, uint _mipmapCount, CompressionType _compressionType)
+Image* Image::Create3d(uint _width, uint _height, uint _depth, Layout _layout, DataType _dataType, uint _mipmapCount, uint _arrayCount, CompressionType _compressionType)
 {
 	Image* ret = new Image;
 	APT_ASSERT(ret);
 	ret->init();
-	ret->m_type        = Type_3d;
+	ret->m_type        = _arrayCount > 1 ? Type_3dArray : Type_3d;
 	ret->m_width       = _width;
 	ret->m_height      = _height;
 	ret->m_depth       = _depth;
 	ret->m_layout      = _layout;
 	ret->m_dataType    = _dataType;
 	ret->m_mipmapCount = _mipmapCount;
+	ret->m_arrayCount  = _arrayCount;
+	ret->m_compression = _compressionType;
+	ret->alloc();
+
+	return ret;
+}
+
+Image* Image::CreateCubemap(uint _width, Layout _layout, DataType _dataType, uint _mipmapCount, uint _arrayCount, CompressionType _compressionType)
+{
+	Image* ret = new Image;
+	APT_ASSERT(ret);
+	ret->init();
+	ret->m_type        = _arrayCount > 1 ? Type_CubemapArray : Type_Cubemap;
+	ret->m_width       = _width;
+	ret->m_height      = _width;
+	ret->m_layout      = _layout;
+	ret->m_dataType    = _dataType;
+	ret->m_mipmapCount = _mipmapCount;
+	ret->m_arrayCount  = _arrayCount;
 	ret->m_compression = _compressionType;
 	ret->alloc();
 
@@ -127,8 +167,10 @@ bool Image::Read(Image& img_, const File& _file, FileFormat _format)
 	switch (_format) {
 		case FileFormat_Dds: return ReadDds(img_, _file.getData(), _file.getDataSize());
 		case FileFormat_Png: return ReadPng(img_, _file.getData(), _file.getDataSize());
+		case FileFormat_Exr: return ReadExr(img_, _file.getData(), _file.getDataSize());
 		case FileFormat_Bmp:
 		case FileFormat_Gif:
+		case FileFormat_Hdr:
 		case FileFormat_Jpg:
 		case FileFormat_Psd:
 		case FileFormat_Tga: return ReadDefault(img_, _file.getData(), _file.getDataSize());
@@ -141,6 +183,7 @@ bool Image::Read(Image& img_, const File& _file, FileFormat _format)
 
 bool Image::Read(Image& img_, const char* _path, FileFormat _format)
 {
+	APT_AUTOTIMER("Image::Read(%s)", _path);
 	File f;
 	f.setPath(_path);
 	if (!File::Read(f, _path)) {
@@ -172,6 +215,8 @@ bool Image::Write(const Image& _img, File& file_, FileFormat _format)
 		case FileFormat_Dds: ret = WriteDds(file_, _img); break;
 		case FileFormat_Png: ret = WritePng(file_, _img); break;
 		case FileFormat_Tga: ret = WriteTga(file_, _img); break;
+		case FileFormat_Hdr: ret = WriteHdr(file_, _img); break;
+		case FileFormat_Exr: ret = WriteExr(file_, _img); break;
 		default: APT_LOG_ERR("Image: File format does not supported writing '%s'", file_.getPath()); goto Image_Write_end;
 	};
 
@@ -184,6 +229,7 @@ Image_Write_end:
 
 bool Image::Write(const Image& _img, const char* _path, FileFormat _format)
 {
+	APT_AUTOTIMER("Image::Write(%s)", _path);
 	File f;
 	f.setPath(_path);
 	if (!Write(_img, f, _format)) {
@@ -192,26 +238,18 @@ bool Image::Write(const Image& _img, const char* _path, FileFormat _format)
 	return File::Write(f, _path);
 }
 
-uint Image::GetMaxMipmapSize(uint _width, uint _height, uint _depth)
+uint Image::GetMaxMipmapCount(uint _width, uint _height, uint _depth)
 {
-	const double rlog2    = 1.0 / log(2.0);
-	const uint log2Width  = (uint)(log((double)_width)  * rlog2);
-	const uint log2Height = (uint)(log((double)_height) * rlog2);
-	const uint log2Depth  = (uint)(log((double)_depth)  * rlog2);
-	uint mipCount = APT_MAX(log2Width, APT_MAX(log2Height, log2Depth)) + 1; // +1 for level 0
-	mipCount = APT_MIN(APT_MIN(mipCount, (uint)1u), kMaxMipmapCount);
-	return mipCount;
+	double rlog2 = 1.0 / log(2.0);
+	uint log2Width  = (uint)ceil(log((double)_width)  * rlog2);
+	uint log2Height = (uint)ceil(log((double)_height) * rlog2);
+	uint log2Depth  = (uint)ceil(log((double)_depth)  * rlog2);
+	return APT_MAX(log2Width, APT_MAX(log2Height, log2Depth)) + 1; // +1 for level 0
 }
 
 char* Image::getRawImage(uint _array, uint _mip) const
 {
 	APT_ASSERT(m_data);
-	APT_ASSERT(_array < m_arrayCount);
-	APT_ASSERT(_mip < m_mipmapCount);
-	if (m_data == 0 || _array >= m_arrayCount || _mip >= m_mipmapCount) {
-		return 0;
-	}
-
 	uint offset = _array * m_arrayLayerSize + m_mipOffsets[_mip];
 	return m_data + offset;
 }
@@ -220,7 +258,7 @@ uint Image::getRawImageSize(uint _mip) const
 {
 	APT_ASSERT(m_data);
 	APT_ASSERT(_mip < m_mipmapCount);
-	if (m_data == 0 || _mip >= m_mipmapCount) {
+	if (!m_data || _mip >= m_mipmapCount) {
 		return 0;
 	}
 
@@ -280,68 +318,105 @@ void Image::init()
 	m_layout      = Layout_Invalid;
 	m_dataType    = DataType::InvalidType;
 	
-	char* m_data = 0;
+	char* m_data = nullptr;
 	memset(m_mipOffsets, 0, sizeof(uint) * kMaxMipmapCount);
 	memset(m_mipSizes,   0, sizeof(uint) * kMaxMipmapCount);
 	m_arrayLayerSize = 0;
-	m_texelSize = 0;
+	m_bytesPerTexel = 0.0f;
 }
 
 void Image::alloc()
 {
 	free(m_data);
-	
-	m_texelSize = DataType::GetSizeBytes(m_dataType) * GetComponentCount(m_layout);
+
+	if (m_compression == Compression_None) {
+		m_bytesPerTexel = (float)(DataType::GetSizeBytes(m_dataType) * GetComponentCount(m_layout));
+	} else {
+		switch (m_compression) {
+			case Compression_BC1:
+			case Compression_BC4:
+				m_bytesPerTexel = 0.5f;
+				break;
+			case Compression_BC2:
+			case Compression_BC3:
+			case Compression_BC5:
+			case Compression_BC6:
+			case Compression_BC7:
+				m_bytesPerTexel = 1.0f;
+				break;
+			default:
+				APT_ASSERT(false); // unknown compression type?
+		};
+	}
 	uint w = m_width, h = m_height, d = m_depth;
 	m_arrayLayerSize = 0;
-	uint i = 0, lim = APT_MIN(m_mipmapCount, GetMaxMipmapSize(w, h, d));
+	uint i = 0, lim = APT_MIN(m_mipmapCount, GetMaxMipmapCount(w, h, d));
 	do {
 		m_mipOffsets[i] = m_arrayLayerSize;
-		m_mipSizes[i] = m_texelSize * w * h * d;
+		m_mipSizes[i] = GetImageSize(w, h, d, m_compression, (uint)m_bytesPerTexel);
 		m_arrayLayerSize += m_mipSizes[i];
-		w = APT_MAX(w / 2, (uint)1);
-		h = APT_MAX(h / 2, (uint)1);
-		d = APT_MAX(d / 2, (uint)1);
+		w = APT_MAX(w >> 1, (uint)1);
+		h = APT_MAX(h >> 1, (uint)1);
+		d = APT_MAX(d >> 1, (uint)1);
 		++i;
 		APT_ASSERT(i < kMaxMipmapCount);
 	} while (i < lim);
 
-	m_data = (char*)malloc(m_arrayLayerSize * m_arrayCount);
+	uint imageCount = isCubemap() ? m_arrayCount * 6 : m_arrayCount;
+	m_data = (char*)malloc(m_arrayLayerSize * imageCount);
 	APT_ASSERT(m_data);
 }
 
 bool Image::validateFileFormat(FileFormat _format) const
 {
+	#define Image_ERR_IF(_cond, _msg, ...) \
+		if (_cond) { \
+			APT_LOG_ERR("Image: " _msg); \
+			return false; \
+		}
+
 	switch (_format) {
 		case FileFormat_Bmp:
-			if (m_compression != Compression_None) return false;
-			if (DataType::IsFloat(m_dataType))  return false;
-			if (DataType::IsSigned(m_dataType)) return false;
-			if (!DataType::IsNormalized(m_dataType)) return false;
-			if (IsDataTypeBpc(m_dataType, 16) || IsDataTypeBpc(m_dataType, 32)) return false;
-			return true;
-		case FileFormat_Dds:
-			if (m_type == Type_3dArray) return false;
-			return true;
-		case FileFormat_Png:
-			if (m_compression != Compression_None) return false;
-			if (DataType::IsFloat(m_dataType))  return false;
-			if (DataType::IsSigned(m_dataType)) return false;
-			if (!DataType::IsNormalized(m_dataType)) return false;
-			if (IsDataTypeBpc(m_dataType, 32)) return false;
-			return true;
-		case FileFormat_Tga:
-			if (m_compression != Compression_None) return false;
-			if (DataType::IsFloat(m_dataType))  return false;
-			if (DataType::IsSigned(m_dataType)) return false;
-			if (!DataType::IsNormalized(m_dataType)) return false;
-			if (IsDataTypeBpc(m_dataType, 16) || IsDataTypeBpc(m_dataType, 32)) return false;
-			return true;
-		default:
+			Image_ERR_IF(m_compression != Compression_None,   "BMP compression not supported");
+			Image_ERR_IF(DataType::IsFloat(m_dataType),       "BMP float data types not supported");
+			Image_ERR_IF(DataType::IsSigned(m_dataType),      "BMP signed data types not supported");
+			Image_ERR_IF(!DataType::IsNormalized(m_dataType), "BMP only normalized data types are supported");
+			Image_ERR_IF(!IsDataTypeBpc(m_dataType, 8),       "BMP only 8 bit data types are supported");
 			break;
+		case FileFormat_Dds:
+			Image_ERR_IF(m_type == Type_3dArray,              "DDS 3d arrays not supported");
+			break;
+		case FileFormat_Exr:
+			Image_ERR_IF(m_compression != Compression_None,   "EXR compression not supported");
+			Image_ERR_IF(!DataType::IsFloat(m_dataType),      "EXR only float data types are supported");
+			Image_ERR_IF(!IsDataTypeBpc(m_dataType, 32),      "EXR only 32 bit data types are supported");
+			break;
+		case FileFormat_Hdr:
+			Image_ERR_IF(m_compression != Compression_None,   "HDR compression not supported");
+			Image_ERR_IF(!DataType::IsFloat(m_dataType),      "HDR only float data types are supported");
+			Image_ERR_IF(!IsDataTypeBpc(m_dataType, 32),      "HDR only 32 bit data types are supported");
+			break;
+		case FileFormat_Png:
+			Image_ERR_IF(m_compression != Compression_None,   "PNG compression not supported");
+			Image_ERR_IF(DataType::IsFloat(m_dataType),       "PNG float data types not supported");
+			Image_ERR_IF(DataType::IsSigned(m_dataType),      "PNG signed data types not supported");
+			Image_ERR_IF(!DataType::IsNormalized(m_dataType), "PNG only normalized data types are supported");
+			Image_ERR_IF(IsDataTypeBpc(m_dataType, 32),       "PNG only 8 and 16 bit data types are supported");
+			break;
+		case FileFormat_Tga:
+			Image_ERR_IF(m_compression != Compression_None,   "TGA compression not supported");
+			Image_ERR_IF(DataType::IsFloat(m_dataType),       "TGA float data types not supported");
+			Image_ERR_IF(DataType::IsSigned(m_dataType),      "TGA signed data types not supported");
+			Image_ERR_IF(!DataType::IsNormalized(m_dataType), "TGA only normalized data types are supported");
+			Image_ERR_IF(IsDataTypeBpc(m_dataType, 32),       "TGA only 8 and 16 bit data types are supported");
+			break;
+		default:
+			return false;
 	};
 
-	return false;
+	return true;
+
+	#undef Image_ERR_IF
 }
 
 uint Image::GetComponentCount(Layout _layout)
@@ -352,7 +427,7 @@ uint Image::GetComponentCount(Layout _layout)
 		case Layout_RGB:       return 3;
 		case Layout_RGBA:      return 4;
 		case Layout_Invalid:
-		default:                 return 0;
+		default:               return 0;
 	};
 }
 
@@ -367,46 +442,26 @@ Image::Layout Image::GuessLayout(uint _cmpCount)
 	};
 }
 
-static char lowercase(char c)
-{
-	if (c >= 'A' && c <= 'Z') {
-		c += 'a' - 'A';
-	}
-	return c;
-}
-static int strcmp_ignore_case(const char* str1, const char* str2)
-{
-	APT_ASSERT(str1 && str2);
-	while (*str1 && *str2) {
-		int dif = (int)lowercase(*str1) - (int)lowercase(*str2);
-		if (dif != 0) {
-			return dif;
-		}
-		++str1;
-		++str2;
-	}
-	return 0;
-}
-
 Image::FileFormat Image::GuessFormat(const char* _path)
 {
-	const char* ext = strrchr(_path, (int)'.');
-	if (ext) {
-		if        (strcmp_ignore_case(ext, ".bmp") == 0) {
-			return FileFormat_Bmp;
-		} else if (strcmp_ignore_case(ext, ".dds") == 0) {
-			return FileFormat_Dds;
-		} else if (strcmp_ignore_case(ext, ".png") == 0) {
-			return FileFormat_Png;
-		} else if (strcmp_ignore_case(ext, ".tga") == 0) {
-			return FileFormat_Tga;
-		} else if (strcmp_ignore_case(ext, ".jpg") == 0 || strcmp_ignore_case(ext, ".jpeg") == 0) {
-			return FileFormat_Jpg;
-		} else if (strcmp_ignore_case(ext, ".gif") == 0) {
-			return FileFormat_Gif;
-		} else if (strcmp_ignore_case(ext, ".psd") == 0) {
-			return FileFormat_Psd;
-		}
+	if        (FileSystem::CompareExtension("bmp", _path)) {
+		return FileFormat_Bmp;
+	} else if (FileSystem::CompareExtension("dds", _path)) {
+		return FileFormat_Dds;
+	} else if (FileSystem::CompareExtension("exr", _path)) {
+		return FileFormat_Exr;
+	} else if (FileSystem::CompareExtension("hdr", _path)) {
+		return FileFormat_Hdr;
+	} else if (FileSystem::CompareExtension("png", _path)) {
+		return FileFormat_Png;
+	} else if (FileSystem::CompareExtension("tga", _path)) {
+		return FileFormat_Tga;
+	} else if (FileSystem::CompareExtension("jpg", _path) || FileSystem::CompareExtension("jpeg", _path)) {
+		return FileFormat_Jpg;
+	} else if (FileSystem::CompareExtension("gif", _path)) {
+		return FileFormat_Gif;
+	} else if (FileSystem::CompareExtension("psd", _path)) {
+		return FileFormat_Psd;
 	}
 
 	return FileFormat_Invalid;
@@ -422,6 +477,7 @@ bool Image::IsDataTypeBpc(DataType _type, int _bpc)
 #define STBI_NO_STDIO
 #define STBI_ONLY_BMP
 #define STBI_ONLY_GIF
+#define STBI_ONLY_HDR
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PSD
 #define STBI_ONLY_TGA
@@ -433,6 +489,7 @@ bool Image::IsDataTypeBpc(DataType _type, int _bpc)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBI_WRITE_NO_STDIO
 #define STBIW_ASSERT(x) APT_ASSERT(x)
+#include <cstdio>
 #include <stb_image_write.h>
 static void StbiWriteFile(void* file_, void* _data, int _size)
 {
@@ -458,23 +515,32 @@ static void SwapByteOrder(char* _d_, unsigned _dsize)
     }
 }
 
+#define TINYEXR_IMPLEMENTATION
+#include <tinyexr.h>
+
 bool Image::ReadDefault(Image& img_, const char* _data, uint _dataSize)
 {
-	int x, y, cmp;
-	unsigned char* d = stbi_load_from_memory((unsigned char*)_data, (int)_dataSize, &x, &y, &cmp, 0);
+	int w, h, cmp;
+	stbi_uc* d;
+	bool isHdr = stbi_is_hdr_from_memory((stbi_uc*)_data, (int)_dataSize) != 0;
+	if (isHdr) {
+		d = (stbi_uc*)stbi_loadf_from_memory((stbi_uc*)_data, (int)_dataSize, &w, &h, &cmp, 0);
+	} else {
+		d = stbi_load_from_memory((stbi_uc*)_data, (int)_dataSize, &w, &h, &cmp, 0);
+	}
 	if (!d) {
-		APT_LOG_ERR("stbi_load_from_memory() failed '%s'", stbi_failure_reason());
+		APT_LOG_ERR("stbi_load%s_from_memory() failed '%s'", isHdr ? "f" : "", stbi_failure_reason());
 		return false;
 	}
-	img_.m_width       = x;
-	img_.m_height      = y;
+	img_.m_width       = w;
+	img_.m_height      = h;
 	img_.m_depth       = img_.m_arrayCount = img_.m_mipmapCount = 1;
 	img_.m_type        = Type_2d;
 	img_.m_layout      = GuessLayout((uint)cmp);
-	img_.m_dataType    = DataType::Uint8N;
+	img_.m_dataType    = isHdr ? DataType::Float32 : DataType::Uint8N;
 	img_.m_compression = Compression_None;
 	img_.alloc();
-	memcpy(img_.m_data, d, x * y * cmp); // \todo, avoid this
+	memcpy(img_.m_data, d, w * h * cmp * (isHdr ? sizeof(float) : sizeof(stbi_uc))); // \todo avoid this, let image own the ptr
 	stbi_image_free(d);
 	return true;
 }
@@ -530,19 +596,17 @@ Image_ReadPng_end:
 	free(d);
 	lodepng_state_cleanup(&state);
 	if (err) {
-		APT_LOG_ERR("lodepng error:\n\t'%s'", lodepng_error_text(err));
+		APT_LOG_ERR("lodepng error: '%s'", lodepng_error_text(err));
 		return false;
 	}
 	return ret;
 }
 bool Image::WritePng(File& file_, const Image& _img)
 {
-	
 	LodePNGColorType colorType;
 	unsigned bitdepth;
 	bool ret = true;
 
- 
 	char* buf = 0;
 
 	switch (_img.m_layout) {
@@ -550,38 +614,181 @@ bool Image::WritePng(File& file_, const Image& _img)
 		case Layout_RG:    colorType = LCT_GREY_ALPHA; break;
 		case Layout_RGB:   colorType = LCT_RGB;        break;
 		case Layout_RGBA:  colorType = LCT_RGBA;       break;
-		default:             APT_ASSERT_MSG(false, "Invalid image layout");
-		                     ret = false;
+		default:           APT_ASSERT_MSG(false, "Invalid image layout");
+		                   ret = false;
 	};
 
 	switch (_img.m_dataType) {
 		case DataType::Uint8N:  bitdepth = 8;   break;
 		case DataType::Uint16N: bitdepth = 16;
-		                         // \hack \todo Can lodepng be modified to swizzle the bytes automatically on x86?
-	                             buf = (char*)malloc(_img.getRawImageSize());
-	                             memcpy(buf, _img.getRawImage(), _img.getRawImageSize());
-		                         SwapByteOrder(buf, (unsigned)_img.getRawImageSize()); break;
-		default:                 APT_ASSERT_MSG(false, "Unsupported data type");
-		                         ret = false;
+		                       // \hack \todo Can lodepng be modified to swizzle the bytes automatically on x86?
+	                            buf = (char*)malloc(_img.getRawImageSize());
+	                            memcpy(buf, _img.getRawImage(), _img.getRawImageSize());
+		                        SwapByteOrder(buf, (unsigned)_img.getRawImageSize()); break;
+		default:                APT_ASSERT_MSG(false, "Unsupported data type");
+		                        ret = false;
 	};
+
+ // don't use the default encoder state, which ignores colorType in some cases
+	LodePNGEncoderSettings enc;
+	lodepng_encoder_settings_init(&enc);
+	enc.auto_convert = false;
+	LodePNGState state;
+	lodepng_state_init(&state);
+	state.info_raw.colortype = colorType;
+	state.info_raw.bitdepth = bitdepth;
+	state.info_png.color.colortype = colorType;
+	state.info_png.color.bitdepth = bitdepth;
+	state.encoder = enc;
 
 	unsigned char* d;
 	uint dsize;
-	unsigned err = lodepng_encode_memory(&d, &dsize, (unsigned char*)(buf ? buf : _img.getRawImage()), (unsigned)_img.getWidth(), (unsigned)_img.getHeight(), colorType, bitdepth);
+	unsigned err = lodepng_encode(&d, &dsize, (unsigned char*)(buf ? buf : _img.getRawImage()), (unsigned)_img.getWidth(), (unsigned)_img.getHeight(), &state);
 	if (err) {
 		goto Image_WritePng_end;
 	}
 	file_.setData((const char*)d, dsize);
 
 Image_WritePng_end:
+	lodepng_state_cleanup(&state);
 	free(buf);
 	free(d);
 	if (err) {
-		APT_LOG_ERR("lodepng error:\n\t'%s'", lodepng_error_text(err));
+		APT_LOG_ERR("lodepng error: '%s'", lodepng_error_text(err));
 		return false;
 	}
 	return ret;
 }
+
+bool Image::ReadExr(Image& img_, const char* _data, uint _dataSize)
+{
+	bool ret = true;
+	const char* err = nullptr;
+
+	EXRVersion version = {};
+	EXRHeader header = {};
+	InitEXRHeader(&header);
+	EXRImage exr = {};
+	InitEXRImage(&exr);
+	
+	if (ParseEXRVersionFromMemory(&version, (const unsigned char*)_data, _dataSize) != TINYEXR_SUCCESS) {
+		ret = false;
+		goto Image_ReadExr_end;
+	}
+	if (ParseEXRHeaderFromMemory(&header, &version, (const unsigned char*)_data, _dataSize, &err) != TINYEXR_SUCCESS) {
+		ret = false;
+		goto Image_ReadExr_end;
+	}
+	if (header.multipart) {
+		err = "Multipart EXR not supported";
+		ret = false;
+		goto Image_ReadExr_end;
+	}
+	if (header.tiled) {
+		err = "Tiled EXR not supported";
+		ret = false;
+		goto Image_ReadExr_end;
+	}	
+	for (int i = 0; i < header.num_channels; ++i) {
+		header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+	}
+	if (LoadEXRImageFromMemory(&exr, &header, (const unsigned char*)_data, _dataSize, &err) != TINYEXR_SUCCESS) {
+		ret = false;
+		goto Image_ReadExr_end;
+	}
+
+	switch (exr.num_channels) {
+		case 1: img_.m_layout = Layout_R;    break;
+		case 2: img_.m_layout = Layout_RG;   break;
+		case 3: img_.m_layout = Layout_RGB;  break;
+		case 4: img_.m_layout = Layout_RGBA; break;
+		default: err = "Unsupported # channels"; ret = false; goto Image_ReadExr_end; 
+	};
+
+	img_.m_width       = exr.width;
+	img_.m_height      = exr.height;
+	img_.m_depth       = img_.m_arrayCount = img_.m_mipmapCount = 1;
+	img_.m_type        = Type_2d;
+	img_.m_dataType    = DataType::Float32;
+	img_.m_compression = Compression_None;
+	img_.alloc();
+
+	float* data = (float*)img_.m_data;
+	for (uint i = 0, n = img_.m_width * img_.m_height; i < n; ++i) {
+	 // \hack read the channels in reverse order (convert ABGR -> RGBA)
+	 // \todo inspect the channel names directly
+		for (int j = exr.num_channels - 1; j >= 0; --j, ++data) {
+			*data = ((float*)exr.images[j])[i];
+		}
+	}
+
+Image_ReadExr_end:
+	FreeEXRHeader(&header);
+	FreeEXRImage(&exr);
+	if (err) {
+		APT_LOG_ERR("ReadExr: '%s'", err);
+		return false;
+	}
+	return ret;
+}
+
+bool Image::WriteExr(File& file_, const Image& _img)
+{
+	const char* err = nullptr;
+
+	EXRHeader header;
+	InitEXRHeader(&header);
+	EXRImage exr;
+	InitEXRImage(&exr);
+
+	switch (_img.m_layout) {
+		case Layout_R:    exr.num_channels = 1; break;
+		case Layout_RG:   exr.num_channels = 2; break;
+		case Layout_RGBA: exr.num_channels = 4; break;
+		case Layout_RGB:  
+		default:          exr.num_channels = 3; break;
+	};
+	float* channels[4] = {};
+	for (int i = 0; i < exr.num_channels; ++i) {
+		int k = exr.num_channels - i - 1;
+		channels[i] = (float*)malloc(sizeof(float) * _img.m_width * _img.m_height);
+		for (uint j = 0, n = _img.m_width * _img.m_height; j < n; ++j) {
+			channels[i][j] = ((float*)_img.m_data)[j * exr.num_channels + k];
+		}
+	}
+	exr.images = (unsigned char**)channels;
+	exr.width = (int)_img.m_width;
+	exr.height = (int)_img.m_height;
+
+	header.num_channels = exr.num_channels;
+	header.channels = (EXRChannelInfo*)malloc(sizeof(EXRChannelInfo) * header.num_channels);
+	header.pixel_types = (int*)malloc(sizeof(int) * header.num_channels);
+	header.requested_pixel_types = header.pixel_types;
+	const char* channelNames[] = { "A", "B", "G", "R" };
+	const char** name = channelNames + (4 - header.num_channels);
+	for (int i = 0; i < header.num_channels; ++i) {
+		strcpy(header.channels[i].name, name[i]);
+		header.pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+	}
+
+	unsigned char* data;
+	size_t dataSize = SaveEXRImageToMemory(&exr, &header, &data, &err);
+	if (!err) {
+		file_.setData((char*)data, dataSize);
+	}
+	free(data);
+	free(header.channels);
+	free(header.pixel_types);
+	for (int i = 0; i < exr.num_channels; ++i) {
+		free(channels[i]);
+	}
+	if (err) {
+		APT_LOG_ERR("ReadExr: '%s'", err);
+		return false;
+	}
+	return true;
+}
+
 bool Image::WriteBmp(File& file_, const Image& _img)
 {
 	if (!stbi_write_bmp_to_func(StbiWriteFile, &file_, (int)_img.m_width, (int)_img.m_height, (int)GetComponentCount(_img.m_layout), _img.m_data)) {
@@ -594,6 +801,14 @@ bool Image::WriteTga(File& file_, const Image& _img)
 {
 	if (!stbi_write_tga_to_func(StbiWriteFile, &file_, (int)_img.m_width, (int)_img.m_height, (int)GetComponentCount(_img.m_layout), _img.m_data)) {
 		APT_LOG_ERR("stbi_write_tga_to_func() failed");
+		return false;
+	}
+	return true;
+}
+bool Image::WriteHdr(File& file_, const Image& _img)
+{
+	if (!stbi_write_hdr_to_func(StbiWriteFile, &file_, (int)_img.m_width, (int)_img.m_height, (int)GetComponentCount(_img.m_layout), (float*)_img.m_data)) {
+		APT_LOG_ERR("stbi_write_hdr_to_func() failed");
 		return false;
 	}
 	return true;

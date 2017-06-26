@@ -10,6 +10,8 @@
 #include <commdlg.h>
 #include <cstring>
 
+#include <EASTL/vector.h>
+
 #pragma comment(lib, "shlwapi")
 
 using namespace apt;
@@ -29,7 +31,19 @@ static void BuildFilterString(const char* _filters, StringBase& ret_)
 
 // PUBLIC
 
-void FileSystem::MakeRelative(PathStr& ret_, const char* _path, RootType _root)
+bool FileSystem::Delete(const char* _path)
+{
+	if (DeleteFile(_path) == 0) {
+		DWORD err = GetLastError();
+		if (err != ERROR_FILE_NOT_FOUND) {
+			APT_LOG_ERR("DeleteFile(%s): %s", _path, GetPlatformErrorString(err));
+		}
+		return false;
+	}
+	return true;
+}
+
+void FileSystem::MakeRelative(StringBase& ret_, const char* _path, RootType _root)
 {
  // construct the full root
 	TCHAR root[MAX_PATH] = {};
@@ -55,7 +69,12 @@ void FileSystem::MakeRelative(PathStr& ret_, const char* _path, RootType _root)
 	ret_.replace('\\', s_separator);
 }
 
-bool FileSystem::PlatformSelect(PathStr& result_, const char* _filters)
+bool FileSystem::IsAbsolute(const char* _path)
+{
+	return PathIsRelative(_path) == FALSE;
+}
+
+bool FileSystem::PlatformSelect(PathStr& ret_, const char* _filters)
 {
 	static DWORD       s_filterIndex = 0;
 	static const DWORD kMaxOutputLength = MAX_PATH;
@@ -76,20 +95,20 @@ bool FileSystem::PlatformSelect(PathStr& result_, const char* _filters)
 	if (GetOpenFileName(&ofn) != 0) {
 		s_filterIndex = ofn.nFilterIndex;
 	 // parse s_output into results_
-		result_.set(s_output);
-		result_.replace('\\', '/'); // sanitize path for display
+		ret_.set(s_output);
+		ret_.replace('\\', '/'); // sanitize path for display
 		return true;
 	} else {
 		DWORD err = CommDlgExtendedError();
 		if (err != 0) {
-			APT_LOG_ERR("GetOpenFileName failed (0x%x)", err);
+			APT_LOG_ERR("GetOpenFileName (0x%x)", err);
 			APT_ASSERT(false);
 		}		
 	}
 	return false;
 }
 
-int FileSystem::PlatformSelectMulti(PathStr* results_, int _maxResults, const char* _filters)
+int FileSystem::PlatformSelectMulti(PathStr retList_[], int _maxResults, const char* _filters)
 {
 	static DWORD       s_filterIndex = 0;
 	static const DWORD kMaxOutputLength = 1024 * 4;
@@ -119,8 +138,8 @@ int FileSystem::PlatformSelectMulti(PathStr* results_, int _maxResults, const ch
 			if (*tp == '\0') {
 				break;
 			}
-			results_[ret].appendf("%s\\%s", s_output, (const char*)tp);
-			results_[ret].replace('\\', '/'); // sanitize path for display
+			retList_[ret].appendf("%s\\%s", s_output, (const char*)tp);
+			retList_[ret].replace('\\', '/'); // sanitize path for display
 			++ret;
 		}
 		return ret;
@@ -128,11 +147,73 @@ int FileSystem::PlatformSelectMulti(PathStr* results_, int _maxResults, const ch
 	} else {
 		DWORD err = CommDlgExtendedError();
 		if (err != 0) {
-			APT_LOG_ERR("GetOpenFileName failed (0x%x)", err);
+			APT_LOG_ERR("GetOpenFileName (0x%x)", err);
 			APT_ASSERT(false);
 		}		
 	}
 	return 0;
+}
+
+int FileSystem::ListFiles(PathStr retList_[], int _maxResults, const char* _path, const char* _filter, bool _recursive)
+{
+	eastl::vector<PathStr> dirs;
+	dirs.push_back(_path);
+	int ret = 0;
+	while (ret < _maxResults && !dirs.empty()) {
+		PathStr root = (PathStr&&)dirs.back();
+		dirs.pop_back();
+		root.replace('/', '\\');
+		PathStr search = root;
+		search.appendf("\\%s", _filter); // \todo check if / or \\ already at the end, same for the dir code below
+
+		WIN32_FIND_DATA ffd;
+		HANDLE h = FindFirstFile((const char*)search, &ffd);
+		if (h == INVALID_HANDLE_VALUE) {
+			APT_LOG_ERR("ListFiles (FindFirstFile): %s", GetPlatformErrorString(GetLastError()));
+			continue;
+		} 
+
+		do {
+			if (strcmp(ffd.cFileName, ".") != 0 && strcmp(ffd.cFileName, "..") != 0) {
+				if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+					if (_recursive) {
+						dirs.push_back(root);
+						dirs.back().appendf("\\%s", ffd.cFileName, _filter);
+					}
+				} else {
+					retList_[ret++].setf("%s\\%s", (const char*)root, ffd.cFileName);
+				}
+			}
+	
+        } while (ret < _maxResults && FindNextFile(h, &ffd) != 0);
+
+		DWORD err = GetLastError();
+		if (err != ERROR_NO_MORE_FILES) {
+			APT_LOG_ERR("ListFiles (FindNextFile): %s", GetPlatformErrorString(err));
+		}
+
+		FindClose(h);
+    }
+
+	return ret;
+}
+
+bool FileSystem::CreateDir(const char* _path)
+{
+	TextParser tp(_path);
+	while (tp.advanceToNext("\\/") != 0) {
+		String<64> mkdir;
+		mkdir.set(_path, tp.getCharCount());
+		if (CreateDirectory(mkdir, NULL) == 0) {
+			DWORD err = GetLastError();
+			if (err != ERROR_ALREADY_EXISTS) {
+				APT_LOG_ERR("CreateDirectory(%s): %s", _path, GetPlatformErrorString(err));
+				return false;
+			}
+		}
+		tp.advance(); // skip the delimiter
+	}
+	return true;
 }
 
 // PROTECTED

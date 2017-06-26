@@ -156,3 +156,55 @@ int TextParser::getLineCount(const char* _pos) const
 	} while (c != m_start);
 	return ret;
 }
+
+bool TextParser::readNextBool(bool& out_)
+{
+	skipWhitespace();
+	if (*m_pos == 't' || *m_pos == 'T' || *m_pos == '1') {
+		advanceToNextWhitespace();
+		out_ = true;
+		return true;
+	}
+	if (*m_pos == 'f' || *m_pos == 'F' || *m_pos == '0') {
+		advanceToNextWhitespace();
+		out_ = false;
+		return true;
+	}
+	return false;
+}
+
+bool TextParser::readNextDouble(double& out_)
+{
+	skipWhitespace();
+	if (isNum() || *m_pos == '+' || *m_pos == '-') {
+		const char* beg = m_pos;
+		advanceToNextWhitespace();
+		out_ = strtod(beg, 0);
+		return true;
+	}
+	return false;
+}
+
+bool TextParser::readNextInt(long int& out_)
+{
+	skipWhitespace();
+	if (isNum() || *m_pos == '+' || *m_pos == '-') {
+		const char* beg = m_pos;
+		advanceToNextWhitespace();
+		out_ = strtol(beg, 0, 0);
+		return true;
+	}
+	return false;
+}
+
+bool TextParser::compareNext(const char* _str)
+{
+	skipWhitespace();
+	const char* beg = m_pos;
+	advanceToNextWhitespace();
+	if (matches(beg, _str)) {
+		return true;
+	}
+	m_pos = beg;
+	return false;
+}

@@ -2,6 +2,10 @@
 #ifndef apt_log_h
 #define apt_log_h
 
+// By default, log messages are written to stdout/stderr prior to the log callback dispatch.
+// The define below disables this behavior; nothing is written to stdout/stderr.
+//#define APT_LOG_CALLBACK_ONLY
+
 #include <apt/def.h>
 
 #define APT_LOG(...)              do { apt::internal::Log(__VA_ARGS__); } while (0)

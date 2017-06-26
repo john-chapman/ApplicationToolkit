@@ -4,6 +4,7 @@
 #include <apt/log.h>
 #include <apt/platform.h>
 #include <apt/win.h>
+#include <apt/FileSystem.h>
 #include <apt/String.h>
 #include <apt/TextParser.h>
 
@@ -29,37 +30,6 @@ File::~File()
 bool File::Exists(const char* _path)
 {
 	return GetFileAttributes(_path) != INVALID_FILE_ATTRIBUTES;
-}
-
-bool File::CreateDir(const char* _path)
-{
-	/*String<64> mkpath(_path);
-	
-	for (int i = 0; i < path.getDirectoryCount(); ++i) {
-		mkpath.appendf("%s/", path.getDirectory(i));
-		if (CreateDirectory(mkpath, NULL) == 0) {
-			DWORD err = GetLastError();
-			if (err != ERROR_ALREADY_EXISTS) {
-				APT_LOG_ERR("CreateDirectory failed: %s", GetPlatformErrorString(err));
-				return false;
-			}
-		}
-	}
-	return true;*/
-	TextParser tp(_path);
-	while (tp.advanceToNext("\\/") != 0) {
-		String<64> mkdir;
-		mkdir.set(_path, tp.getCharCount());
-		if (CreateDirectory(mkdir, NULL) == 0) {
-			DWORD err = GetLastError();
-			if (err != ERROR_ALREADY_EXISTS) {
-				APT_LOG_ERR("CreateDirectory failed: %s", GetPlatformErrorString(err));
-				return false;
-			}
-		}
-		tp.advance(); // skip the delimiter
-	}
-	return true;
 }
 
 bool File::Read(File& file_, const char* _path)
@@ -154,7 +124,7 @@ bool File::Write(const File& _file, const char* _path)
 	if (h == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
 		if (err == ERROR_PATH_NOT_FOUND) {
-			if (CreateDir(_path)) {
+			if (FileSystem::CreateDir(_path)) {
 				return Write(_file, _path);
 			} else {
 				return false;

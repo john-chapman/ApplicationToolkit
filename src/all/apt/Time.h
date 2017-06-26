@@ -5,6 +5,7 @@
 #include <apt/def.h>
 #include <apt/log.h>
 #include <apt/static_initializer.h>
+#include <apt/String.h>
 
 namespace apt {
 
@@ -47,7 +48,7 @@ class Timestamp
 	friend class Time;
 public:
 	// Default/value-initializing ctor.
-	Timestamp(sint64 _raw = 0ll): m_raw(_raw) {}
+	Timestamp(sint64 _raw = 0): m_raw(_raw) {}
 
 	// Raw time value in system-dependent units.
 	sint64 getRaw() const { return m_raw; }
@@ -61,6 +62,10 @@ public:
 	// Raw value converted to microseconds (10^-6s).
 	double asMicroseconds() const;
 	
+	// Return a string with an appropriate units e.g. "2.43s", "17.2ms", "400us".
+	// \note Returns a ptr to a local static buffer - for normal use this should 
+	//    be fine, just print the string and don't keep the ptr.
+	const char*     asString() const;
 
 	const Timestamp operator- (const Timestamp& rhs) const  { return m_raw -  rhs.m_raw; }
 	const Timestamp operator+ (const Timestamp& rhs) const  { return m_raw +  rhs.m_raw; }
@@ -114,7 +119,7 @@ public:
 	// E.g. ISO 8601 format would be "%Y-%m-%dT%H:%M:%SZ".
 	// \note Returns a ptr to a local static buffer - for normal use this should 
 	//    be fine, just print the string and don't keep the ptr.
-	const char*    asString(const char* _format = 0) const;
+	const char*    asString(const char* _format = nullptr) const;
 
 	const DateTime operator- (const DateTime& rhs) const  { return m_raw -  rhs.m_raw; }
 	const DateTime operator+ (const DateTime& rhs) const  { return m_raw +  rhs.m_raw; }
@@ -133,32 +138,35 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 // AutoTimer
-// Scoped timer. Measures the time between ctor, dtor calls and logs the
-// interval in the dtor. Use APT_TIME_DBG to declare an AutoTimer instance for 
-// debug builds only.
+// Scoped timer. Measures the time between ctor and dtor, logs the interval in
+// the dtor. Use APT_TIME_DBG to declare an AutoTimer instance for debug builds 
+// only.
 ////////////////////////////////////////////////////////////////////////////////
 class AutoTimer
 {
-	Timestamp   m_start;
-	const char* m_name;
+	Timestamp  m_start;
+	String<64> m_msg;
 public:
-	AutoTimer(const char* _name)
-		: m_name(_name) 
-	{ 
+	AutoTimer(const char* _fmt, ...)
+	{
+		va_list args;
+		va_start(args, _fmt);
+		m_msg.setfv(_fmt, args);
+		va_end(args);
 		m_start = Time::GetTimestamp(); 
 	}
 	~AutoTimer() 
 	{ 
 		Timestamp interval = Time::GetTimestamp() - m_start;
-		APT_LOG("%s -- %fms", m_name, interval.asMilliseconds());
+		APT_LOG("%s -- %s", (const char*)m_msg, interval.asString());
 	}
 };
 
-#define APT_AUTOTIMER(name) apt::AutoTimer APT_UNIQUE_NAME(_aptAutoTimer_)(name)
+#define APT_AUTOTIMER(...) apt::AutoTimer APT_UNIQUE_NAME(_aptAutoTimer_)(__VA_ARGS__)
 #ifdef APT_DEBUG
-	#define APT_AUTOTIMER_DBG(name) APT_AUTOTIMER(name)
+	#define APT_AUTOTIMER_DBG(...) APT_AUTOTIMER(__VA_ARGS__)
 #else
-	#define APT_AUTOTIMER_DBG(name) APT_UNUSED(name)
+	#define APT_AUTOTIMER_DBG(...) do { } while (0)
 #endif
 
 } // namespace apt

@@ -6,10 +6,12 @@
 #include <cstddef>
 #include <cstdint>
 
-/*	TODO:
-	- Look below you'll find some DataType* structs. Something like this is required
-	  so that you can have e.g. sint8N as a real type and not just a typedef (e.g. to
-	  allow function overloading).
+/*	TODO/NOTES:
+	- DataType* struct hierarchy - the idea was for the data types to be strongly typed but
+	  doesn't really work because you use implicit conversions. New SIMPLE approach:
+		- basic typedefs for everything e.g. typedef uint8_t uint8N;
+		- simple functions to get metadata: GetDataTypeMin(). Templated version which takes
+		  the type, non-templated version which takes the enum.
 	- Focus on creating a single templated Convert function - use branching, it will be
 	  much clearer, and let the compiler optimize (or not).
 */
@@ -49,7 +51,7 @@ enum DataType
 	DataType_Uint  = DataType_Uint64,
 	DataType_Float = DataType_Float32,
 };
-
+/*
 namespace internal {
 	// Helper macro; instantiate _macro for all enum-type pairs
 	#define APT_DataType_decl(_macro) \
@@ -83,12 +85,11 @@ namespace internal {
 }
 
 #define APT_DATA_TYPE_FROM_ENUM(_enum) typename apt::internal::DataTypeFromEnum<_enum>::Type
+*/
 
-
-/*template <typename tBaseType> struct DataTypeBase;
-template <typename tBaseType> struct DataTypeInt;
-template <typename tBaseType> struct DataTypeNormalizedInt;
-template <typename tBaseType> struct DataTypeFloat;
+template <typename tBase> struct DataTypeInt;
+template <typename tBase> struct DataTypeNormalizedInt;
+template <typename tBase> struct DataTypeFloat;
 
 template <typename tBase>
 struct DataTypeBase
@@ -101,6 +102,14 @@ struct DataTypeBase
 	operator BaseType&()             { return m_value; }
 	operator const BaseType&() const { return m_value; }
 
+	DataTypeBase() = default;
+
+	template <typename tType>
+	DataTypeBase(tType _v)
+		: m_value((BaseType)_v)
+	{
+	}
+
 protected:
 	BaseType m_value;
 };
@@ -108,43 +117,83 @@ protected:
 template <typename tBase>
 struct DataTypeInt: public DataTypeBase<tBase>
 {
-	DataTypeInt()
+	DataTypeInt() = default;
+
+	template <typename tType>
+	DataTypeInt(tType _v)
+		: DataTypeBase(_v)
 	{
 	}
 
-	template <typename tValueBase>
-	DataTypeInt(DataTypeInt<tValueBase> _value)
-		: m_value((BaseType)_value)
+	template <typename tType>
+	DataTypeInt<BaseType>& operator=(tType _v)
 	{
-	}
-
-	template <typename tValueBase>
-	DataTypeInt(DataTypeNormalizedInt<tValueBase> _value)
-		: m_value((BaseType)_value)
-	{
-	}
-
-	template <typename tValueBase>
-	DataTypeInt(DataTypeFloat<tValueBase> _value)
-		: m_value((BaseType)_value)
-	{
+		m_value = _v;
+		return *this;
 	}
 };
 
 template <typename tBase>
 struct DataTypeNormalizedInt: public DataTypeBase<tBase>
 {
+	DataTypeNormalizedInt() = default;
+
+	template <typename tType>
+	DataTypeNormalizedInt(tType _v)
+		: DataTypeBase(_v)
+	{
+	}
+
+	template <typename tType>
+	DataTypeNormalizedInt<BaseType>& operator=(tType _v)
+	{
+		m_value = _v;
+		return *this;
+	}
 };
 
 template <typename tBase>
 struct DataTypeFloat: public DataTypeBase<tBase>
 {
+	DataTypeFloat() = default;
+
+	template <typename tType>
+	DataTypeFloat(tType _v)
+		: DataTypeBase(_v)
+	{
+	}
+
+	template <typename tType>
+	DataTypeFloat<BaseType>& operator=(tType _v)
+	{
+		m_value = _v;
+		return *this;
+	}
 };
 
-typedef DataTypeInt<std::uint8_t>           uint8;
-typedef DataTypeNormalizedInt<std::uint8_t> uint8N;
-typedef DataTypeFloat<float>                float32;
-*/
+typedef DataTypeInt<std::int8_t>              sint8;
+typedef DataTypeInt<std::uint8_t>             uint8;
+typedef DataTypeInt<std::int16_t>             sint16;
+typedef DataTypeInt<std::uint16_t>            uint16;
+typedef DataTypeInt<std::int32_t>             sint32;
+typedef DataTypeInt<std::uint32_t>            uint32;
+typedef DataTypeInt<std::int64_t>             sint64;
+typedef DataTypeInt<std::uint64_t>            uint64;
+
+typedef DataTypeNormalizedInt<std::int8_t>    sint8N;
+typedef DataTypeNormalizedInt<std::uint8_t>   uint8N;
+typedef DataTypeNormalizedInt<std::int16_t>   sint16N;
+typedef DataTypeNormalizedInt<std::uint16_t>  uint16N;
+typedef DataTypeNormalizedInt<std::int32_t>   sint32N;
+typedef DataTypeNormalizedInt<std::uint32_t>  uint32N;
+typedef DataTypeNormalizedInt<std::int64_t>   sint64N;
+typedef DataTypeNormalizedInt<std::uint64_t>  uint64N;
+
+typedef DataTypeFloat<float>                  float32;
+typedef DataTypeFloat<double>                 float64;
+
+typedef std::ptrdiff_t                        sint;
+typedef std::size_t                           uint;
 
 } } // namespace apt
 

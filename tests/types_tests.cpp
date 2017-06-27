@@ -5,9 +5,35 @@
 
 using namespace apt;
 
+void StronglyTypedFunction(refactor::uint8N x)
+{
+}
+
 TEST_CASE("Validate type sizes", "[types]")
 {
-	APT_DATA_TYPE_FROM_ENUM(apt::refactor::DataType_Sint16) x;
+	REQUIRE(sizeof(refactor::sint8)    == 1);
+	REQUIRE(sizeof(refactor::uint8)    == 1);
+	REQUIRE(sizeof(refactor::sint8N)   == 1);
+	REQUIRE(sizeof(refactor::uint8N)   == 1);
+	REQUIRE(sizeof(refactor::sint16)   == 2);
+	REQUIRE(sizeof(refactor::uint16)   == 2);
+	REQUIRE(sizeof(refactor::sint16N)  == 2);
+	REQUIRE(sizeof(refactor::uint16N)  == 2);
+	REQUIRE(sizeof(refactor::sint32)   == 4);
+	REQUIRE(sizeof(refactor::uint32)   == 4);
+	REQUIRE(sizeof(refactor::sint32N)  == 4);
+	REQUIRE(sizeof(refactor::uint32N)  == 4);
+	REQUIRE(sizeof(refactor::sint64)   == 8);
+	REQUIRE(sizeof(refactor::uint64)   == 8);
+	REQUIRE(sizeof(refactor::sint64N)  == 8);
+	REQUIRE(sizeof(refactor::uint64N)  == 8);
+	//REQUIRE(sizeof(refactor::float16)  == 2);
+	REQUIRE(sizeof(refactor::float32)  == 4);
+	REQUIRE(sizeof(refactor::float64)  == 8);
+
+refactor::uint8  x = 4;
+refactor::uint8N xn = x;
+StronglyTypedFunction(x);
 
 	REQUIRE(sizeof(sint8)    == 1);
 	REQUIRE(sizeof(uint8)    == 1);
@@ -20,7 +46,7 @@ TEST_CASE("Validate type sizes", "[types]")
 	REQUIRE(sizeof(sint32)   == 4);
 	REQUIRE(sizeof(uint32)   == 4);
 	REQUIRE(sizeof(sint32N)  == 4);
-	REQUIRE(sizeof(uint32N)  == 4);	
+	REQUIRE(sizeof(uint32N)  == 4);
 	REQUIRE(sizeof(sint64)   == 8);
 	REQUIRE(sizeof(uint64)   == 8);
 	REQUIRE(sizeof(sint64N)  == 8);

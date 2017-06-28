@@ -1,5 +1,6 @@
 #include <catch.hpp>
 
+#include <apt/def.h>
 #include <apt/types.h>
 #include <apt/math.h>
 
@@ -11,6 +12,10 @@ void StronglyTypedFunction(refactor::uint8N x)
 
 TEST_CASE("Validate type sizes", "[types]")
 {
+	refactor::float32 f = -1.25f;
+	refactor::sint8N x = refactor::DataTypeConvert<refactor::sint8N>(f);
+
+
 	REQUIRE(sizeof(refactor::sint8)    == 1);
 	REQUIRE(sizeof(refactor::uint8)    == 1);
 	REQUIRE(sizeof(refactor::sint8N)   == 1);
@@ -30,9 +35,6 @@ TEST_CASE("Validate type sizes", "[types]")
 	REQUIRE(sizeof(refactor::float16)  == 2);
 	REQUIRE(sizeof(refactor::float32)  == 4);
 	REQUIRE(sizeof(refactor::float64)  == 8);
-
-	refactor::float32 f = 1.0f;
-	refactor::uint8N x = refactor::DataTypeConvert<refactor::uint8N>(f);
 
 	REQUIRE(sizeof(sint8)    == 1);
 	REQUIRE(sizeof(uint8)    == 1);

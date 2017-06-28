@@ -119,10 +119,12 @@ inline tDst DataTypeConvert(tSrc _src)
 	} else {
 		if (DataTypeIsNormalized(tDst::Enum)) {
 			if (DataTypeIsSigned(tDst::Enum)) { // F -> SN
+				_src = APT_CLAMP(_src, (tSrc)-1, (tSrc)1);
 				return _src < 0
-					? (tDst)(_src * (tSrc)tDst::kMin)
+					? (tDst)-(_src * (tSrc)tDst::kMin)
 					: (tDst)(_src * (tSrc)tDst::kMax);
 			} else {                            // F -> UN
+				_src = APT_CLAMP(_src, (tSrc)0, (tSrc)1);
 				return (tDst)(_src * (tSrc)tDst::kMax);
 			}
 		} else if (DataTypeIsNormalized(tSrc::Enum)) {
@@ -135,6 +137,8 @@ inline tDst DataTypeConvert(tSrc _src)
 			}
 		}
 	}
+
+	APT_ASSERT(false);
 	return (tDst)0;
 }
 

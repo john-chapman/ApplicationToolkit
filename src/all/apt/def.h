@@ -2,8 +2,6 @@
 #ifndef apt_def_h
 #define apt_def_h
 
-#include <apt/types.h>
-
 // Compiler
 #if defined(__GNUC__)
 	#define APT_COMPILER_GNU
@@ -73,28 +71,12 @@
 
 #define APT_ARRAY_COUNT(_arr) apt::internal::ArrayCount(_arr)
 
-#define APT_MIN(_a, _b) apt::internal::Min(_a, _b)
-#define APT_MAX(_a, _b) apt::internal::Max(_a, _b)
+#define APT_MIN(_a, _b)           apt::internal::Min(_a, _b)
+#define APT_MAX(_a, _b)           apt::internal::Max(_a, _b)
 #define APT_CLAMP(_x, _min, _max) APT_MAX(APT_MIN(_x, _max), _min)
+#define APT_SATURATE(_x)          apt::internal::Saturate(_x)
 
 namespace apt {
-
-// Forward declarations
-
-class ArgList;
-class File;
-class FileSystem;
-class Image;
-class Ini;
-class Json;
-class JsonSerializer;
-class MemoryPool;
-template <typename tType> class PersistentVector;
-template <typename tType> class Pool;
-template <typename tType> class RingBuffer;
-template <uint kCapacity> class String;
-class StringHash;
-class TextParser;
 
 enum AssertBehavior
 {
@@ -129,6 +111,8 @@ template <typename tType>
 inline tType Min(tType a, tType b) { return a < b ? a : b; }
 template <typename tType>
 inline tType Max(tType a, tType b) { return a > b ? a : b; }
+template <typename tType>
+inline tType Saturate(tType x)     { return x < 0 ? 0 : (x > 1 ? 1 : x); }
 
 } } // namespace apt::internal
 
@@ -163,7 +147,11 @@ inline tType Max(tType a, tType b) { return a > b ? a : b; }
 
 #define APT_STATIC_ASSERT(e) { (void)sizeof(char[(e) ? 1 : -1]); }
 
+#include <apt/types.h>
+
 namespace apt {
+
+// Forward declarations
 
 class ArgList;
 class File;

@@ -5,16 +5,8 @@
 #include <cfloat>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
-/*	TODO/NOTES:
-	- DataType* struct hierarchy - the idea was for the data types to be strongly typed but
-	  doesn't really work because you use implicit conversions. New SIMPLE approach:
-		- basic typedefs for everything e.g. typedef uint8_t uint8N;
-		- simple functions to get metadata: GetDataTypeMin(). Templated version which takes
-		  the type, non-templated version which takes the enum.
-	- Focus on creating a single templated Convert function - use branching, it will be
-	  much clearer, and let the compiler optimize (or not).
-*/
 namespace apt { namespace refactor {
 
 enum DataType
@@ -51,149 +43,100 @@ enum DataType
 	DataType_Uint  = DataType_Uint64,
 	DataType_Float = DataType_Float32,
 };
-/*
+
 namespace internal {
-	// Helper macro; instantiate _macro for all enum-type pairs
-	#define APT_DataType_decl(_macro) \
-		_macro(DataType_Sint8,   sint8)   \
-		_macro(DataType_Uint8,   uint8)   \
-		_macro(DataType_Sint16,  sint16)  \
-		_macro(DataType_Uint16,  uint16)  \
-		_macro(DataType_Sint32,  sint32)  \
-		_macro(DataType_Uint32,  uint32)  \
-		_macro(DataType_Sint64,  sint64)  \
-		_macro(DataType_Uint64,  uint64)  \
-		_macro(DataType_Sint8N,  sint8N)  \
-		_macro(DataType_Uint8N,  uint8N)  \
-		_macro(DataType_Sint16N, sint16N) \
-		_macro(DataType_Uint16N, uint16N) \
-		_macro(DataType_Sint32N, sint32N) \
-		_macro(DataType_Uint32N, uint32N) \
-		_macro(DataType_Sint64N, sint64N) \
-		_macro(DataType_Uint64N, uint64N) \
-		_macro(DataType_Float16, float16) \
-		_macro(DataType_Float32, float32) \
-		_macro(DataType_Float64, float64)
 
-	template <DataType kEnum> struct DataTypeFromEnum {};
-		#define APT_DataType_DataTypeFromEnum(_enum, _type) \
-			template<> struct DataTypeFromEnum<_enum> { typedef _type Type; };
-		APT_DataType_decl(APT_DataType_DataTypeFromEnum)
-		#undef APT_DataType_DataTypeFromEnum
-
-	#undef APT_DataType_decl
-}
-
-#define APT_DATA_TYPE_FROM_ENUM(_enum) typename apt::internal::DataTypeFromEnum<_enum>::Type
-*/
-
-template <typename tBase> struct DataTypeInt;
-template <typename tBase> struct DataTypeNormalizedInt;
-template <typename tBase> struct DataTypeFloat;
-
-template <typename tBase>
+template <typename tBase, DataType kEnum>
 struct DataTypeBase
 {
 	typedef tBase BaseType;
-
-	static const BaseType kMin;
-	static const BaseType kMax;
-
-	operator BaseType&()             { return m_value; }
-	operator const BaseType&() const { return m_value; }
+	static const DataType Enum = kEnum;
+	static const tBase kMin;
+	static const tBase kMax;
 
 	DataTypeBase() = default;
+	template <typename tValue>
 
-	template <typename tType>
-	DataTypeBase(tType _v)
-		: m_value((BaseType)_v)
-	{
-	}
+	DataTypeBase(tValue _value): m_val(_value) {}
 
-protected:
-	BaseType m_value;
+	operator BaseType&()                       { return m_val; }
+	operator const BaseType&() const           { return m_val; }
+private:
+	BaseType m_val;
 };
 
-template <typename tBase>
-struct DataTypeInt: public DataTypeBase<tBase>
+} // namespace internal
+
+typedef internal::DataTypeBase<std::int8_t,   DataType::DataType_Sint8>   sint8;
+typedef internal::DataTypeBase<std::uint8_t,  DataType::DataType_Uint8>   uint8;
+typedef internal::DataTypeBase<std::int16_t,  DataType::DataType_Sint16>  sint16;
+typedef internal::DataTypeBase<std::uint16_t, DataType::DataType_Uint16>  uint16;
+typedef internal::DataTypeBase<std::int32_t,  DataType::DataType_Sint32>  sint32;
+typedef internal::DataTypeBase<std::uint32_t, DataType::DataType_Uint32>  uint32;
+typedef internal::DataTypeBase<std::int64_t,  DataType::DataType_Sint64>  sint64;
+typedef internal::DataTypeBase<std::uint64_t, DataType::DataType_Uint64>  uint64;
+
+typedef internal::DataTypeBase<std::int8_t,   DataType::DataType_Sint8N>  sint8N;
+typedef internal::DataTypeBase<std::uint8_t,  DataType::DataType_Uint8N>  uint8N;
+typedef internal::DataTypeBase<std::int16_t,  DataType::DataType_Sint16N> sint16N;
+typedef internal::DataTypeBase<std::uint16_t, DataType::DataType_Uint16N> uint16N;
+typedef internal::DataTypeBase<std::int32_t,  DataType::DataType_Sint32N> sint32N;
+typedef internal::DataTypeBase<std::uint32_t, DataType::DataType_Uint32N> uint32N;
+typedef internal::DataTypeBase<std::int64_t,  DataType::DataType_Sint64N> sint64N;
+typedef internal::DataTypeBase<std::uint64_t, DataType::DataType_Uint64N> uint64N;
+
+typedef internal::DataTypeBase<std::uint16_t, DataType::DataType_Float16> float16;
+typedef internal::DataTypeBase<float,         DataType::DataType_Float32> float32;
+typedef internal::DataTypeBase<double,        DataType::DataType_Float64> float64;
+
+typedef std::ptrdiff_t sint;
+typedef std::size_t    uint;
+
+inline bool DataTypeIsInt(DataType _type)
 {
-	DataTypeInt() = default;
-
-	template <typename tType>
-	DataTypeInt(tType _v)
-		: DataTypeBase(_v)
-	{
-	}
-
-	template <typename tType>
-	DataTypeInt<BaseType>& operator=(tType _v)
-	{
-		m_value = _v;
-		return *this;
-	}
-};
-
-template <typename tBase>
-struct DataTypeNormalizedInt: public DataTypeBase<tBase>
+	return _type >= DataType_Sint8 && _type <= DataType_Uint64N;
+}
+inline bool DataTypeIsFloat(DataType _type)
 {
-	DataTypeNormalizedInt() = default;
-
-	template <typename tType>
-	DataTypeNormalizedInt(tType _v)
-		: DataTypeBase(_v)
-	{
-	}
-
-	template <typename tType>
-	DataTypeNormalizedInt<BaseType>& operator=(tType _v)
-	{
-		m_value = _v;
-		return *this;
-	}
-};
-
-template <typename tBase>
-struct DataTypeFloat: public DataTypeBase<tBase>
+	return _type >= DataType_Float16 && _type <= DataType_Float64;
+}
+inline bool DataTypeIsSigned(DataType _type)
 {
-	DataTypeFloat() = default;
+	return (_type % 2) != 0 || _type >= DataType_Float16;
+}
+inline bool DataTypeIsNormalized(DataType _type)
+{
+	return _type >= DataType_Sint8N && _type <= DataType_Uint64N;
+}
 
-	template <typename tType>
-	DataTypeFloat(tType _v)
-		: DataTypeBase(_v)
-	{
+template <typename tDst, typename tSrc>
+inline tDst DataTypeConvert(tSrc _src)
+{
+	if (tSrc::Enum == tDst::Enum) {
+		return _src;
 	}
-
-	template <typename tType>
-	DataTypeFloat<BaseType>& operator=(tType _v)
-	{
-		m_value = _v;
-		return *this;
+	if (DataTypeIsInt(tSrc::Enum) && DataTypeIsInt(tDst::Enum)) {
+	} else {
+		if (DataTypeIsNormalized(tDst::Enum)) {
+			if (DataTypeIsSigned(tDst::Enum)) { // F -> SN
+				return _src < 0
+					? (tDst)(_src * (tSrc)tDst::kMin)
+					: (tDst)(_src * (tSrc)tDst::kMax);
+			} else {                            // F -> UN
+				return (tDst)(_src * (tSrc)tDst::kMax);
+			}
+		} else if (DataTypeIsNormalized(tSrc::Enum)) {
+			if (DataTypeIsSigned(tSrc::Enum)) { // SN -> F
+				return _src < 0
+					? -((tDst)_src / (tDst)tSrc::kMin)
+					: (tDst)_src / (tDst)tSrc::kMax;
+			} else {                            // UN -> F
+				return (tDst)_src / (tDst)tSrc::kMax;
+			}
+		}
 	}
-};
-
-typedef DataTypeInt<std::int8_t>              sint8;
-typedef DataTypeInt<std::uint8_t>             uint8;
-typedef DataTypeInt<std::int16_t>             sint16;
-typedef DataTypeInt<std::uint16_t>            uint16;
-typedef DataTypeInt<std::int32_t>             sint32;
-typedef DataTypeInt<std::uint32_t>            uint32;
-typedef DataTypeInt<std::int64_t>             sint64;
-typedef DataTypeInt<std::uint64_t>            uint64;
-
-typedef DataTypeNormalizedInt<std::int8_t>    sint8N;
-typedef DataTypeNormalizedInt<std::uint8_t>   uint8N;
-typedef DataTypeNormalizedInt<std::int16_t>   sint16N;
-typedef DataTypeNormalizedInt<std::uint16_t>  uint16N;
-typedef DataTypeNormalizedInt<std::int32_t>   sint32N;
-typedef DataTypeNormalizedInt<std::uint32_t>  uint32N;
-typedef DataTypeNormalizedInt<std::int64_t>   sint64N;
-typedef DataTypeNormalizedInt<std::uint64_t>  uint64N;
-
-typedef DataTypeFloat<float>                  float32;
-typedef DataTypeFloat<double>                 float64;
-
-typedef std::ptrdiff_t                        sint;
-typedef std::size_t                           uint;
+	return (tDst)0;
+}
 
 } } // namespace apt
 

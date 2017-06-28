@@ -1,19 +1,40 @@
 #include <apt/types.h>
 #include <apt/def.h>
 
+namespace apt { namespace refactor { namespace internal {
+
+#define APT_DataType_decl_refactor(_macro) \
+	_macro(apt::refactor::sint8,   apt::refactor::DataType_Sint8  ) \
+	_macro(apt::refactor::uint8,   apt::refactor::DataType_Uint8  ) \
+	_macro(apt::refactor::sint16,  apt::refactor::DataType_Sint16 ) \
+	_macro(apt::refactor::uint16,  apt::refactor::DataType_Uint16 ) \
+	_macro(apt::refactor::sint32,  apt::refactor::DataType_Sint32 ) \
+	_macro(apt::refactor::uint32,  apt::refactor::DataType_Uint32 ) \
+	_macro(apt::refactor::sint64,  apt::refactor::DataType_Sint64 ) \
+	_macro(apt::refactor::uint64,  apt::refactor::DataType_Uint64 ) \
+	_macro(apt::refactor::sint8N,  apt::refactor::DataType_Sint8N ) \
+	_macro(apt::refactor::uint8N,  apt::refactor::DataType_Uint8N ) \
+	_macro(apt::refactor::sint16N, apt::refactor::DataType_Sint16N) \
+	_macro(apt::refactor::uint16N, apt::refactor::DataType_Uint16N) \
+	_macro(apt::refactor::sint32N, apt::refactor::DataType_Sint32N) \
+	_macro(apt::refactor::uint32N, apt::refactor::DataType_Uint32N) \
+	_macro(apt::refactor::sint64N, apt::refactor::DataType_Sint64N) \
+	_macro(apt::refactor::uint64N, apt::refactor::DataType_Uint64N) \
+	_macro(apt::refactor::float16, apt::refactor::DataType_Float16) \
+	_macro(apt::refactor::float32, apt::refactor::DataType_Float32) \
+	_macro(apt::refactor::float64, apt::refactor::DataType_Float64)
+//#undef APT_DataType_decl
+
+#define DataType_constants(_type, _enum) \
+	const _type::BaseType _type::kMin = std::numeric_limits<_type::BaseType>::min(); \
+	const _type::BaseType _type::kMax = std::numeric_limits<_type::BaseType>::max();
+
+APT_DataType_decl_refactor(DataType_constants);
+
+} } }
+
+
 #include <cstring>
-
-namespace apt { namespace refactor
-{
-
-	#define APT_DataType_Constants(_baseType) \
-		const _baseType DataTypeBase<_baseType>::kMin = std::numeric_limits<_baseType>::min(); \
-		const _baseType DataTypeBase<_baseType>::kMax = std::numeric_limits<_baseType>::max()
-
-	APT_DataType_Constants(std::uint8_t);
-	APT_DataType_Constants(float);
-
-} }
 
 using std::numeric_limits;
 

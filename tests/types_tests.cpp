@@ -27,13 +27,12 @@ TEST_CASE("Validate type sizes", "[types]")
 	REQUIRE(sizeof(refactor::uint64)   == 8);
 	REQUIRE(sizeof(refactor::sint64N)  == 8);
 	REQUIRE(sizeof(refactor::uint64N)  == 8);
-	//REQUIRE(sizeof(refactor::float16)  == 2);
+	REQUIRE(sizeof(refactor::float16)  == 2);
 	REQUIRE(sizeof(refactor::float32)  == 4);
 	REQUIRE(sizeof(refactor::float64)  == 8);
 
-refactor::uint8  x = 4;
-refactor::uint8N xn = x;
-StronglyTypedFunction(x);
+	refactor::float32 f = 1.0f;
+	refactor::uint8N x = refactor::DataTypeConvert<refactor::uint8N>(f);
 
 	REQUIRE(sizeof(sint8)    == 1);
 	REQUIRE(sizeof(uint8)    == 1);

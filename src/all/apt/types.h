@@ -67,6 +67,7 @@ private:
 
 } // namespace internal
 
+// Sized integer types.
 typedef internal::DataTypeBase<std::int8_t,   DataType::DataType_Sint8>   sint8;
 typedef internal::DataTypeBase<std::uint8_t,  DataType::DataType_Uint8>   uint8;
 typedef internal::DataTypeBase<std::int16_t,  DataType::DataType_Sint16>  sint16;
@@ -76,6 +77,8 @@ typedef internal::DataTypeBase<std::uint32_t, DataType::DataType_Uint32>  uint32
 typedef internal::DataTypeBase<std::int64_t,  DataType::DataType_Sint64>  sint64;
 typedef internal::DataTypeBase<std::uint64_t, DataType::DataType_Uint64>  uint64;
 
+// Sized normalized integer types (use ConvertDataType() for conversion to/from floating point types).
+// \note For *32N/*64N types, floating point precision is insufficient for accurate conversion.
 typedef internal::DataTypeBase<std::int8_t,   DataType::DataType_Sint8N>  sint8N;
 typedef internal::DataTypeBase<std::uint8_t,  DataType::DataType_Uint8N>  uint8N;
 typedef internal::DataTypeBase<std::int16_t,  DataType::DataType_Sint16N> sint16N;
@@ -85,6 +88,8 @@ typedef internal::DataTypeBase<std::uint32_t, DataType::DataType_Uint32N> uint32
 typedef internal::DataTypeBase<std::int64_t,  DataType::DataType_Sint64N> sint64N;
 typedef internal::DataTypeBase<std::uint64_t, DataType::DataType_Uint64N> uint64N;
 
+// Sized floating point types.
+// \note float16 is a storage type only and has no arithmetic operators.
 typedef internal::DataTypeBase<std::uint16_t, DataType::DataType_Float16> float16;
 typedef internal::DataTypeBase<float,         DataType::DataType_Float32> float32;
 typedef internal::DataTypeBase<double,        DataType::DataType_Float64> float64;

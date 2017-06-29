@@ -6,16 +6,18 @@
 
 using namespace apt;
 
-void StronglyTypedFunction(refactor::uint8N x)
+template <typename tType>
+void NormalizedIntTest()
 {
+	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)0.0f)  == (tType)0);
+	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)1.0f)  == tType::kMax);
+	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)-1.0f) == tType::kMin);
+	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)0.5f)  == tType::kMax / 2);
+	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)-0.5f) == tType::kMin / 2);
 }
 
 TEST_CASE("Validate type sizes", "[types]")
 {
-	refactor::float32 f = -1.25f;
-	refactor::sint8N x = refactor::DataTypeConvert<refactor::sint8N>(f);
-
-
 	REQUIRE(sizeof(refactor::sint8)    == 1);
 	REQUIRE(sizeof(refactor::uint8)    == 1);
 	REQUIRE(sizeof(refactor::sint8N)   == 1);
@@ -35,6 +37,16 @@ TEST_CASE("Validate type sizes", "[types]")
 	REQUIRE(sizeof(refactor::float16)  == 2);
 	REQUIRE(sizeof(refactor::float32)  == 4);
 	REQUIRE(sizeof(refactor::float64)  == 8);
+
+	NormalizedIntTest<refactor::sint8N>();
+	NormalizedIntTest<refactor::uint8N>();
+	NormalizedIntTest<refactor::sint16N>();
+	NormalizedIntTest<refactor::uint16N>();
+	// The following all fail due to floating point precision
+	//NormalizedIntTest<refactor::sint32N>();
+	//NormalizedIntTest<refactor::uint32N>();
+	//NormalizedIntTest<refactor::sint64N>();
+	//NormalizedIntTest<refactor::uint64N>();
 
 	REQUIRE(sizeof(sint8)    == 1);
 	REQUIRE(sizeof(uint8)    == 1);

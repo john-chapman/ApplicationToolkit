@@ -7,13 +7,22 @@
 using namespace apt;
 
 template <typename tType>
-void NormalizedIntTest()
+static void FloatToIntN()
 {
 	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)0.0f)  == (tType)0);
 	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)1.0f)  == tType::kMax);
 	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)-1.0f) == tType::kMin);
 	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)0.5f)  == tType::kMax / 2);
 	REQUIRE(refactor::DataTypeConvert<tType>((refactor::float32)-0.5f) == tType::kMin / 2);
+}
+template <typename tType>
+static void IntNToFloat()
+{
+	float err = 2.0f / pow(2.0f, sizeof(tType) * 8); // (kMax - kMin) fails for 32/64 bit types?
+	float mn = DataTypeIsSigned(tType::Enum) ? -1.0f : 0.0f;
+	REQUIRE(fabs(refactor::DataTypeConvert<refactor::float32>(tType::kMax) - 1.0f) < err);
+	REQUIRE(fabs(refactor::DataTypeConvert<refactor::float32>(tType::kMin) - mn) < err);
+	REQUIRE(fabs(refactor::DataTypeConvert<refactor::float32>((tType)(tType::kMax / 2)) - 0.5f) < err);
 }
 
 TEST_CASE("Validate type sizes", "[types]")
@@ -38,36 +47,6 @@ TEST_CASE("Validate type sizes", "[types]")
 	REQUIRE(sizeof(refactor::float32)  == 4);
 	REQUIRE(sizeof(refactor::float64)  == 8);
 
-	NormalizedIntTest<refactor::sint8N>();
-	NormalizedIntTest<refactor::uint8N>();
-	NormalizedIntTest<refactor::sint16N>();
-	NormalizedIntTest<refactor::uint16N>();
-	// The following all fail due to floating point precision
-	//NormalizedIntTest<refactor::sint32N>();
-	//NormalizedIntTest<refactor::uint32N>();
-	//NormalizedIntTest<refactor::sint64N>();
-	//NormalizedIntTest<refactor::uint64N>();
-
-	REQUIRE(sizeof(sint8)    == 1);
-	REQUIRE(sizeof(uint8)    == 1);
-	REQUIRE(sizeof(sint8N)   == 1);
-	REQUIRE(sizeof(uint8N)   == 1);
-	REQUIRE(sizeof(sint16)   == 2);
-	REQUIRE(sizeof(uint16)   == 2);
-	REQUIRE(sizeof(sint16N)  == 2);
-	REQUIRE(sizeof(uint16N)  == 2);
-	REQUIRE(sizeof(sint32)   == 4);
-	REQUIRE(sizeof(uint32)   == 4);
-	REQUIRE(sizeof(sint32N)  == 4);
-	REQUIRE(sizeof(uint32N)  == 4);
-	REQUIRE(sizeof(sint64)   == 8);
-	REQUIRE(sizeof(uint64)   == 8);
-	REQUIRE(sizeof(sint64N)  == 8);
-	REQUIRE(sizeof(uint64N)  == 8);
-	REQUIRE(sizeof(float16)  == 2);
-	REQUIRE(sizeof(float32)  == 4);
-	REQUIRE(sizeof(float64)  == 8);
-
 	REQUIRE(sizeof(vec2) == sizeof(float32) * 2);
 	REQUIRE(sizeof(vec3) == sizeof(float32) * 3);
 	REQUIRE(sizeof(vec4) == sizeof(float32) * 4);
@@ -77,88 +56,87 @@ TEST_CASE("Validate type sizes", "[types]")
 	REQUIRE(sizeof(mat4) == sizeof(float32) * 16);
 }
 
-TEST_CASE("Validate DataType::GetSizeInBytes() matches sizeof()", "[types]")
+TEST_CASE("Validate conversion functions", "[types]")
 {
-	REQUIRE(DataType::GetSizeBytes(DataType::Sint8)    == sizeof(sint8));
-	REQUIRE(DataType::GetSizeBytes(DataType::Uint8)    == sizeof(uint8));
-	REQUIRE(DataType::GetSizeBytes(DataType::Sint8N)   == sizeof(sint8));
-	REQUIRE(DataType::GetSizeBytes(DataType::Uint8N)   == sizeof(uint8));
-	REQUIRE(DataType::GetSizeBytes(DataType::Sint16)   == sizeof(sint16));
-	REQUIRE(DataType::GetSizeBytes(DataType::Uint16)   == sizeof(uint16));
-	REQUIRE(DataType::GetSizeBytes(DataType::Sint16N)  == sizeof(sint16));
-	REQUIRE(DataType::GetSizeBytes(DataType::Uint16N)  == sizeof(uint16));
-	REQUIRE(DataType::GetSizeBytes(DataType::Sint32)   == sizeof(sint32));
-	REQUIRE(DataType::GetSizeBytes(DataType::Uint32)   == sizeof(uint32));
-	REQUIRE(DataType::GetSizeBytes(DataType::Sint32N)  == sizeof(sint32));
-	REQUIRE(DataType::GetSizeBytes(DataType::Uint32N)  == sizeof(uint32));
-	REQUIRE(DataType::GetSizeBytes(DataType::Sint64)   == sizeof(sint64));
-	REQUIRE(DataType::GetSizeBytes(DataType::Uint64)   == sizeof(uint64));
-	REQUIRE(DataType::GetSizeBytes(DataType::Sint64N)  == sizeof(sint64));
-	REQUIRE(DataType::GetSizeBytes(DataType::Uint64N)  == sizeof(uint64));
-	REQUIRE(DataType::GetSizeBytes(DataType::Float16)  == sizeof(float16));
-	REQUIRE(DataType::GetSizeBytes(DataType::Float32)  == sizeof(float32));
-	REQUIRE(DataType::GetSizeBytes(DataType::Float64)  == sizeof(float64));
+	FloatToIntN<refactor::sint8N>();
+	FloatToIntN<refactor::uint8N>();
+	FloatToIntN<refactor::sint16N>();
+	FloatToIntN<refactor::uint16N>();
+	// The following all fail due to floating point precision
+	//FloatToIntN<refactor::sint32N>();
+	//FloatToIntN<refactor::uint32N>();
+	//FloatToIntN<refactor::sint64N>();
+	//FloatToIntN<refactor::uint64N>();
+	
+	IntNToFloat<refactor::sint8N>();
+	IntNToFloat<refactor::uint8N>();
+	IntNToFloat<refactor::sint16N>();
+	IntNToFloat<refactor::uint16N>();
+	IntNToFloat<refactor::sint32N>();
+	IntNToFloat<refactor::uint32N>();
+	IntNToFloat<refactor::sint64N>();
+	IntNToFloat<refactor::uint64N>();
 }
 
 TEST_CASE("Validate metadata functions", "[types]")
 {
-	REQUIRE(DataType::IsNormalized(DataType::Sint8)    == false);
-	REQUIRE(DataType::IsNormalized(DataType::Uint8)    == false);
-	REQUIRE(DataType::IsNormalized(DataType::Sint8N)   == true);
-	REQUIRE(DataType::IsNormalized(DataType::Uint8N)   == true);
-	REQUIRE(DataType::IsNormalized(DataType::Sint16)   == false);
-	REQUIRE(DataType::IsNormalized(DataType::Uint16)   == false);
-	REQUIRE(DataType::IsNormalized(DataType::Sint16N)  == true);
-	REQUIRE(DataType::IsNormalized(DataType::Uint16N)  == true);
-	REQUIRE(DataType::IsNormalized(DataType::Sint32)   == false);
-	REQUIRE(DataType::IsNormalized(DataType::Uint32)   == false);
-	REQUIRE(DataType::IsNormalized(DataType::Sint32N)  == true);
-	REQUIRE(DataType::IsNormalized(DataType::Uint32N)  == true);
-	REQUIRE(DataType::IsNormalized(DataType::Sint64)   == false);
-	REQUIRE(DataType::IsNormalized(DataType::Uint64)   == false);
-	REQUIRE(DataType::IsNormalized(DataType::Sint64N)  == true);
-	REQUIRE(DataType::IsNormalized(DataType::Uint64N)  == true);
-	REQUIRE(DataType::IsNormalized(DataType::Float16)  == false);
-	REQUIRE(DataType::IsNormalized(DataType::Float32)  == false);
-	REQUIRE(DataType::IsNormalized(DataType::Float64)  == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Sint8)   == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Uint8)   == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Sint8N)  == true);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Uint8N)  == true);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Sint16)  == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Uint16)  == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Sint16N) == true);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Uint16N) == true);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Sint32)  == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Uint32)  == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Sint32N) == true);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Uint32N) == true);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Sint64)  == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Uint64)  == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Sint64N) == true);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Uint64N) == true);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Float16) == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Float32) == false);
+	REQUIRE(refactor::DataTypeIsNormalized(refactor::DataType_Float64) == false);
 
-	REQUIRE(DataType::IsFloat(DataType::Sint8)    == false);
-	REQUIRE(DataType::IsFloat(DataType::Uint8)    == false);
-	REQUIRE(DataType::IsFloat(DataType::Sint8N)   == false);
-	REQUIRE(DataType::IsFloat(DataType::Uint8N)   == false);
-	REQUIRE(DataType::IsFloat(DataType::Sint16)   == false);
-	REQUIRE(DataType::IsFloat(DataType::Uint16)   == false);
-	REQUIRE(DataType::IsFloat(DataType::Sint16N)  == false);
-	REQUIRE(DataType::IsFloat(DataType::Uint16N)  == false);
-	REQUIRE(DataType::IsFloat(DataType::Sint32)   == false);
-	REQUIRE(DataType::IsFloat(DataType::Uint32)   == false);
-	REQUIRE(DataType::IsFloat(DataType::Sint32N)  == false);
-	REQUIRE(DataType::IsFloat(DataType::Uint32N)  == false);
-	REQUIRE(DataType::IsFloat(DataType::Sint64)   == false);
-	REQUIRE(DataType::IsFloat(DataType::Uint64)   == false);
-	REQUIRE(DataType::IsFloat(DataType::Sint64N)  == false);
-	REQUIRE(DataType::IsFloat(DataType::Uint64N)  == false);
-	REQUIRE(DataType::IsFloat(DataType::Float16)  == true);
-	REQUIRE(DataType::IsFloat(DataType::Float32)  == true);
-	REQUIRE(DataType::IsFloat(DataType::Float64)  == true);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Sint8)   == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Uint8)   == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Sint8N)  == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Uint8N)  == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Sint16)  == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Uint16)  == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Sint16N) == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Uint16N) == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Sint32)  == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Uint32)  == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Sint32N) == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Uint32N) == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Sint64)  == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Uint64)  == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Sint64N) == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Uint64N) == false);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Float16) == true);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Float32) == true);
+	REQUIRE(refactor::DataTypeIsFloat(refactor::DataType_Float64) == true);
 
-	REQUIRE(DataType::IsSigned(DataType::Sint8)    == true);
-	REQUIRE(DataType::IsSigned(DataType::Uint8)    == false);
-	REQUIRE(DataType::IsSigned(DataType::Sint8N)   == true);
-	REQUIRE(DataType::IsSigned(DataType::Uint8N)   == false);
-	REQUIRE(DataType::IsSigned(DataType::Sint16)   == true);
-	REQUIRE(DataType::IsSigned(DataType::Uint16)   == false);
-	REQUIRE(DataType::IsSigned(DataType::Sint16N)  == true);
-	REQUIRE(DataType::IsSigned(DataType::Uint16N)  == false);
-	REQUIRE(DataType::IsSigned(DataType::Sint32)   == true);
-	REQUIRE(DataType::IsSigned(DataType::Uint32)   == false);
-	REQUIRE(DataType::IsSigned(DataType::Sint32N)  == true);
-	REQUIRE(DataType::IsSigned(DataType::Uint32N)  == false);
-	REQUIRE(DataType::IsSigned(DataType::Sint64)   == true);
-	REQUIRE(DataType::IsSigned(DataType::Uint64)   == false);
-	REQUIRE(DataType::IsSigned(DataType::Sint64N)  == true);
-	REQUIRE(DataType::IsSigned(DataType::Uint64N)  == false);
-	REQUIRE(DataType::IsSigned(DataType::Float16)  == true);
-	REQUIRE(DataType::IsSigned(DataType::Float32)  == true);
-	REQUIRE(DataType::IsSigned(DataType::Float64)  == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Sint8)   == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Uint8)   == false);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Sint8N)  == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Uint8N)  == false);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Sint16)  == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Uint16)  == false);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Sint16N) == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Uint16N) == false);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Sint32)  == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Uint32)  == false);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Sint32N) == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Uint32N) == false);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Sint64)  == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Uint64)  == false);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Sint64N) == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Uint64N) == false);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Float16) == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Float32) == true);
+	REQUIRE(refactor::DataTypeIsSigned(refactor::DataType_Float64) == true);
 }

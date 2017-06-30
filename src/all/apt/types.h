@@ -44,6 +44,25 @@ enum DataType
 	DataType_Float = DataType_Float32,
 };
 
+
+inline constexpr bool DataTypeIsInt(DataType _type)
+{
+	return _type >= DataType_Sint8 && _type <= DataType_Uint64N;
+}
+inline constexpr bool DataTypeIsFloat(DataType _type)
+{
+	return _type >= DataType_Float16 && _type <= DataType_Float64;
+}
+inline constexpr bool DataTypeIsSigned(DataType _type)
+{
+	return (_type % 2) != 0 || _type >= DataType_Float16;
+}
+inline constexpr bool DataTypeIsNormalized(DataType _type)
+{
+	return _type >= DataType_Sint8N && _type <= DataType_Uint64N;
+}
+
+
 namespace internal {
 
 template <typename tBase, DataType kEnum>
@@ -51,12 +70,12 @@ struct DataTypeBase
 {
 	typedef tBase BaseType;
 	static const DataType Enum = kEnum;
-	static const tBase kMin;
-	static const tBase kMax;
+	static const DataTypeBase<tBase, kEnum> kMin;
+	static const DataTypeBase<tBase, kEnum> kMax;
 
 	DataTypeBase() = default;
-	template <typename tValue>
 
+	template <typename tValue>
 	DataTypeBase(tValue _value): m_val(_value) {}
 
 	operator BaseType&()                       { return m_val; }
@@ -66,6 +85,7 @@ private:
 };
 
 } // namespace internal
+
 
 // Sized integer types.
 typedef internal::DataTypeBase<std::int8_t,   DataType::DataType_Sint8>   sint8;
@@ -77,8 +97,7 @@ typedef internal::DataTypeBase<std::uint32_t, DataType::DataType_Uint32>  uint32
 typedef internal::DataTypeBase<std::int64_t,  DataType::DataType_Sint64>  sint64;
 typedef internal::DataTypeBase<std::uint64_t, DataType::DataType_Uint64>  uint64;
 
-// Sized normalized integer types (use ConvertDataType() for conversion to/from floating point types).
-// \note For *32N/*64N types, floating point precision is insufficient for accurate conversion.
+// Sized normalized integer types (use DataTypeConvert() for conversion to/from floating point types).
 typedef internal::DataTypeBase<std::int8_t,   DataType::DataType_Sint8N>  sint8N;
 typedef internal::DataTypeBase<std::uint8_t,  DataType::DataType_Uint8N>  uint8N;
 typedef internal::DataTypeBase<std::int16_t,  DataType::DataType_Sint16N> sint16N;
@@ -97,52 +116,108 @@ typedef internal::DataTypeBase<double,        DataType::DataType_Float64> float6
 typedef std::ptrdiff_t sint;
 typedef std::size_t    uint;
 
-inline bool DataTypeIsInt(DataType _type)
+
+namespace internal {
+
+// Instantiate _macro for all type/datatype pairs
+#define APT_DataType_decl_refactor(_macro) \
+	_macro(apt::refactor::sint8,   apt::refactor::DataType_Sint8  ) \
+	_macro(apt::refactor::uint8,   apt::refactor::DataType_Uint8  ) \
+	_macro(apt::refactor::sint16,  apt::refactor::DataType_Sint16 ) \
+	_macro(apt::refactor::uint16,  apt::refactor::DataType_Uint16 ) \
+	_macro(apt::refactor::sint32,  apt::refactor::DataType_Sint32 ) \
+	_macro(apt::refactor::uint32,  apt::refactor::DataType_Uint32 ) \
+	_macro(apt::refactor::sint64,  apt::refactor::DataType_Sint64 ) \
+	_macro(apt::refactor::uint64,  apt::refactor::DataType_Uint64 ) \
+	_macro(apt::refactor::sint8N,  apt::refactor::DataType_Sint8N ) \
+	_macro(apt::refactor::uint8N,  apt::refactor::DataType_Uint8N ) \
+	_macro(apt::refactor::sint16N, apt::refactor::DataType_Sint16N) \
+	_macro(apt::refactor::uint16N, apt::refactor::DataType_Uint16N) \
+	_macro(apt::refactor::sint32N, apt::refactor::DataType_Sint32N) \
+	_macro(apt::refactor::uint32N, apt::refactor::DataType_Uint32N) \
+	_macro(apt::refactor::sint64N, apt::refactor::DataType_Sint64N) \
+	_macro(apt::refactor::uint64N, apt::refactor::DataType_Uint64N) \
+	_macro(apt::refactor::float16, apt::refactor::DataType_Float16) \
+	_macro(apt::refactor::float32, apt::refactor::DataType_Float32) \
+	_macro(apt::refactor::float64, apt::refactor::DataType_Float64)
+
+template <DataType kEnum> struct DataType_EnumToType {};
+	#define APT_DataType_EnumToType(_type, _enum) \
+		template<> struct DataType_EnumToType<_enum> { typedef _type Type; };
+	APT_DataType_decl_refactor(APT_DataType_EnumToType)
+	#undef APT_DataType_EnumToType
+	template<> struct DataType_EnumToType<DataType_Invalid> { typedef apt::refactor::sint8 Type; }; // required so that ToType<(DataType::Enum)(kSint8 - 1)> will compile
+
+#define APT_DATA_TYPE_FROM_ENUM(_enum) typename apt::refactor::internal::DataType_EnumToType<(_enum)>::Type
+
+
+// Conversion helpers
+template <typename tDst, typename tSrc>
+inline tDst DataType_FloatToIntN(tSrc _src)
 {
-	return _type >= DataType_Sint8 && _type <= DataType_Uint64N;
+	APT_ASSERT(DataTypeIsNormalized(tDst::Enum));
+	APT_ASSERT(DataTypeIsFloat(tSrc::Enum));
+	_src = APT_CLAMP(_src, (tSrc)-1, (tSrc)1);
+	return _src < 0 ? (tDst)-(_src * (tSrc)tDst::kMin)
+	                : (tDst) (_src * (tSrc)tDst::kMax);
 }
-inline bool DataTypeIsFloat(DataType _type)
+template <typename tDst, typename tSrc>
+inline tDst DataType_IntNToFloat(tSrc _src)
 {
-	return _type >= DataType_Float16 && _type <= DataType_Float64;
+	APT_ASSERT(DataTypeIsFloat(tDst::Enum));
+	APT_ASSERT(DataTypeIsNormalized(tSrc::Enum));
+	return _src < 0 ? -((tDst)_src / (tDst)tSrc::kMin)
+	                :  (tDst)_src / (tDst)tSrc::kMax;
 }
-inline bool DataTypeIsSigned(DataType _type)
+template <typename tDst, typename tSrc>
+inline tDst DataType_IntNPrecisionChange(tSrc _src)
 {
-	return (_type % 2) != 0 || _type >= DataType_Float16;
+	APT_ASSERT(DataTypeIsSigned(tSrc::Enum) == DataTypeIsSigned(tDst::Enum)); // perform signed -> unsigned conversion before precision change
+	if (sizeof(tSrc) > sizeof(tDst)) {
+		return (tDst)(_src < 0 ? -(_src / (tSrc::kMin / tDst::kMin))
+		                       :   _src / (tSrc::kMax / tDst::kMax));
+	} else if (sizeof(tSrc) < sizeof(tDst)) {
+		return (tDst)(_src < 0 ? -(_src * (tDst::kMin / tSrc::kMin))
+	                           :   _src * (tDst::kMax / tSrc::kMax));
+	} else {
+		return _src;
+	}
 }
-inline bool DataTypeIsNormalized(DataType _type)
+template <typename tDst, typename tSrc>
+inline tDst DataType_IntNToIntN(tSrc _src)
 {
-	return _type >= DataType_Sint8N && _type <= DataType_Uint64N;
+	if (DataTypeIsSigned(tSrc::Enum) && !DataTypeIsSigned(tDst::Enum)) { // signed -> unsigned
+		typedef APT_DATA_TYPE_FROM_ENUM((DataType)(tSrc::Enum + 1)) tUnsigned;
+		tUnsigned tmp = (tUnsigned)(_src * 2);
+		return DataType_IntNPrecisionChange<tDst, tUnsigned>(tmp);
+	} else if (!DataTypeIsSigned(tSrc::Enum) && DataTypeIsSigned(tDst::Enum)) { // unsigned -> signed
+		typedef APT_DATA_TYPE_FROM_ENUM((DataType)(tSrc::Enum - 1)) tSigned;
+		tSigned tmp = (tSigned)(_src / 2);
+		return DataType_IntNPrecisionChange<tDst, tSigned>(tmp);
+	} else {
+		return DataType_IntNPrecisionChange<tDst, tSrc>(_src);
+	}
 }
 
+} // namespace internal
+
+// Convert from tSrc -> tDst.
+// \note float32/64 -> *32N/*64N conversion has poor precision.
 template <typename tDst, typename tSrc>
 inline tDst DataTypeConvert(tSrc _src)
 {
 	if (tSrc::Enum == tDst::Enum) {
 		return _src;
 	}
-	if (DataTypeIsInt(tSrc::Enum) && DataTypeIsInt(tDst::Enum)) {
+	if (DataTypeIsNormalized(tSrc::Enum) && DataTypeIsNormalized(tDst::Enum)) {
+		return internal::DataType_IntNToIntN<tDst>(_src);
+	} else if (DataTypeIsFloat(tSrc::Enum) && DataTypeIsNormalized(tDst::Enum)) {
+		return internal::DataType_FloatToIntN<tDst, tSrc>(_src);
+	} else if (DataTypeIsNormalized(tSrc::Enum) && DataTypeIsFloat(tDst::Enum)) {
+		return internal::DataType_IntNToFloat<tDst, tSrc>(_src);
 	} else {
-		if (DataTypeIsNormalized(tDst::Enum)) {
-			if (DataTypeIsSigned(tDst::Enum)) { // F -> SN
-				_src = APT_CLAMP(_src, (tSrc)-1, (tSrc)1);
-				return _src < 0
-					? (tDst)-(_src * (tSrc)tDst::kMin)
-					: (tDst)(_src * (tSrc)tDst::kMax);
-			} else {                            // F -> UN
-				_src = APT_CLAMP(_src, (tSrc)0, (tSrc)1);
-				return (tDst)(_src * (tSrc)tDst::kMax);
-			}
-		} else if (DataTypeIsNormalized(tSrc::Enum)) {
-			if (DataTypeIsSigned(tSrc::Enum)) { // SN -> F
-				return _src < 0
-					? -((tDst)_src / (tDst)tSrc::kMin)
-					: (tDst)_src / (tDst)tSrc::kMax;
-			} else {                            // UN -> F
-				return (tDst)_src / (tDst)tSrc::kMax;
-			}
-		}
+		return (tDst)_src;
 	}
-
 	APT_ASSERT(false);
 	return (tDst)0;
 }

@@ -83,6 +83,7 @@ public:
 			if_unlikely (!s_registry) {
 				s_registry = new eastl::vector_map<StringHash, ClassRef*>;
 			}
+			APT_ASSERT(m_nameHash != StringHash::kInvalidHash);
 			APT_ASSERT(FindClassRef(m_nameHash) == nullptr); // multiple registrations, or name was not unique
 			s_registry->insert(eastl::make_pair(m_nameHash, this));
 		}

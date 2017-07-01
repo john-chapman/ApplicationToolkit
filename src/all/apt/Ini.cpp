@@ -33,8 +33,7 @@ bool Ini::Write(const Ini& _iniFile, File& file_)
 {
 	String<0> buf;
 
-	for (uint i = 0; i < _iniFile.m_sections.size(); ++i) {
-		const Section& section = _iniFile.m_sections[i];
+	for (auto& section : _iniFile.m_sections) {
 		if (section.m_propertyCount == 0) { // skip empty sections
 			continue;
 		}
@@ -42,19 +41,19 @@ bool Ini::Write(const Ini& _iniFile, File& file_)
 			buf.appendf("[%s]\n", (const char*)section.m_name);
 		}
 
-		for (uint j = section.m_keyOffset, n = j + section.m_propertyCount; j < n; ++j) {
-			const Key& key = _iniFile.m_keys[j];
+		for (int i = section.m_keyOffset, n = i + section.m_propertyCount; i < n; ++i) {
+			const Key& key = _iniFile.m_keys[i];
 			buf.appendf("%s = ", (const char*)key.m_name);
-			for (uint16 k = key.m_valueOffset, m = k + key.m_valueCount; k < m; ++k) {
-				const Value& val = _iniFile.m_values[k];
+			for (int j = key.m_valueOffset, m = j + key.m_valueCount; j < m; ++j) {
+				const Value& val = _iniFile.m_values[j];
 				switch (key.m_type) {
-				case ValueType_Bool:   buf.append(val.m_bool ? "true" : "false"); break;
-				case ValueType_Int:    buf.appendf("%d", val.m_int); break;
-				case ValueType_Double: buf.appendf("%1.10f", val.m_double); break; // \todo better float representation for printing; want to print the smallest number of significant digits
-				case ValueType_String: buf.appendf("\"%s\"", val.m_string); break;
+				case ValueType_Bool:     buf.append(val.m_bool ? "true" : "false"); break;
+				case ValueType_Int:      buf.appendf("%d", val.m_int); break;
+				case ValueType_Double:   buf.appendf("%1.10f", val.m_double); break; // \todo better float representation for printing; want to print the smallest number of significant digits
+				case ValueType_String:   buf.appendf("\"%s\"", val.m_string); break;
 				default:                 APT_ASSERT(false);
 				};
-				if ((k + 1) != m) {
+				if ((j + 1) != m) {
 					buf.append(", ");
 				}
 			}
@@ -80,19 +79,18 @@ bool Ini::Write(const Ini& _iniFile, const char* _path)
 Ini::Ini()
 {
  // push default section
-	Section s = { "", 0, (uint16)m_keys.size() };
+	Section s = { "", 0, (int)m_keys.size() };
 	m_sections.push_back(s);
 }
 
 Ini::~Ini()
 {
-	for (uint i = 0; i < m_keys.size(); ++i) {
-		Key& k = m_keys[i];
-		if (k.m_type != ValueType_String) {
+	for (auto& key : m_keys) {
+		if (key.m_type != ValueType_String) {
 			continue;
 		}
-		for (uint j = k.m_valueOffset; j < k.m_valueOffset + k.m_valueCount; ++j) {
-			delete[] m_values[j].m_string;
+		for (int i = key.m_valueOffset; i < key.m_valueOffset + key.m_valueCount; ++i) {
+			delete[] m_values[i].m_string;
 		}
 	}
 }
@@ -104,7 +102,7 @@ Ini::Property Ini::getProperty(const char* _name, const char* _section) const
 	const Section* section = _section ? findSection(_section) : 0;
 	const Key* key = findKey(_name, section);
 	if (key) {
-		ret.m_type = (uint8)key->m_type;
+		ret.m_type  = key->m_type;
 		ret.m_count = key->m_valueCount;
 		ret.m_first = &const_cast<Value&>(m_values[key->m_valueOffset]);
 	}
@@ -114,33 +112,33 @@ Ini::Property Ini::getProperty(const char* _name, const char* _section) const
 void Ini::pushSection(const char* _name)
 {
 	APT_ASSERT_MSG(findSection(_name) == 0, "Ini::pushSection: '%s' already exists", _name);
-	Section s = { NameStr(_name), 0, (uint16)m_keys.size() };
+	Section s = { NameStr(_name), 0, (int)m_keys.size() };
 	m_sections.push_back(s);
 }
 
-#define DEFINE_pushValueArray(_type, _typeEnum, _valueMember) \
-	template <> void Ini::pushValueArray<_type>(const char* _name, const _type _value[], uint16 _count) { \
+#define APT_Ini_pushValueArray(_type, _typeEnum, _valueMember) \
+	template <> void Ini::pushValueArray<_type>(const char* _name, const _type _value[], int _count) { \
 		APT_ASSERT_MSG(findKey(_name, &m_sections.back()) == 0, "Ini::pushValue: '%s' already exists in section '%s'", _name, m_sections.back().m_name.isEmpty() ? "default" : (const char*)m_sections.back().m_name); \
-		Key key = { NameStr(_name), ValueType:: ## _typeEnum, _count, (uint16)m_values.size() }; \
+		Key key = { NameStr(_name), ValueType:: ## _typeEnum, _count, (int)m_values.size() }; \
 		m_keys.push_back(key); \
-		for (uint16 i = 0; i < _count; ++i) { \
+		for (int i = 0; i < _count; ++i) { \
 			m_values.push_back(Value()); \
 			m_values.back(). ## _valueMember = _value[i]; \
 		} \
 		++m_sections.back().m_propertyCount; \
 	}
-DEFINE_pushValueArray(bool,   ValueType_Bool,   m_bool)
-DEFINE_pushValueArray(int,    ValueType_Int,    m_int)
-DEFINE_pushValueArray(double, ValueType_Double, m_double)
-DEFINE_pushValueArray(float,  ValueType_Double, m_double)
-#undef DEFINE_pushValueArray
+APT_Ini_pushValueArray(bool,   ValueType_Bool,   m_bool)
+APT_Ini_pushValueArray(int,    ValueType_Int,    m_int)
+APT_Ini_pushValueArray(double, ValueType_Double, m_double)
+APT_Ini_pushValueArray(float,  ValueType_Double, m_double)
+#undef APT_Ini_pushValueArray
 
-void Ini::pushValueArray(const char* _name, const char* _value[], uint16 _count)
+void Ini::pushValueArray(const char* _name, const char* _value[], int _count)
 {
 	APT_ASSERT_MSG(findKey(_name, &m_sections.back()) == 0, "Ini::pushValue: '%s' already exists in section '%s'", _name, m_sections.back().m_name.isEmpty() ? "default" : (const char*)m_sections.back().m_name);
-	Key key = { NameStr(_name), ValueType_String, _count, (uint16)m_values.size() };
+	Key key = { NameStr(_name), ValueType_String, _count, (int)m_values.size() };
 	m_keys.push_back(key);
-	for (uint16 i = 0; i < _count; ++i) {
+	for (int i = 0; i < _count; ++i) {
 		m_values.push_back(Value());
 		m_values.back().m_string = new char[strlen(_value[i]) + 1];
 		strcpy(m_values.back().m_string, _value[i]);
@@ -155,7 +153,7 @@ bool Ini::parse(const char* _str)
 	APT_ASSERT(_str);
 	
 	if (m_sections.empty()) {
-		Section s = { "", 0, (uint16)m_keys.size() };
+		Section s = { "", 0, (int)m_keys.size() };
 		m_sections.push_back(s);
 	}
 
@@ -173,7 +171,7 @@ bool Ini::parse(const char* _str)
 				INI_ERROR(tp.getLineCount(beg), "Unterminated section");
 				return false;
 			}
-			Section s = { NameStr(), 0, (uint16)m_keys.size() };
+			Section s = { NameStr(), 0, (int)m_keys.size() };
 			s.m_name.set(beg, tp - beg);
 			m_sections.push_back(s);
 			tp.advance(); // skip ']'
@@ -270,7 +268,7 @@ bool Ini::parse(const char* _str)
 
 			Key k;
 			k.m_name.set(beg, tp - beg);
-			k.m_valueOffset = (uint16)m_values.size();
+			k.m_valueOffset = (int)m_values.size();
 			k.m_valueCount = 0;
 			m_keys.push_back(k);
 
@@ -282,22 +280,22 @@ bool Ini::parse(const char* _str)
 
 const Ini::Section* Ini::findSection(const char* _name) const
 {
-	for (uint i = 0; i < m_sections.size(); ++i) {
-		if (m_sections[i].m_name == _name) {
-			return &m_sections[i];
+	for (auto& section : m_sections) {
+		if (section.m_name == _name) {
+			return &section;
 		}
 	}
 	return 0;
 }
 const Ini::Key* Ini::findKey(const char* _name, const Section* _section) const
 {
-	uint koff = 0;
-	uint kcount = m_keys.size();
+	int koff = 0;
+	int kcount = (int)m_keys.size();
 	if (_section) {
 		koff = _section->m_keyOffset;
 		kcount = _section->m_propertyCount;
 	}
-	for (uint i = koff, n = koff + kcount; i < n; ++i) {
+	for (int i = koff, n = koff + kcount; i < n; ++i) {
 		if (m_keys[i].m_name == _name) {
 			return &m_keys[i];
 		}

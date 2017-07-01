@@ -95,7 +95,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\tests\ApplicationTools_tests.cpp" />
-    <ClCompile Include="..\..\tests\Factory_tests.cpp" />
+    <ClCompile Include="..\..\tests\Factory_tests.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\tests\Json_tests.cpp" />
     <ClCompile Include="..\..\tests\String_tests.cpp" />
     <ClCompile Include="..\..\tests\math_tests.cpp" />

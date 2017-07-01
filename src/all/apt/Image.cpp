@@ -18,7 +18,7 @@ template <typename tSrc, typename tDst>
 static void ConvertCopy(const tSrc* _src, tDst* _dst, uint _srcCount, uint _dstCount)
 {
 	do {
-		*_dst = DataType::Convert<tSrc, tDst>(*_src);
+		*_dst = DataTypeConvert<tSrc, tDst>(*_src);
 		++_src;
 		++_dst;
 		--_dstCount;
@@ -285,18 +285,18 @@ void Image::setRawImage(uint _array, uint _mip, const void* _src, Layout _layout
 
 	#define CONVERT_FROM(type) \
 		switch (m_dataType) { \
-			case DataType::Uint8N:   ConvertCopyImage<DataType::ToType<DataType:: ## type>::Type, DataType::ToType<DataType::Uint8N >::Type >(_src, dst, srcCount, dstCount, m_arrayLayerSize); break; \
-			case DataType::Uint16N:  ConvertCopyImage<DataType::ToType<DataType:: ## type>::Type, DataType::ToType<DataType::Uint16N>::Type >(_src, dst, srcCount, dstCount, m_arrayLayerSize); break; \
-			case DataType::Uint32N:  ConvertCopyImage<DataType::ToType<DataType:: ## type>::Type, DataType::ToType<DataType::Uint32N>::Type >(_src, dst, srcCount, dstCount, m_arrayLayerSize); break; \
-			case DataType::Float32:  ConvertCopyImage<DataType::ToType<DataType:: ## type>::Type, DataType::ToType<DataType::Float32>::Type >(_src, dst, srcCount, dstCount, m_arrayLayerSize); break; \
+			case DataType_Uint8N:   ConvertCopyImage<internal::DataType_EnumToType<type>::Type, uint8N >(_src, dst, srcCount, dstCount, m_arrayLayerSize); break; \
+			case DataType_Uint16N:  ConvertCopyImage<internal::DataType_EnumToType<type>::Type, uint16N>(_src, dst, srcCount, dstCount, m_arrayLayerSize); break; \
+			case DataType_Uint32N:  ConvertCopyImage<internal::DataType_EnumToType<type>::Type, uint32N>(_src, dst, srcCount, dstCount, m_arrayLayerSize); break; \
+			case DataType_Float32:  ConvertCopyImage<internal::DataType_EnumToType<type>::Type, float32>(_src, dst, srcCount, dstCount, m_arrayLayerSize); break; \
 			default: APT_ASSERT(false); \
 		}
 	switch (_dataType) {
-		case DataType::Uint8N:  CONVERT_FROM(Uint8N); break;
-		case DataType::Uint16N: CONVERT_FROM(Uint16N); break;
-		case DataType::Uint32N: CONVERT_FROM(Uint32N); break;
-		case DataType::Float32: CONVERT_FROM(Float32); break;
-		default: APT_ASSERT_MSG(false, "Unknown data type");
+		case DataType_Uint8N:  CONVERT_FROM(DataType_Uint8N); break;
+		case DataType_Uint16N: CONVERT_FROM(DataType_Uint16N); break;
+		case DataType_Uint32N: CONVERT_FROM(DataType_Uint32N); break;
+		case DataType_Float32: CONVERT_FROM(DataType_Float32); break;
+		default:               APT_ASSERT_MSG(false, "Unsupported DataType: %s", DataTypeString(_dataType));
 	};
 	#undef CONVERT_FROM
 }
@@ -316,7 +316,7 @@ void Image::init()
 	m_type        = Type_Invalid;
 	m_compression = Compression_None;
 	m_layout      = Layout_Invalid;
-	m_dataType    = DataType::InvalidType;
+	m_dataType    = DataType_Invalid;
 	
 	char* m_data = nullptr;
 	memset(m_mipOffsets, 0, sizeof(uint) * kMaxMipmapCount);
@@ -330,7 +330,7 @@ void Image::alloc()
 	free(m_data);
 
 	if (m_compression == Compression_None) {
-		m_bytesPerTexel = (float)(DataType::GetSizeBytes(m_dataType) * GetComponentCount(m_layout));
+		m_bytesPerTexel = (float)(DataTypeSizeBytes(m_dataType) * GetComponentCount(m_layout));
 	} else {
 		switch (m_compression) {
 			case Compression_BC1:
@@ -378,9 +378,9 @@ bool Image::validateFileFormat(FileFormat _format) const
 	switch (_format) {
 		case FileFormat_Bmp:
 			Image_ERR_IF(m_compression != Compression_None,   "BMP compression not supported");
-			Image_ERR_IF(DataType::IsFloat(m_dataType),       "BMP float data types not supported");
-			Image_ERR_IF(DataType::IsSigned(m_dataType),      "BMP signed data types not supported");
-			Image_ERR_IF(!DataType::IsNormalized(m_dataType), "BMP only normalized data types are supported");
+			Image_ERR_IF(DataTypeIsFloat(m_dataType),         "BMP float data types not supported");
+			Image_ERR_IF(DataTypeIsSigned(m_dataType),        "BMP signed data types not supported");
+			Image_ERR_IF(!DataTypeIsNormalized(m_dataType),   "BMP only normalized data types are supported");
 			Image_ERR_IF(!IsDataTypeBpc(m_dataType, 8),       "BMP only 8 bit data types are supported");
 			break;
 		case FileFormat_Dds:
@@ -388,26 +388,26 @@ bool Image::validateFileFormat(FileFormat _format) const
 			break;
 		case FileFormat_Exr:
 			Image_ERR_IF(m_compression != Compression_None,   "EXR compression not supported");
-			Image_ERR_IF(!DataType::IsFloat(m_dataType),      "EXR only float data types are supported");
+			Image_ERR_IF(!DataTypeIsFloat(m_dataType),        "EXR only float data types are supported");
 			Image_ERR_IF(!IsDataTypeBpc(m_dataType, 32),      "EXR only 32 bit data types are supported");
 			break;
 		case FileFormat_Hdr:
 			Image_ERR_IF(m_compression != Compression_None,   "HDR compression not supported");
-			Image_ERR_IF(!DataType::IsFloat(m_dataType),      "HDR only float data types are supported");
+			Image_ERR_IF(!DataTypeIsFloat(m_dataType),        "HDR only float data types are supported");
 			Image_ERR_IF(!IsDataTypeBpc(m_dataType, 32),      "HDR only 32 bit data types are supported");
 			break;
 		case FileFormat_Png:
 			Image_ERR_IF(m_compression != Compression_None,   "PNG compression not supported");
-			Image_ERR_IF(DataType::IsFloat(m_dataType),       "PNG float data types not supported");
-			Image_ERR_IF(DataType::IsSigned(m_dataType),      "PNG signed data types not supported");
-			Image_ERR_IF(!DataType::IsNormalized(m_dataType), "PNG only normalized data types are supported");
+			Image_ERR_IF(DataTypeIsFloat(m_dataType),         "PNG float data types not supported");
+			Image_ERR_IF(DataTypeIsSigned(m_dataType),        "PNG signed data types not supported");
+			Image_ERR_IF(!DataTypeIsNormalized(m_dataType),   "PNG only normalized data types are supported");
 			Image_ERR_IF(IsDataTypeBpc(m_dataType, 32),       "PNG only 8 and 16 bit data types are supported");
 			break;
 		case FileFormat_Tga:
 			Image_ERR_IF(m_compression != Compression_None,   "TGA compression not supported");
-			Image_ERR_IF(DataType::IsFloat(m_dataType),       "TGA float data types not supported");
-			Image_ERR_IF(DataType::IsSigned(m_dataType),      "TGA signed data types not supported");
-			Image_ERR_IF(!DataType::IsNormalized(m_dataType), "TGA only normalized data types are supported");
+			Image_ERR_IF(DataTypeIsFloat(m_dataType),         "TGA float data types not supported");
+			Image_ERR_IF(DataTypeIsSigned(m_dataType),        "TGA signed data types not supported");
+			Image_ERR_IF(!DataTypeIsNormalized(m_dataType),   "TGA only normalized data types are supported");
 			Image_ERR_IF(IsDataTypeBpc(m_dataType, 32),       "TGA only 8 and 16 bit data types are supported");
 			break;
 		default:
@@ -469,7 +469,7 @@ Image::FileFormat Image::GuessFormat(const char* _path)
 
 bool Image::IsDataTypeBpc(DataType _type, int _bpc)
 {
-	return _bpc == DataType::GetSizeBytes(_type) * 8;
+	return _bpc == DataTypeSizeBytes(_type) * 8;
 }
 
 #define STB_IMAGE_STATIC
@@ -537,7 +537,7 @@ bool Image::ReadDefault(Image& img_, const char* _data, uint _dataSize)
 	img_.m_depth       = img_.m_arrayCount = img_.m_mipmapCount = 1;
 	img_.m_type        = Type_2d;
 	img_.m_layout      = GuessLayout((uint)cmp);
-	img_.m_dataType    = isHdr ? DataType::Float32 : DataType::Uint8N;
+	img_.m_dataType    = isHdr ? DataType_Float32 : DataType_Uint8N;
 	img_.m_compression = Compression_None;
 	img_.alloc();
 	memcpy(img_.m_data, d, w * h * cmp * (isHdr ? sizeof(float) : sizeof(stbi_uc))); // \todo avoid this, let image own the ptr
@@ -575,8 +575,8 @@ bool Image::ReadPng(Image& img_, const char* _data, uint _dataSize)
 		                        ret = false;
 	};
 	switch (state.info_raw.bitdepth) {
-		case 8:                 dataType = DataType::Uint8N;  break;
-		case 16:                dataType = DataType::Uint16N;
+		case 8:                 dataType = DataType_Uint8N;  break;
+		case 16:                dataType = DataType_Uint16N;
 		                        SwapByteOrder((char*)d, x * y * cmp * 2); break; // \todo swizzle bytes during copy to img_
 		default:                APT_ASSERT_MSG(false, "Unsupported bit depth (%d)", state.info_raw.bitdepth);
 		                        ret = false;
@@ -590,7 +590,7 @@ bool Image::ReadPng(Image& img_, const char* _data, uint _dataSize)
 	img_.m_dataType    = dataType;
 	img_.m_compression = Compression_None;
 	img_.alloc();
-	memcpy(img_.m_data, d, x * y * cmp * DataType::GetSizeBytes(dataType)); // \todo, avoid this?
+	memcpy(img_.m_data, d, x * y * cmp * DataTypeSizeBytes(dataType)); // \todo, avoid this?
 
 Image_ReadPng_end:
 	free(d);
@@ -619,8 +619,8 @@ bool Image::WritePng(File& file_, const Image& _img)
 	};
 
 	switch (_img.m_dataType) {
-		case DataType::Uint8N:  bitdepth = 8;   break;
-		case DataType::Uint16N: bitdepth = 16;
+		case DataType_Uint8N:  bitdepth = 8;   break;
+		case DataType_Uint16N: bitdepth = 16;
 		                       // \hack \todo Can lodepng be modified to swizzle the bytes automatically on x86?
 	                            buf = (char*)malloc(_img.getRawImageSize());
 	                            memcpy(buf, _img.getRawImage(), _img.getRawImageSize());
@@ -709,7 +709,7 @@ bool Image::ReadExr(Image& img_, const char* _data, uint _dataSize)
 	img_.m_height      = exr.height;
 	img_.m_depth       = img_.m_arrayCount = img_.m_mipmapCount = 1;
 	img_.m_type        = Type_2d;
-	img_.m_dataType    = DataType::Float32;
+	img_.m_dataType    = DataType_Float32;
 	img_.m_compression = Compression_None;
 	img_.alloc();
 

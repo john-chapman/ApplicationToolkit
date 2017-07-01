@@ -424,10 +424,10 @@ template <> void Json::setValue<bool>(const char* _name, bool _val)
 		m_impl->m_value = &(m_impl->top()->MemberEnd() - 1)->value;
 	}
 }
-template <> void Json::setValue<sint64>(const char* _name, sint64 _val)
+template <> void Json::setValue<sint32>(const char* _name, sint32 _val)
 {
 	if (find(_name)) {
-		m_impl->m_value->SetInt64(_val);
+		m_impl->m_value->SetInt(_val);
 	} else {
 		m_impl->top()->AddMember(
 			rapidjson::StringRef(_name),
@@ -437,10 +437,10 @@ template <> void Json::setValue<sint64>(const char* _name, sint64 _val)
 		m_impl->m_value = &(m_impl->top()->MemberEnd() - 1)->value;
 	}
 }
-template <> void Json::setValue<sint32>(const char* _name, sint32 _val)
+template <> void Json::setValue<sint64>(const char* _name, sint64 _val)
 {
 	if (find(_name)) {
-		m_impl->m_value->SetInt(_val);
+		m_impl->m_value->SetInt64(_val);
 	} else {
 		m_impl->top()->AddMember(
 			rapidjson::StringRef(_name),
@@ -571,7 +571,7 @@ template <> void Json::pushValue<uint32>(uint32 _val)
 }
 template <> void Json::pushValue<uint8>(uint8 _val)
 {
-	pushValue<uint32>((uint32)_val);
+	pushValue((uint32)_val);
 }
 template <> void Json::pushValue<float32>(float32 _val)
 {
@@ -782,7 +782,7 @@ void JsonSerializer::endArray()
 	}
 }
 
-#define DEFINE_value(_type) \
+#define APT_JsonSerializer_value(_type) \
 	template <> bool JsonSerializer::value<_type>(const char* _name, _type& _value_) { \
 		APT_ASSERT_MSG(!insideArray(), "JsonSerializer::value: _name variant called inside an array"); \
 		if (m_mode == Mode_Read) { \
@@ -809,23 +809,23 @@ void JsonSerializer::endArray()
 		return true; \
 	}
 
-DEFINE_value(bool)
-DEFINE_value(sint8)
-DEFINE_value(sint32)
-DEFINE_value(sint64)
-DEFINE_value(uint8)
-DEFINE_value(uint32)
-DEFINE_value(uint64)
-DEFINE_value(float32)
-DEFINE_value(float64)
-DEFINE_value(vec2)
-DEFINE_value(vec3)
-DEFINE_value(vec4)
-DEFINE_value(mat2)
-DEFINE_value(mat3)
-DEFINE_value(mat4)
+APT_JsonSerializer_value(bool)
+APT_JsonSerializer_value(sint8)
+APT_JsonSerializer_value(sint32)
+APT_JsonSerializer_value(sint64)
+APT_JsonSerializer_value(uint8)
+APT_JsonSerializer_value(uint32)
+APT_JsonSerializer_value(uint64)
+APT_JsonSerializer_value(float32)
+APT_JsonSerializer_value(float64)
+APT_JsonSerializer_value(vec2)
+APT_JsonSerializer_value(vec3)
+APT_JsonSerializer_value(vec4)
+APT_JsonSerializer_value(mat2)
+APT_JsonSerializer_value(mat3)
+APT_JsonSerializer_value(mat4)
 
-#undef DEFINE_value
+#undef APT_JsonSerializer_value
 
 template <> bool JsonSerializer::value<StringBase>(const char* _name, StringBase& _value_)
 {

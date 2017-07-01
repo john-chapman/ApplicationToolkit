@@ -39,7 +39,9 @@ public:
 		ValueType_Bool, 
 		ValueType_Int,
 		ValueType_Double,
-		ValueType_String
+		ValueType_String,
+
+		ValueType_Count
 	};
 
 	union Value
@@ -54,12 +56,12 @@ public:
 	{
 		friend class Ini;
 
-		uint8   m_type;
-		uint16  m_count;
-		Value*  m_first;
+		ValueType m_type;
+		int       m_count;
+		Value*    m_first;
 
-		Property(ValueType _type, uint16 _count, Value* _first)
-			: m_type((uint8)_type)
+		Property(ValueType _type, int _count, Value* _first)
+			: m_type(_type)
 			, m_count(_count)
 			, m_first(_first)
 		{
@@ -67,19 +69,19 @@ public:
 
 	public:
 		Property()
-			: m_type(0)
+			: m_type(ValueType_Count)
 			, m_count(0)
 			, m_first(0)
 		{
 		}
 		
 		bool        isNull() const                { return m_first == 0; }
-		ValueType   getType() const               { return (ValueType)m_type; }
-		uint16      getCount() const              { return m_count; }
-		bool        asBool(int _i = 0) const      { APT_ASSERT((ValueType)m_type == ValueType_Bool);   APT_ASSERT(_i < m_count); return m_first[_i].m_bool;   }
-		sint64      asInt(int _i = 0) const       { APT_ASSERT((ValueType)m_type == ValueType_Int);    APT_ASSERT(_i < m_count); return m_first[_i].m_int;    }
-		double      asDouble(int _i = 0) const    { APT_ASSERT((ValueType)m_type == ValueType_Double); APT_ASSERT(_i < m_count); return m_first[_i].m_double; }
-		const char* asString(int _i = 0) const    { APT_ASSERT((ValueType)m_type == ValueType_String); APT_ASSERT(_i < m_count); return m_first[_i].m_string; }	
+		ValueType   getType() const               { return m_type; }
+		int         getCount() const              { return m_count; }
+		bool        asBool(int _i = 0) const      { APT_ASSERT(m_type == ValueType_Bool);   APT_ASSERT(_i < m_count); return m_first[_i].m_bool;   }
+		sint64      asInt(int _i = 0) const       { APT_ASSERT(m_type == ValueType_Int);    APT_ASSERT(_i < m_count); return m_first[_i].m_int;    }
+		double      asDouble(int _i = 0) const    { APT_ASSERT(m_type == ValueType_Double); APT_ASSERT(_i < m_count); return m_first[_i].m_double; }
+		const char* asString(int _i = 0) const    { APT_ASSERT(m_type == ValueType_String); APT_ASSERT(_i < m_count); return m_first[_i].m_string; }	
 	};
 	
 	// Read from a file and parse. Invalidates any existing Property instances returned by getProperty();
@@ -103,8 +105,8 @@ public:
 
 	void pushSection(const char* _name);
 	template <typename tType>
-	void pushValueArray(const char* _name, const tType _value[], uint16 _count);
-	void pushValueArray(const char* _name, const char* _value[], uint16 _count);
+	void pushValueArray(const char* _name, const tType _value[], int _count);
+	void pushValueArray(const char* _name, const char* _value[], int _count);
 	template <typename tType>
 	void pushValue(const char* _name, const tType& _value) { pushValueArray<tType>(_name, &_value, 1); }
 	void pushValue(const char* _name, const char* _value)  { pushValueArray(_name, &_value, 1); }
@@ -116,14 +118,14 @@ private:
 	{
 		NameStr    m_name;
 		ValueType  m_type;
-		uint16     m_valueCount;
-		uint16     m_valueOffset;
+		int        m_valueCount;
+		int        m_valueOffset;
 	};
 	struct Section
 	{
 		NameStr    m_name;
-		uint16     m_propertyCount;
-		uint16     m_keyOffset;      
+		int        m_propertyCount;
+		int        m_keyOffset;      
 	};
 
 	eastl::vector<Section> m_sections;

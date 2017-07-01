@@ -1,6 +1,7 @@
 #include <apt/TextParser.h>
 
 #include <cctype>
+#include <cstdlib>
 #include <cstring>
 
 using namespace apt;

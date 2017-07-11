@@ -171,7 +171,7 @@ template <typename tDataType> struct DataType_Limits {};
 #define APT_DATA_TYPE_TO_ENUM(_type)   apt::internal::DataType_TypeToEnum<_type>::Enum
 #define APT_DATA_TYPE_FROM_ENUM(_enum) typename apt::internal::DataType_EnumToType<_enum>::Type
 #define APT_DATA_TYPE_MIN(_type)       apt::internal::DataType_Limits<_type>::kMin
-#define APT_DATA_TYPE_MAX(_type)       apt::internal::DataType_Limits<_type>::kMin
+#define APT_DATA_TYPE_MAX(_type)       apt::internal::DataType_Limits<_type>::kMax
 
 // Conversion helpers
 template <typename tDst, typename tSrc>
@@ -188,19 +188,26 @@ inline tDst DataType_IntNToFloat(tSrc _src)
 {
 	APT_ASSERT(DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(tDst)));
 	APT_ASSERT(DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tSrc)));
-	return _src < 0 ? -((tDst)_src / (tDst)APT_DATA_TYPE_MIN(tSrc))
-	                :  (tDst)_src / (tDst)APT_DATA_TYPE_MAX(tSrc);
+	tDst mn = APT_DATA_TYPE_MIN(tSrc) == 0 ? 1 : (tDst)APT_DATA_TYPE_MIN(tSrc); // prevent DBZ
+	tDst mx = (tDst)APT_DATA_TYPE_MAX(tSrc);
+	return _src < 0 ? -((tDst)_src / mn)
+	                :   (tDst)_src / mx;
 }
 template <typename tDst, typename tSrc>
 inline tDst DataType_IntNPrecisionChange(tSrc _src)
 {
+	return _src;
 	APT_ASSERT(DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(tSrc)) == DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(tDst))); // perform signed -> unsigned conversion before precision change
 	if (sizeof(tSrc) > sizeof(tDst)) {
-		return (tDst)(_src < 0 ? -(_src / (APT_DATA_TYPE_MIN(tSrc) / APT_DATA_TYPE_MIN(tDst)))
-		                       :   _src / (APT_DATA_TYPE_MAX(tSrc) / APT_DATA_TYPE_MAX(tDst)));
+		tSrc mn = APT_DATA_TYPE_MIN(tDst) == 0 ? 1 : (tSrc)APT_DATA_TYPE_MIN(tDst); // prevent DBZ
+		tSrc mx = (tSrc)APT_DATA_TYPE_MAX(tDst);
+		return (tDst)(_src < 0 ? -(_src / (APT_DATA_TYPE_MIN(tSrc) / mn))
+		                       :   _src / (APT_DATA_TYPE_MAX(tSrc) / mx));
 	} else if (sizeof(tSrc) < sizeof(tDst)) {
-		return (tDst)(_src < 0 ? -(_src * (APT_DATA_TYPE_MIN(tDst) / APT_DATA_TYPE_MIN(tSrc)))
-	                           :   _src * (APT_DATA_TYPE_MAX(tDst) / APT_DATA_TYPE_MAX(tSrc)));
+		tDst mn = APT_DATA_TYPE_MIN(tSrc) == 0 ? 1 : (tDst)APT_DATA_TYPE_MIN(tSrc); // prevent DBZ
+		tDst mx = (tDst)APT_DATA_TYPE_MAX(tSrc);
+		return (tDst)(_src < 0 ? -(_src * (APT_DATA_TYPE_MIN(tDst) / mn))
+	                           :   _src * (APT_DATA_TYPE_MAX(tDst) / mx));
 	} else {
 		return _src;
 	}
@@ -232,7 +239,7 @@ inline tDst DataTypeConvert(tSrc _src)
 		return _src;
 	}
 	if (DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tSrc)) && DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tDst))) {
-		return internal::DataType_IntNToIntN<tDst>(_src);
+		return internal::DataType_IntNToIntN<tDst, tSrc>(_src);
 	} else if (DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(tSrc)) && DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tDst))) {
 		return internal::DataType_FloatToIntN<tDst, tSrc>(_src);
 	} else if (DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tSrc)) && DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(tDst))) {

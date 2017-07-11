@@ -9,6 +9,10 @@
 #include <cmath>
 #include <cstring>
 
+#ifdef APT_COMPILER_MSVC
+	#pragma warning(disable: 4244) // possible loss of data
+#endif
+
 using namespace apt;
 
 // Copy at most _srcCount objects from _src to _dst, performing conversion from 

@@ -12,19 +12,19 @@ template <typename tType>
 static void FloatToIntN()
 {
 	REQUIRE(DataTypeConvert<tType>((float32)0.0f)  == (tType)0);
-	REQUIRE(DataTypeConvert<tType>((float32)1.0f)  == tType::kMax);
-	REQUIRE(DataTypeConvert<tType>((float32)-1.0f) == tType::kMin);
-	REQUIRE(DataTypeConvert<tType>((float32)0.5f)  == tType::kMax / 2);
-	REQUIRE(DataTypeConvert<tType>((float32)-0.5f) == tType::kMin / 2);
+	REQUIRE(DataTypeConvert<tType>((float32)1.0f)  == APT_DATA_TYPE_MAX(tType));
+	REQUIRE(DataTypeConvert<tType>((float32)-1.0f) == APT_DATA_TYPE_MIN(tType));
+	REQUIRE(DataTypeConvert<tType>((float32)0.5f)  == APT_DATA_TYPE_MAX(tType) / 2);
+	REQUIRE(DataTypeConvert<tType>((float32)-0.5f) == APT_DATA_TYPE_MIN(tType) / 2);
 }
 template <typename tType>
 static void IntNToFloat()
 {
 	float err = 2.0f / powf(2.0f, sizeof(tType) * 8); // (kMax - kMin) fails for 32/64 bit types?
 	float mn = DataTypeIsSigned(tType::Enum) ? -1.0f : 0.0f;
-	REQUIRE(fabs(DataTypeConvert<float32>(tType::kMax) - 1.0f) < err);
-	REQUIRE(fabs(DataTypeConvert<float32>(tType::kMin) - mn) < err);
-	REQUIRE(fabs(DataTypeConvert<float32>((tType)(tType::kMax / 2)) - 0.5f) < err);
+	REQUIRE(fabs(DataTypeConvert<float32>(APT_DATA_TYPE_MAX(tType)) - 1.0f) < err);
+	REQUIRE(fabs(DataTypeConvert<float32>(APT_DATA_TYPE_MIN(tType)) - mn) < err);
+	REQUIRE(fabs(DataTypeConvert<float32>((tType)(APT_DATA_TYPE_MAX(tType) / 2)) - 0.5f) < err);
 }
 
 TEST_CASE("Validate type sizes", "[types]")

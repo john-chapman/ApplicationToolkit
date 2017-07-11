@@ -6,6 +6,10 @@ local WIN_EXTERN_DIR     = WIN_SRC_DIR .. "extern/"
 local TESTS_DIR          = "../tests/"
 local TESTS_EXTERN_DIR   = TESTS_DIR .. "extern/"
 
+defines { "EA_COMPILER_NO_EXCEPTIONS" }
+rtti "Off"
+exceptionhandling "Off"
+
 filter { "configurations:debug" }
 	defines { "APT_DEBUG" }
 	targetsuffix "_debug"
@@ -18,6 +22,7 @@ filter { "configurations:release" }
 
 filter { "action:vs*" }
 	defines { "_CRT_SECURE_NO_WARNINGS", "_SCL_SECURE_NO_WARNINGS" }
+	buildoptions { "/EHsc" }
 	characterset "MBCS" -- force Win32 API to use *A variants (i.e. can pass char* for strings)
 
 workspace "ApplicationTools"

@@ -26,6 +26,21 @@ static void IntNToFloat()
 	REQUIRE(fabs(DataTypeConvert<float32>(APT_DATA_TYPE_MIN(tType)) - mn) < err);
 	REQUIRE(fabs(DataTypeConvert<float32>((tType)(APT_DATA_TYPE_MAX(tType) / 2)) - 0.5f) < err);
 }
+template <typename tType>
+static void IntNToIntN()
+{
+ // check signed/unsigned conversions
+	if (DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(tType))) {
+	 // allow an error of 1 in this case; signed -> unsigned clips at zero, so signed types have half the precision of unsigned types in this case
+		typedef APT_DATA_TYPE_FROM_ENUM((DataType)(APT_DATA_TYPE_TO_ENUM(tType) + 1)) tUnsigned;
+		REQUIRE(DataTypeConvert<tUnsigned>(APT_DATA_TYPE_MAX(tType)) >= (APT_DATA_TYPE_MAX(tUnsigned) - 1));
+		REQUIRE(DataTypeConvert<tUnsigned>(APT_DATA_TYPE_MIN(tType)) == 0);
+	} else {
+		typedef APT_DATA_TYPE_FROM_ENUM((DataType)(APT_DATA_TYPE_TO_ENUM(tType) - 1)) tSigned;
+		REQUIRE(DataTypeConvert<tSigned>(APT_DATA_TYPE_MAX(tType)) == APT_DATA_TYPE_MAX(tSigned));
+		REQUIRE(DataTypeConvert<tSigned>(APT_DATA_TYPE_MIN(tType)) == 0);
+	}
+}
 
 TEST_CASE("Validate type sizes", "[types]")
 {
@@ -78,6 +93,15 @@ TEST_CASE("Validate conversion functions", "[types]")
 	IntNToFloat<uint32N>();
 	IntNToFloat<sint64N>();
 	IntNToFloat<uint64N>();
+
+	IntNToIntN<uint8N>();
+	IntNToIntN<sint8N>();
+	IntNToIntN<uint16N>();
+	IntNToIntN<sint16N>();
+	IntNToIntN<uint32N>();
+	IntNToIntN<sint32N>();
+	IntNToIntN<uint64N>();
+	IntNToIntN<sint64N>();
 }
 
 TEST_CASE("Validate metadata functions", "[types]")

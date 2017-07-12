@@ -10,9 +10,10 @@
 #include <cstddef>
 #include <cstdint>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 	#pragma warning(push)
 	#pragma warning(disable: 4244) // possible loss of data
+	#pragma warning(disable: 4723) // possible DBZ
 	#pragma warning(disable: 4146) // unary minus applied to unsigned
 #endif
 
@@ -174,24 +175,23 @@ template <typename tDataType> struct DataType_Limits {};
 #define APT_DATA_TYPE_MAX(_type)       apt::internal::DataType_Limits<_type>::kMax
 
 // Conversion helpers
+
 template <typename tDst, typename tSrc>
 inline tDst DataType_FloatToIntN(tSrc _src)
 {
 	APT_ASSERT(DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tDst)));
 	APT_ASSERT(DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(tSrc)));
 	_src = APT_CLAMP(_src, (tSrc)-1, (tSrc)1);
-	return _src < 0 ? (tDst)-(_src * (tSrc)APT_DATA_TYPE_MIN(tDst))
-	                : (tDst) (_src * (tSrc)APT_DATA_TYPE_MAX(tDst));
+	return _src < 0 ? (tDst)-(_src * APT_DATA_TYPE_MIN(tDst))
+	                : (tDst) (_src * APT_DATA_TYPE_MAX(tDst));
 }
 template <typename tDst, typename tSrc>
 inline tDst DataType_IntNToFloat(tSrc _src)
 {
 	APT_ASSERT(DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(tDst)));
 	APT_ASSERT(DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tSrc)));
-	tDst mn = APT_DATA_TYPE_MIN(tSrc) == 0 ? 1 : (tDst)APT_DATA_TYPE_MIN(tSrc); // prevent DBZ
-	tDst mx = (tDst)APT_DATA_TYPE_MAX(tSrc);
-	return _src < 0 ? -((tDst)_src / mn)
-	                :   (tDst)_src / mx;
+	return _src < 0 ? -((tDst)_src / APT_DATA_TYPE_MIN(tSrc))
+	                :   (tDst)_src / APT_DATA_TYPE_MAX(tSrc);
 }
 template <typename tDst, typename tSrc>
 inline tDst DataType_IntNPrecisionChange(tSrc _src)
@@ -199,13 +199,13 @@ inline tDst DataType_IntNPrecisionChange(tSrc _src)
 	return _src;
 	APT_ASSERT(DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(tSrc)) == DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(tDst))); // perform signed -> unsigned conversion before precision change
 	if (sizeof(tSrc) > sizeof(tDst)) {
-		tSrc mn = APT_DATA_TYPE_MIN(tDst) == 0 ? 1 : (tSrc)APT_DATA_TYPE_MIN(tDst); // prevent DBZ
-		tSrc mx = (tSrc)APT_DATA_TYPE_MAX(tDst);
+		tDst mn = APT_DATA_TYPE_MIN(tDst) == 0 ? 1 : APT_DATA_TYPE_MIN(tDst); // prevent DBZ
+		tDst mx = APT_DATA_TYPE_MAX(tDst);
 		return (tDst)(_src < 0 ? -(_src / (APT_DATA_TYPE_MIN(tSrc) / mn))
 		                       :   _src / (APT_DATA_TYPE_MAX(tSrc) / mx));
 	} else if (sizeof(tSrc) < sizeof(tDst)) {
-		tDst mn = APT_DATA_TYPE_MIN(tSrc) == 0 ? 1 : (tDst)APT_DATA_TYPE_MIN(tSrc); // prevent DBZ
-		tDst mx = (tDst)APT_DATA_TYPE_MAX(tSrc);
+		tSrc mn = APT_DATA_TYPE_MIN(tSrc) == 0 ? 1 : APT_DATA_TYPE_MIN(tSrc); // prevent DBZ
+		tSrc mx = APT_DATA_TYPE_MAX(tSrc);
 		return (tDst)(_src < 0 ? -(_src * (APT_DATA_TYPE_MIN(tDst) / mn))
 	                           :   _src * (APT_DATA_TYPE_MAX(tDst) / mx));
 	} else {
@@ -231,7 +231,6 @@ inline tDst DataType_IntNToIntN(tSrc _src)
 } // namespace internal
 
 // Convert from tSrc -> tDst.
-// \note float32/64 -> *32N/*64N conversion has poor precision.
 template <typename tDst, typename tSrc>
 inline tDst DataTypeConvert(tSrc _src)
 {
@@ -265,39 +264,39 @@ inline uint DataTypeSizeBytes(DataType _dataType)
 	#undef APT_DataType_case_decl
 }
 
+// Get _enum as a string.
 const char* DataTypeString(DataType _enum);
 
-namespace Bitfield {
-	// Create a bit mask covering _count bits.
-	template <typename tType>
-	inline tType Mask(int _count) 
-	{ 
-		return (1 << _count) - 1; 
-	}
-
-	// Create a bit mask covering _count bits starting at _offset.
-	template <typename tType>
-	inline tType Mask(int _offset, int _count) 
-	{ 
-		return ((1 << _count) - 1) << _offset; 
-	}
-	
-	// Insert _count least significant bits from _insert into _base at _offset.
-	template <typename tType>
-	inline tType Insert(tType _base, tType _insert, int _offset, int _count) 
-	{ 
-		tType mask = Mask<tType>(_count);
-		return (_base & ~(mask << _offset)) | ((_insert & mask) << _offset);
-	}
-
-	// Extract _count bits from _base starting at _offset into the _count least significant bits of the result.
-	template <typename tType>
-	inline tType Extract(tType _base, int _offset, int _count) 
-	{ 
-		tType mask = Mask<tType>(_count) << _offset;
-		return (_base & mask) >> _offset;
-	}
+// Create a bit mask covering _count bits.
+template <typename tType>
+inline tType BitfieldMask(int _count) 
+{ 
+	return (1 << _count) - 1; 
 }
+
+// Create a bit mask covering _count bits starting at _offset.
+template <typename tType>
+inline tType BitfieldMask(int _offset, int _count) 
+{ 
+	return ((1 << _count) - 1) << _offset; 
+}
+
+// Insert _count least significant bits from _insert into _base at _offset.
+template <typename tType>
+inline tType BitfieldInsert(tType _base, tType _insert, int _offset, int _count) 
+{ 
+	tType mask = Mask<tType>(_count);
+	return (_base & ~(mask << _offset)) | ((_insert & mask) << _offset);
+}
+
+// Extract _count bits from _base starting at _offset into the _count least significant bits of the result.
+template <typename tType>
+inline tType BitfieldExtract(tType _base, int _offset, int _count) 
+{ 
+	tType mask = Mask<tType>(_count) << _offset;
+	return (_base & mask) >> _offset;
+}
+
 
 } // namespace apt
 

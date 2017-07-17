@@ -5,6 +5,7 @@
 #include <apt/def.h>
 #include <apt/File.h>
 #include <apt/String.h>
+#include <apt/Time.h>
 
 namespace apt {
 
@@ -52,6 +53,10 @@ public:
 
 	// Delete a file.
 	static bool        Delete(const char* _path);
+
+	// Get the creation/last modified time for a file. The path is constructed as per Read(). 
+	static DateTime    GetTimeCreated(const char* _path, RootType _rootHint = RootType_Default);
+	static DateTime    GetTimeModified(const char* _path, RootType _rootHint = RootType_Default);
 
 	// Concatenates _path + s_separator + s_root[_root]. If _path is absolute the root is ignored.
 	static void        MakePath(StringBase& ret_, const char* _path, RootType _root);

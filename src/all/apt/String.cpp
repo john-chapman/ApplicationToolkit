@@ -129,14 +129,39 @@ const char* StringBase::find(const char* _str) const
 	return strstr(m_buf, _str);
 }
 
-void StringBase::replace(char _find, char _replace)
+uint StringBase::replace(char _find, char _replace)
 {
 	char* tmp = m_buf;
+	uint ret = 0;
 	for (; *tmp != '\0'; ++tmp) {
 		if (*tmp == _find) {
 			*tmp = _replace;
+			++ret;
 		}
 	}
+	return ret;
+}
+
+uint StringBase::replace(const char* _find, const char* _replace)
+{
+	String<256> tmp;
+	const uint findlen = strlen(_find);
+	char* beg = m_buf;
+	char* end = nullptr;
+	uint ret = 0;
+	while (end = strstr(beg, _find)) {
+		tmp.append(beg, (uint)(end - beg));
+		tmp.append(_replace);
+		beg = end + findlen;
+		++ret;
+		if (*beg == 0) {
+			break;
+		}
+	}
+	if (ret) {
+		swap(*this, tmp);
+	}
+	return ret;
 }
 
 void StringBase::toLowerCase()

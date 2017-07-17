@@ -46,8 +46,9 @@ public:
 	// Find the first occurence of the substring _str, return null if not found.
 	const char* find(const char* _str) const;
 
-	// Replace all instanced of _find with _replace.
-	void replace(char _find, char _replace);
+	// Replace all instances of _find with _replace. Return the number of instances replaced.
+	uint replace(char _find, char _replace); // single char (faster, in-place)
+	uint replace(const char* _find, const char* _replace); // sub string
 
 	// Convert to upper/lower case.
 	void toUpperCase();

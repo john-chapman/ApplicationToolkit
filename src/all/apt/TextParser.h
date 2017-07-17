@@ -31,8 +31,7 @@ public:
 	bool isAlphaNum() const;
 	bool isLineEnd() const;
 
-	// advance*() and skip*() functions return the character they stop on, which
-	// is 0 if the function reached the end of the string.
+	// advance*() and skip*() functions return the character they stop on (0 if the function reached the end of the sequence).
 	char advance(sint _n = 1) { m_pos += _n; return *m_pos;  }
 	char advanceToNext(char _c); // advance to next occurence of _c
 	char advanceToNext(const char* _list); // advance to next occurence of any char in _list
@@ -48,12 +47,14 @@ public:
 
 	void reset(const char* _pos = nullptr) { m_pos = _pos ? _pos : m_start; }
 
-	// Return the first occurence of any characters from _list in the region between _beg and 
-	// the current position, or 0 if none.
+	// Return the first occurence of any characters from _list in the region between _beg and the current position, or 0 if none.
 	char containsAny(const char* _beg, const char* _list);
 
 	// Return true if the region between _beg and the current position exactly matches _str.
 	bool matches(const char *_beg, const char* _str);
+
+	// Advance to the next occurrence of substring _str, return true if found, else false.
+	bool find(const char* _str);
 
 	// Return # occurences of '\n' up to and including _pos (or the current position if _pos is 0).
 	int getLineCount(const char* _pos = nullptr) const;
@@ -61,7 +62,7 @@ public:
 	// Return # of chars between the start of the string and the current position.
 	int getCharCount() const { return (int)(m_pos - m_start); }
 
-	operator const char*()   { return m_pos; }
+	operator const char*() { return m_pos; }
 
 
 	// readNext*() and compareNext*() functions operate on the next region of non-whitespace characters,

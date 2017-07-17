@@ -245,9 +245,9 @@ bool Image::Write(const Image& _img, const char* _path, FileFormat _format)
 uint Image::GetMaxMipmapCount(uint _width, uint _height, uint _depth)
 {
 	double rlog2 = 1.0 / log(2.0);
-	uint log2Width  = (uint)ceil(log((double)_width)  * rlog2);
-	uint log2Height = (uint)ceil(log((double)_height) * rlog2);
-	uint log2Depth  = (uint)ceil(log((double)_depth)  * rlog2);
+	uint log2Width  = (uint)floor(log((double)_width)  * rlog2);
+	uint log2Height = (uint)floor(log((double)_height) * rlog2);
+	uint log2Depth  = (uint)floor(log((double)_depth)  * rlog2);
 	return APT_MAX(log2Width, APT_MAX(log2Height, log2Depth)) + 1; // +1 for level 0
 }
 

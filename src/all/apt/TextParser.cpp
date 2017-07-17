@@ -147,6 +147,16 @@ bool TextParser::matches(const char *_beg, const char* _str)
 	return strncmp(_beg, _str, m_pos - _beg) == 0;
 }
 
+bool TextParser::find(const char* _str)
+{
+	const char* ret = strstr(m_pos, _str);
+	if (!ret) {
+		return false;
+	}
+	m_pos = ret;
+	return true;
+}
+
 int TextParser::getLineCount(const char* _pos) const
 {
 	const char* c = _pos ? _pos : m_pos;

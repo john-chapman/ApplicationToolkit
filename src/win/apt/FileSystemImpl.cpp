@@ -28,6 +28,46 @@ static void BuildFilterString(const char* _filters, StringBase& ret_)
 	ret_.replace('#', '\0'); // \hack
 }
 
+static DateTime FileTimeToDateTime(const FILETIME& _fileTime)
+{
+	LARGE_INTEGER li;
+	li.LowPart  = _fileTime.dwLowDateTime;
+	li.HighPart = _fileTime.dwHighDateTime;
+	return DateTime(li.QuadPart);
+}
+
+static bool GetFileDateTime(const char* _fullPath, DateTime& created_, DateTime& modified_)
+{
+	const char* err = nullptr;
+	HANDLE h = CreateFile(
+		_fullPath,
+		GENERIC_READ,
+		FILE_SHARE_READ,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+		);
+	if (h == INVALID_HANDLE_VALUE) {
+		err = GetPlatformErrorString(GetLastError());
+		goto GetFileDateTime_End;
+	}
+	FILETIME created, modified;
+	if (GetFileTime(h, &created, NULL, &modified) == 0) {
+		err = GetPlatformErrorString(GetLastError());
+		goto GetFileDateTime_End;
+	}	
+	created_ = FileTimeToDateTime(created);
+	modified_ = FileTimeToDateTime(modified);
+	
+GetFileDateTime_End:
+	if (err) {
+		APT_LOG_ERR("GetFileDateTime: %s", err);
+		APT_ASSERT(false);
+	}
+	APT_PLATFORM_VERIFY(CloseHandle(h));
+	return err == nullptr;
+} 
 
 // PUBLIC
 
@@ -41,6 +81,28 @@ bool FileSystem::Delete(const char* _path)
 		return false;
 	}
 	return true;
+}
+
+DateTime FileSystem::GetTimeCreated(const char* _path, RootType _rootHint)
+{
+	PathStr fullPath;
+	if (!FindExisting(fullPath, _path, _rootHint)) {
+		return DateTime(); // \todo return invalid sentinel
+	}
+	DateTime created, modified;
+	GetFileDateTime(fullPath, created, modified);
+	return created;
+}
+
+DateTime FileSystem::GetTimeModified(const char* _path, RootType _rootHint)
+{
+	PathStr fullPath;
+	if (!FindExisting(fullPath, _path, _rootHint)) {
+		return DateTime(); // \todo return invalid sentinel
+	}
+	DateTime created, modified;
+	GetFileDateTime(fullPath, created, modified);
+	return modified;
 }
 
 void FileSystem::MakeRelative(StringBase& ret_, const char* _path, RootType _root)

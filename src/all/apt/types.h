@@ -155,7 +155,7 @@ template <DataType kEnum> struct DataType_EnumToType {};
 	#undef APT_DataType_EnumToType
 	// required to compile instantiations of DataType_IntNToIntN
 	template<> struct DataType_EnumToType<DataType_Invalid> { typedef apt::sint8 Type; };
-	template<> struct DataType_EnumToType<DataType_Count>   { typedef apt::sint8 Type; };
+	template<> struct DataType_EnumToType<DataType_Count>   { typedef apt::uint8 Type; };
 
 template <typename tDataType> struct DataType_TypeToEnum {};
 	#define APT_DataType_TypeToEnum(_type, _enum) \

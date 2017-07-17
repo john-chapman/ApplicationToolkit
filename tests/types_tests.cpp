@@ -29,17 +29,31 @@ static void IntNToFloat()
 template <typename tType>
 static void IntNToIntN()
 {
+	const DataType enm = APT_DATA_TYPE_TO_ENUM(tType);
+
  // check signed/unsigned conversions
-	if (DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(tType))) {
+	if (DataTypeIsSigned(enm)) {
 	 // allow an error of 1 in this case; signed -> unsigned clips at zero, so signed types have half the precision of unsigned types in this case
-		typedef APT_DATA_TYPE_FROM_ENUM((DataType)(APT_DATA_TYPE_TO_ENUM(tType) + 1)) tUnsigned;
+		typedef APT_DATA_TYPE_FROM_ENUM((DataType)(enm + 1)) tUnsigned;
 		REQUIRE(DataTypeConvert<tUnsigned>(APT_DATA_TYPE_MAX(tType)) >= (APT_DATA_TYPE_MAX(tUnsigned) - 1));
 		REQUIRE(DataTypeConvert<tUnsigned>(APT_DATA_TYPE_MIN(tType)) == 0);
 	} else {
-		typedef APT_DATA_TYPE_FROM_ENUM((DataType)(APT_DATA_TYPE_TO_ENUM(tType) - 1)) tSigned;
+		typedef APT_DATA_TYPE_FROM_ENUM((DataType)(enm - 1)) tSigned;
 		REQUIRE(DataTypeConvert<tSigned>(APT_DATA_TYPE_MAX(tType)) == APT_DATA_TYPE_MAX(tSigned));
 		REQUIRE(DataTypeConvert<tSigned>(APT_DATA_TYPE_MIN(tType)) == 0);
 	}
+
+ // check precision conversions
+	//if constexpr (enm < DataType_Sint64N) {
+	//	typedef APT_DATA_TYPE_FROM_ENUM((DataType)(enm + 2)) tHigher;
+	//	REQUIRE(DataTypeConvert<tHigher>(APT_DATA_TYPE_MAX(tType) == APT_DATA_TYPE_MAX(tHigher)));
+	//	REQUIRE(DataTypeConvert<tHigher>(APT_DATA_TYPE_MIN(tType) == APT_DATA_TYPE_MIN(tHigher)));
+	//}
+	//if constexpr (enm > DataType_Uint8N) {
+	//	typedef APT_DATA_TYPE_FROM_ENUM((DataType)(enm - 2)) tLower;
+	//	REQUIRE(DataTypeConvert<tHigher>(APT_DATA_TYPE_MAX(tType) == APT_DATA_TYPE_MAX(tLower)));
+	//	REQUIRE(DataTypeConvert<tHigher>(APT_DATA_TYPE_MIN(tType) == APT_DATA_TYPE_MIN(tLower)));
+	//}
 }
 
 TEST_CASE("Validate type sizes", "[types]")

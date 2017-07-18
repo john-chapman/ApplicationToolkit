@@ -20,5 +20,5 @@ const char* Timestamp::asString() const
 			s_buf.setf("%1.0fus", x);
 		}
 	}
-	return s_buf;
+	return (const char*)s_buf;
 }

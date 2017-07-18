@@ -90,7 +90,7 @@ DateTime FileSystem::GetTimeCreated(const char* _path, RootType _rootHint)
 		return DateTime(); // \todo return invalid sentinel
 	}
 	DateTime created, modified;
-	GetFileDateTime(fullPath, created, modified);
+	GetFileDateTime((const char*)fullPath, created, modified);
 	return created;
 }
 
@@ -101,7 +101,7 @@ DateTime FileSystem::GetTimeModified(const char* _path, RootType _rootHint)
 		return DateTime(); // \todo return invalid sentinel
 	}
 	DateTime created, modified;
-	GetFileDateTime(fullPath, created, modified);
+	GetFileDateTime((const char*)fullPath, created, modified);
 	return modified;
 }
 
@@ -115,7 +115,7 @@ void FileSystem::MakeRelative(StringBase& ret_, const char* _path, RootType _roo
 		APT_PLATFORM_VERIFY(GetFullPathName(tmp, MAX_PATH, root, NULL)); // required to resolve a relative path (e.g. when launching from the ide)
 		char* pathEnd = strrchr(root, (int)'\\');
 		++pathEnd;
-		strcpy(pathEnd, s_roots[_root]);
+		strcpy(pathEnd, (const char*)s_roots[_root]);
 	}
  // construct the full path
 	TCHAR path[MAX_PATH] = {};
@@ -266,7 +266,7 @@ bool FileSystem::CreateDir(const char* _path)
 	while (tp.advanceToNext("\\/") != 0) {
 		String<64> mkdir;
 		mkdir.set(_path, tp.getCharCount());
-		if (CreateDirectory(mkdir, NULL) == 0) {
+		if (CreateDirectory((const char*)mkdir, NULL) == 0) {
 			DWORD err = GetLastError();
 			if (err != ERROR_ALREADY_EXISTS) {
 				APT_LOG_ERR("CreateDirectory(%s): %s", _path, GetPlatformErrorString(err));

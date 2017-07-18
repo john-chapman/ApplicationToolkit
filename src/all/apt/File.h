@@ -48,7 +48,7 @@ public:
 	// Append _size bytes from _data to the internal buffer. If _data is 0 the internal buffer is reallocated.
 	void        appendData(const char* _data, uint64 _size);
 
-	const char* getPath() const                                 { return m_path; }
+	const char* getPath() const                                 { return (const char*)m_path; }
 	void        setPath(const char* _path)                      { m_path.set(_path); }
 	const char* getData() const                                 { return m_data; }
 	char*       getData()                                       { return m_data; }

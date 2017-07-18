@@ -53,7 +53,7 @@ public:
 	// Return true if the region between _beg and the current position exactly matches _str.
 	bool matches(const char *_beg, const char* _str);
 
-	// Advance to the next occurrence of substring _str, return true if found, else false.
+	// Advance to the next occurrence of substring _str, return false if not found.
 	bool find(const char* _str);
 
 	// Return # occurences of '\n' up to and including _pos (or the current position if _pos is 0).

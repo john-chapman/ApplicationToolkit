@@ -834,7 +834,7 @@ template <> bool JsonSerializer::value<StringBase>(const char* _name, StringBase
 		int ln = string(_name, 0);
 		_value_.setCapacity(ln + 1);
 	}
-	return string(_name, _value_) != 0;
+	return string(_name, (char*)_value_) != 0;
 }
 
 template <> bool JsonSerializer::value<StringBase>(StringBase& _value_)
@@ -847,7 +847,7 @@ template <> bool JsonSerializer::value<StringBase>(StringBase& _value_)
 		}
 		_value_.setCapacity(ln + 1);
 	}
-	return string(_value_) != 0;
+	return string((char*)_value_) != 0;
 }
 
 int JsonSerializer::string(const char* _name, char* _string_)

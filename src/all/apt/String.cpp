@@ -17,6 +17,9 @@ using namespace apt;
 
 uint StringBase::set(const char* _src, uint _count)
 {
+	if (!_src) {
+		return 0;
+	}
 	uint len = strlen(_src);
 	len = (_count == 0) ? len : APT_MIN(len, _count);
 	len += 1;
@@ -190,7 +193,15 @@ uint StringBase::getLength() const
 
 bool StringBase::operator==(const char* _rhs) const
 {
-	return strcmp(_rhs, m_buf) == 0;
+	return strcmp(m_buf, _rhs) == 0;
+}
+bool StringBase::operator<(const char* _rhs) const
+{
+	return strcmp(m_buf, _rhs) < 0;
+}
+bool StringBase::operator>(const char* _rhs) const
+{
+	return strcmp(m_buf, _rhs) > 0;
 }
 
 void StringBase::setCapacity(uint _capacity)

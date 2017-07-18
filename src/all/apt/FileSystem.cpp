@@ -12,7 +12,7 @@ using namespace apt;
 
 const char* FileSystem::GetRoot(RootType _type)
 {
-	return s_roots[_type];
+	return (const char*)s_roots[_type];
 }
 
 void FileSystem::SetRoot(RootType _type, const char* _path)
@@ -60,7 +60,7 @@ void FileSystem::StripRoot(StringBase& ret_, const char* _path)
 		if (s_rootLengths[r] == 0) {
 			continue;
 		}
-		const char* rootBeg = strstr(_path, s_roots[r]);
+		const char* rootBeg = strstr(_path, (const char*)s_roots[r]);
 		if (rootBeg != nullptr) {
 			ret_.set(rootBeg + s_rootLengths[r] + 1);
 			return;
@@ -140,7 +140,7 @@ void FileSystem::MakePath(StringBase& ret_, const char* _path, RootType _root)
 	bool useRoot = !s_roots[_root].isEmpty() && !IsAbsolute(_path);
 	if (useRoot) {
 	 // check if the root already exists in path as a directory
-		const char* r = strstr(s_roots[_root], _path);
+		const char* r = strstr((const char*)s_roots[_root], _path);
 		if (!r || *(r + s_rootLengths[_root]) != s_separator) {
 			ret_.setf("%s%c%s", (const char*)s_roots[_root], s_separator, _path);
 			return;

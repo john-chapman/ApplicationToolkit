@@ -132,6 +132,6 @@ const char* apt::DateTime::asString(const char* _format) const
 			}
 		}
 	}
-	return s_buf;
+	return (const char*)s_buf;
 }
 

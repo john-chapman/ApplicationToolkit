@@ -58,15 +58,22 @@ public:
 	// \note String length is not stored internally, hence getLength() is not a constant time operation.
 	uint getLength() const;
 
-	void clear()                                { *m_buf = '\0'; }
-	bool isEmpty() const                        { return *m_buf == '\0'; }
+	void clear()                                { if (m_buf) { *m_buf = '\0'; } }
+	bool isEmpty() const                        { return m_buf ? *m_buf == '\0' : true; }
 	bool isLocal() const                        { return m_buf == getLocalBuf(); }
 	uint getCapacity() const                    { return m_capacity; }
 	void setCapacity(uint _capacity);
 
 	bool operator==(const char* _rhs) const;
-	operator const char*() const                { return m_buf; }
-	operator char*()                            { return m_buf; }
+	bool operator==(const StringBase& _rhs) const  { return this->operator==(m_buf); }
+	bool operator<(const char* _rhs) const;
+	bool operator<(const StringBase& _rhs) const   { return this->operator<(m_buf); }
+	bool operator>(const char* _rhs) const;
+	bool operator>(const StringBase& _rhs) const   { return this->operator>(m_buf); }
+
+	// Cast to char*/const char* is explicit to avoid conflicts with the operator overloads above.
+	explicit operator const char*() const          { return m_buf; }
+	explicit operator char*()                      { return m_buf; }
 	
 	friend void swap(StringBase& _a_, StringBase& _b_);
 
@@ -107,8 +114,8 @@ class String: public StringBase
 
 public:
 	String():                              StringBase(kCapacity)           {}
-	String(const String<kCapacity>& _rhs): StringBase(kCapacity)           { set(_rhs); }
-	String<kCapacity>& operator=(const String<kCapacity>& _rhs)            { if (&_rhs != this) set(_rhs); return *this; }
+	String(const String<kCapacity>& _rhs): StringBase(kCapacity)           { set((const char*)_rhs); }
+	String<kCapacity>& operator=(const String<kCapacity>& _rhs)            { if (&_rhs != this) set((const char*)_rhs); return *this; }
 	String(String<kCapacity>&& _rhs):      StringBase((StringBase&&)_rhs)  {}
 	String<kCapacity>& operator=(String<kCapacity>&& _rhs)                 { StringBase::operator=((StringBase&&)_rhs); return *this; }
 	String(const char* _fmt, ...):         StringBase(kCapacity)
@@ -127,10 +134,10 @@ class String<0>: public StringBase
 {
 public:
 	String():                      StringBase()                   {}
-	String(const String<0>& _rhs): StringBase()                   { set(_rhs); }
-	String<0>& operator=(const String<0>& _rhs)                   { if (&_rhs != this) set(_rhs); return *this; }
+	String(const String<0>& _rhs): StringBase()                   { set((const char*)_rhs); }
+	String<0>& operator=(const String<0>& _rhs)                   { if (&_rhs != this) set((const char*)_rhs); return *this; }
 	String(String<0>&& _rhs):      StringBase((StringBase&&)_rhs) {}
-	String<0>& operator=(String<0>&& _rhs)                        { (String<0>)StringBase::operator=((StringBase&&)_rhs); return *this; }
+	String<0>& operator=(String<0>&& _rhs)                        { StringBase::operator=((StringBase&&)_rhs); return *this; }
 	String(const char* _fmt, ...): StringBase()
 	{
 		if (_fmt) {

@@ -63,7 +63,7 @@ public:
 
 	// Make _path relative to _root. It is safe for _path to point to the string buffer in ret_.
 	static void        MakeRelative(StringBase& ret_, const char* _path, RootType _root = RootType_Root);
-	static void        MakeRelative(StringBase& ret_, RootType _root = RootType_Root) { MakeRelative(ret_, ret_, _root); }
+	static void        MakeRelative(StringBase& ret_, RootType _root = RootType_Root) { MakeRelative(ret_, (const char*)ret_, _root); }
 	
 	// Return true if _path is absolute.
 	static bool        IsAbsolute(const char* _path);
@@ -71,21 +71,21 @@ public:
 	// Strip path from _path up to and including any root directory. It is safe for _path to point to 
 	// the string buffer in ret_.
 	static void        StripRoot(StringBase& ret_, const char* _path);
-	static void        StripRoot(StringBase& ret_) { StripRoot(ret_, ret_); }
+	static void        StripRoot(StringBase& ret_) { StripRoot(ret_, (const char*)ret_); }
 	// Strip path from _path. It is safe for _path to point to the string buffer in ret_.
 	static void        StripPath(StringBase& ret_, const char* _path);
-	static void        StripPath(StringBase& ret_) { StripPath(ret_, ret_); }
+	static void        StripPath(StringBase& ret_) { StripPath(ret_, (const char*)ret_); }
 
 	// Extract path from _path (remove file name + extension). It is safe for _path to point
 	// the string buffer in ret_.
 	static void        GetPath(StringBase& ret_, const char* _path);
-	static void        GetPath(StringBase& ret_) { GetFileName(ret_, ret_); }
+	static void        GetPath(StringBase& ret_) { GetFileName(ret_, (const char*)ret_); }
 	// Extract file name from _path. It is safe for _path to point to the string buffer in ret_.
 	static void        GetFileName(StringBase& ret_, const char* _path);
-	static void        GetFileName(StringBase& ret_) { GetFileName(ret_, ret_); }
+	static void        GetFileName(StringBase& ret_) { GetFileName(ret_, (const char*)ret_); }
 	// Extract extension from _path. It is safe for _path to point to the string buffer in ret_.
 	static void        GetExtension(StringBase& ret_, const char* _path) { ret_.set(FindExtension(_path)); }
-	static void        GetExtension(StringBase& ret_) { GetExtension(ret_, ret_); }
+	static void        GetExtension(StringBase& ret_) { GetExtension(ret_, (const char*)ret_); }
 
 	// Return ptr to the character following the last occurrence of '.' in _path.
 	static const char* FindExtension(const char* _path);

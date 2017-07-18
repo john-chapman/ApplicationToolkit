@@ -15,7 +15,7 @@ static void DispatchLogCallback(const char* _fmt, va_list _args, LogType _type)
 	if (g_logCallback) {
 		String<kLogMsgMax> buf;
 		buf.setfv(_fmt, _args);
-		g_logCallback(buf, _type);
+		g_logCallback((const char*)buf, _type);
 	}
 }
 

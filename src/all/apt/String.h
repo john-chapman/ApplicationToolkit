@@ -48,7 +48,7 @@ public:
 
 	// Replace all instances of _find with _replace. Return the number of instances replaced.
 	uint replace(char _find, char _replace); // single char (faster, in-place)
-	uint replace(const char* _find, const char* _replace); // sub string
+	uint replace(const char* _find, const char* _replace); // substring
 
 	// Convert to upper/lower case.
 	void toUpperCase();
@@ -58,27 +58,27 @@ public:
 	// \note String length is not stored internally, hence getLength() is not a constant time operation.
 	uint getLength() const;
 
-	void clear()                                { if (m_buf) { *m_buf = '\0'; } }
-	bool isEmpty() const                        { return m_buf ? *m_buf == '\0' : true; }
-	bool isLocal() const                        { return m_buf == getLocalBuf(); }
-	uint getCapacity() const                    { return m_capacity; }
+	void clear()                                   { if (m_buf) { *m_buf = '\0'; } }
+	bool isEmpty() const                           { return m_buf ? *m_buf == '\0' : true; }
+	bool isLocal() const                           { return m_buf == getLocalBuf(); }
+	uint getCapacity() const                       { return m_capacity; }
 	void setCapacity(uint _capacity);
 
 	bool operator==(const char* _rhs) const;
-	bool operator==(const StringBase& _rhs) const  { return this->operator==(m_buf); }
+	bool operator==(const StringBase& _rhs) const  { return this->operator==((const char*)_rhs); }
 	bool operator<(const char* _rhs) const;
-	bool operator<(const StringBase& _rhs) const   { return this->operator<(m_buf); }
+	bool operator<(const StringBase& _rhs) const   { return this->operator<((const char*)_rhs); }
 	bool operator>(const char* _rhs) const;
-	bool operator>(const StringBase& _rhs) const   { return this->operator>(m_buf); }
+	bool operator>(const StringBase& _rhs) const   { return this->operator>((const char*)_rhs); }
 
 	// Cast to char*/const char* is explicit to avoid conflicts with the operator overloads above.
 	explicit operator const char*() const          { return m_buf; }
 	explicit operator char*()                      { return m_buf; }
+	const char* c_str() const                      { return m_buf; }
 	
 	friend void swap(StringBase& _a_, StringBase& _b_);
 
 protected:
-	
 	// String always heap-allocated.
 	StringBase();
 	// String has a local buffer of _localBufferSize chars.

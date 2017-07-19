@@ -5,6 +5,7 @@
 #include <apt/String.h>
 
 #include <EASTL/vector.h>
+#include <EASTL/vector_map.h>
 
 using namespace apt;
 
@@ -33,11 +34,31 @@ static void VectorTest()
 	}
 }
 
-TEST_CASE("Vector", "[String]")
+
+TEST_CASE("vector", "[String]")
 {
 	VectorTest<0>();
 	VectorTest<16>();
 	VectorTest<64>();
+}
+
+TEST_CASE("vector_map", "[String]")
+{
+ // test use of String in a dictionary
+	typedef String<16> Str;
+	typedef eastl::vector_map<Str, Str> StrMap;
+
+	StrMap map;
+
+	map.insert(eastl::make_pair(Str("Key A"), Str("Value A")));
+	REQUIRE(map.find("Key A") != map.end());
+	REQUIRE(map.find("Key A")->second == "Value A");
+	REQUIRE(map.find("abc") == map.end());
+
+	map.insert(eastl::make_pair(Str("Key B"), Str("Value B")));
+	REQUIRE(map.find("Key B") != map.end());
+	REQUIRE(map.find("Key B")->second == "Value B");
+	REQUIRE(map.find("abc") == map.end());
 }
 
 TEST_CASE("toUpperCase, toLowerCase", "[String]")
@@ -46,7 +67,15 @@ TEST_CASE("toUpperCase, toLowerCase", "[String]")
 	static const char* upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 	String<0> str(lower);
 	str.toUpperCase();
-	REQUIRE((str == upper) == true);
+	REQUIRE(str == upper);
 	str.toLowerCase();
-	REQUIRE((str == lower) == true);
+	REQUIRE(str == lower);
+}
+
+TEST_CASE("relational operators", "[String]")
+{
+	typedef String<16> Str;
+	REQUIRE(Str("abc") < Str("xyz"));
+	REQUIRE(Str("xyz") > Str("abc"));
+	REQUIRE(Str("abc") == Str("abc"));
 }

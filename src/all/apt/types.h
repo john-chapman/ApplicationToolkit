@@ -177,6 +177,9 @@ template <typename tDataType> struct DataType_Limits {};
 // Conversion helpers
 
 template <typename tDst, typename tSrc>
+tDst DataType_FloatToFloat(tSrc _src);
+
+template <typename tDst, typename tSrc>
 inline tDst DataType_FloatToIntN(tSrc _src)
 {
 	APT_ASSERT(DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tDst)));
@@ -237,7 +240,11 @@ inline tDst DataTypeConvert(tSrc _src)
 	if (APT_DATA_TYPE_TO_ENUM(tSrc) == APT_DATA_TYPE_TO_ENUM(tDst)) {
 		return _src;
 	}
-	if (DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tSrc)) && DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tDst))) {
+	/*if (APT_DATA_TYPE_TO_ENUM(tSrc) == DataType_Float16) {
+		return DataTypeConvert<tDst>(internal::DataType_FloatToFloat<float32>(_src));
+	} else if (APT_DATA_TYPE_TO_ENUM(tDst) == DataType_Float16) {
+		return internal::DataType_FloatToFloat<float16>(DataTypeConvert<float32>(_src));
+	} else*/ if (DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tSrc)) && DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tDst))) {
 		return internal::DataType_IntNToIntN<tDst, tSrc>(_src);
 	} else if (DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(tSrc)) && DataTypeIsNormalized(APT_DATA_TYPE_TO_ENUM(tDst))) {
 		return internal::DataType_FloatToIntN<tDst, tSrc>(_src);

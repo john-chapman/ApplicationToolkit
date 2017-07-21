@@ -1,5 +1,7 @@
 #include <apt/def.h>
 
+#include <glm/gtc/packing.hpp>
+
 #include <limits>
 
 namespace apt { namespace internal {
@@ -36,13 +38,33 @@ const sint64N DataType_Limits<sint64N>::kMin = std::numeric_limits<sint64 >::min
 const sint64N DataType_Limits<sint64N>::kMax = std::numeric_limits<sint64 >::max();
 const uint64N DataType_Limits<uint64N>::kMin = std::numeric_limits<uint64 >::min();
 const uint64N DataType_Limits<uint64N>::kMax = std::numeric_limits<uint64 >::max();
-const float16 DataType_Limits<float16>::kMin = std::numeric_limits<uint16 >::min(); // \todo IEEE values heres
-const float16 DataType_Limits<float16>::kMax = std::numeric_limits<uint16 >::max(); // \todo IEEE values heres
+const float16 DataType_Limits<float16>::kMin = 0; // \todo IEEE values here?
+const float16 DataType_Limits<float16>::kMax = 0; // \todo IEEE values here?
 const float32 DataType_Limits<float32>::kMin = std::numeric_limits<float32>::min();
 const float32 DataType_Limits<float32>::kMax = std::numeric_limits<float32>::max();
 const float64 DataType_Limits<float64>::kMin = std::numeric_limits<float64>::min();
 const float64 DataType_Limits<float64>::kMax = std::numeric_limits<float64>::max();
 
+template <> float16 DataType_FloatToFloat(float16 _src)
+{
+	return _src;
+}
+template <> float16 DataType_FloatToFloat(float32 _src)
+{
+	return float16(glm::packHalf1x16(_src));
+}
+template <> float16 DataType_FloatToFloat(float64 _src)
+{
+	return float16(glm::packHalf1x16((float32)_src));
+}
+template <> float32 DataType_FloatToFloat(float16 _src)
+{
+	return glm::unpackHalf1x16(_src);
+}
+template <> float64 DataType_FloatToFloat(float16 _src)
+{
+	return (float64)glm::unpackHalf1x16(_src);
+}
 
 } } // namespace apt::internal
 

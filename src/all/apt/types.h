@@ -234,6 +234,7 @@ inline tDst DataType_IntNToIntN(tSrc _src)
 } // namespace internal
 
 // Convert from tSrc -> tDst.
+// \todo Conversion to/from float16 is not currently handled, use internal::DataType_FloatToFloat.
 template <typename tDst, typename tSrc>
 inline tDst DataTypeConvert(tSrc _src)
 {

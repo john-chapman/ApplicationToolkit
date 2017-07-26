@@ -2,7 +2,7 @@
 #ifndef apt_MemoryPool_h
 #define apt_MemoryPool_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 
 namespace apt {
 
@@ -28,13 +28,11 @@ public:
 	// to allocate when allocate() cannot service a new request.
 	MemoryPool(uint _objectSize, uint _objectAlignment, uint _blockSize);
 
-	// Free all allocated memory. Any allocated objects should be released via free() before the 
-	// MemoryPool is destroyed.
+	// Free all allocated memory. Any allocated objects should be released via free() before the MemoryPool is destroyed.
 	~MemoryPool();
 
 	void* alloc();
 	void  free(void* _object);
-
 
 	// Return true if _ptr was allocated from the pool.
 	bool isFromPool(const void* _ptr) const;
@@ -53,7 +51,7 @@ private:
 
 	void allocBlock();
 
-}; // class MemoryPool
+};
 
 } // namespace apt
 

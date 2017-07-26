@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/types.h>
 #include <apt/math.h>
 

@@ -2,7 +2,7 @@
 #ifndef apt_String_h
 #define apt_String_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 
 #include <cstdarg> // va_list
 
@@ -108,7 +108,7 @@ private:
 	// Resize m_buf to _capaicty, maintain contents.
 	void realloc(uint _capacity);
 
-}; // class String
+};
 
 
 template <uint kCapacity>

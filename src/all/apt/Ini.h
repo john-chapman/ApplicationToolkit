@@ -2,7 +2,7 @@
 #ifndef apt_Ini_h
 #define apt_Ini_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/String.h>
 
 #include <EASTL/vector.h>
@@ -135,7 +135,7 @@ private:
 	const Section* findSection(const char* _name) const;
 	const Key* findKey(const char* _name, const Section* _section) const;
 	
-}; // class Ini
+};
 
 } // namespace apt
 

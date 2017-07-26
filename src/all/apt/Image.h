@@ -2,7 +2,7 @@
 #ifndef apt_Image_h
 #define apt_Image_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/types.h>
 
 namespace apt {
@@ -219,7 +219,7 @@ private:
 	static bool WriteTga(File& file_, const Image& _img);
 	static bool WriteHdr(File& file_, const Image& _img);
 
-}; // class Image
+};
 
 } // namespace apt
 

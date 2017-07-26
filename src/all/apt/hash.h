@@ -2,7 +2,7 @@
 #ifndef apt_hash_h
 #define apt_hash_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 
 namespace apt { namespace internal {
 

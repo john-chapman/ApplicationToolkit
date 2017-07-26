@@ -1,6 +1,8 @@
 #pragma once
-#ifndef apt_def_h
-#define apt_def_h
+#ifndef apt_h
+#define apt_h
+
+#define APT_VERSION "1.01"
 
 // Compiler
 #if defined(__GNUC__)
@@ -206,4 +208,4 @@ private:
 
 } // namespace apt
 
-#endif // apt_def_h
+#endif // apt_h

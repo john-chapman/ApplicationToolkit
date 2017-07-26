@@ -2,7 +2,7 @@
 #ifndef apt_Factory_h
 #define apt_Factory_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/StringHash.h>
 
 #include <EASTL/vector_map.h>

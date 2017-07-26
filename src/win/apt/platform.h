@@ -2,7 +2,7 @@
 #ifndef apt_platform_h
 #define apt_platform_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #ifndef APT_PLATFORM_WIN
 	#error apt: APT_PLATFORM_WIN was not defined, probably the build system was configured incorrectly
 #endif

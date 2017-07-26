@@ -6,6 +6,12 @@
 
 using namespace apt;
 
+TextParser::TextParser(const char* _str)
+	: m_start(_str)
+	, m_pos(_str)
+{
+}
+
 bool TextParser::isWhitespace() const
 {
 	return isspace(*m_pos) != 0;

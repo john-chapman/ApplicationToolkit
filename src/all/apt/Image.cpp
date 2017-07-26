@@ -1,6 +1,5 @@
 #include <apt/Image.h>
 
-#include <apt/def.h>
 #include <apt/log.h>
 #include <apt/File.h>
 #include <apt/FileSystem.h>

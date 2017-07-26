@@ -2,7 +2,7 @@
 #ifndef apt_File_h
 #define apt_File_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/String.h>
 
 namespace apt {
@@ -64,7 +64,7 @@ private:
 	void ctorCommon();
 	void dtorCommon();
 
-}; // class File
+};
 
 } // namespace apt
 

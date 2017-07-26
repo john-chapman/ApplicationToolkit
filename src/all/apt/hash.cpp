@@ -1,6 +1,6 @@
 #include <apt/hash.h>
 
-#include <apt/def.h>
+#include <apt/apt.h>
 
 using namespace apt;
 

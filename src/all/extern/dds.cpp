@@ -398,7 +398,7 @@ typedef struct
 
 /*******************************************************************************/
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/log.h>
 #include <apt/Image.h>
 

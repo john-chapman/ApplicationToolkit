@@ -2,8 +2,8 @@
 #ifndef apt_types_h
 #define apt_types_h
 
-#ifndef apt_def_h
-	#error apt: include apt/def.h, not apt/types.h
+#ifndef apt_h
+	#error apt: include apt/apt.h, not apt/types.h
 #endif
 
 #include <cfloat>

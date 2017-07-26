@@ -1,4 +1,4 @@
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/log.h>
 
 #ifdef APT_COMPILER_MSVC

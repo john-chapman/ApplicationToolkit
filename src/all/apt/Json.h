@@ -2,7 +2,7 @@
 #ifndef apt_Json_h
 #define apt_Json_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/FileSystem.h>
 
 namespace apt {
@@ -142,7 +142,7 @@ private:
 	struct Impl;
 	Impl* m_impl;
 
-}; // class Json
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // JsonSerializer

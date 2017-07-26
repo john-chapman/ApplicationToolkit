@@ -109,7 +109,7 @@
     <ClInclude Include="..\..\src\all\apt\StringHash.h" />
     <ClInclude Include="..\..\src\all\apt\TextParser.h" />
     <ClInclude Include="..\..\src\all\apt\Time.h" />
-    <ClInclude Include="..\..\src\all\apt\def.h" />
+    <ClInclude Include="..\..\src\all\apt\apt.h" />
     <ClInclude Include="..\..\src\all\apt\hash.h" />
     <ClInclude Include="..\..\src\all\apt\log.h" />
     <ClInclude Include="..\..\src\all\apt\math.h" />
@@ -254,7 +254,7 @@
     <ClCompile Include="..\..\src\all\apt\StringHash.cpp" />
     <ClCompile Include="..\..\src\all\apt\TextParser.cpp" />
     <ClCompile Include="..\..\src\all\apt\Time.cpp" />
-    <ClCompile Include="..\..\src\all\apt\def.cpp" />
+    <ClCompile Include="..\..\src\all\apt\apt.cpp" />
     <ClCompile Include="..\..\src\all\apt\hash.cpp" />
     <ClCompile Include="..\..\src\all\apt\log.cpp" />
     <ClCompile Include="..\..\src\all\apt\math.cpp" />

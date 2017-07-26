@@ -2,7 +2,7 @@
 #ifndef apt_TextParser_h
 #define apt_TextParser_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 
 namespace apt {
 
@@ -17,11 +17,7 @@ namespace apt {
 class TextParser
 {
 public:
-	TextParser(const char* _str)
-		: m_start(_str)
-		, m_pos(_str)
-	{
-	}
+	TextParser(const char* _str);
 
 	// Classification functions test the char at the current position.
 	bool isNull() const { return *m_pos == 0; }
@@ -78,7 +74,7 @@ private:
 	const char* m_start;
 	const char* m_pos;
 
-}; // class TextParser
+};
 
 } // namespace apt
 

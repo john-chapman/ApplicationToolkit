@@ -1,6 +1,5 @@
 #include <apt/File.h>
 
-#include <apt/def.h>
 #include <apt/log.h>
 #include <apt/platform.h>
 #include <apt/win.h>

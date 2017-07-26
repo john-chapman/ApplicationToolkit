@@ -1,39 +1,33 @@
-local SRC_DIR            = "../src/"
-local ALL_SRC_DIR        = SRC_DIR .. "all/"
-local ALL_EXTERN_DIR     = ALL_SRC_DIR .. "extern/"
-local WIN_SRC_DIR        = SRC_DIR .. "win/"
-local WIN_EXTERN_DIR     = WIN_SRC_DIR .. "extern/"
-local TESTS_DIR          = "../tests/"
-local TESTS_EXTERN_DIR   = TESTS_DIR .. "extern/"
+-- Options (define as globals prior to dofile(ApplicationTools_premek.lua)
+-- APT_LOG_CALLBACK_ONLY   - disable writing to stdout/stderr by default (via APT_LOG*)
 
-defines { "EA_COMPILER_NO_EXCEPTIONS" }
-rtti "Off"
-exceptionhandling "Off"
-
-filter { "configurations:debug" }
-	defines { "APT_DEBUG" }
-	targetsuffix "_debug"
-	symbols "On"
-	optimize "Off"
+function ApplicationTools(_libRoot)
+	local SRC_DIR         = _libRoot .. "/src/"
+	local ALL_SRC_DIR     = SRC_DIR .. "all/"
+	local ALL_EXTERN_DIR  = ALL_SRC_DIR .. "extern/"
+	local WIN_SRC_DIR     = SRC_DIR .. "win/"
+	local WIN_EXTERN_DIR  = WIN_SRC_DIR .. "extern/"
 	
-filter { "configurations:release" }
-	symbols "Off"
-	optimize "Full"
-
-filter { "action:vs*" }
-	defines { "_CRT_SECURE_NO_WARNINGS", "_SCL_SECURE_NO_WARNINGS" }
-	buildoptions { "/EHsc" }
-	characterset "MBCS" -- force Win32 API to use *A variants (i.e. can pass char* for strings)
-
-workspace "ApplicationTools"
-	location(_ACTION)
-	configurations { "Debug", "Release" }
-	platforms { "Win64" }
-	flags { "C++11", "StaticRuntime" }
-	filter { "platforms:Win64" }
-		system "windows"
-		architecture "x86_64"
+	defines { "EA_COMPILER_NO_EXCEPTIONS" }
+	rtti "Off"
+	exceptionhandling "Off"
 	
+	filter { "configurations:debug" }
+		defines { "APT_DEBUG" }
+		targetsuffix "_debug"
+		symbols "On"
+		optimize "Off"
+		
+	filter { "configurations:release" }
+		symbols "Off"
+		optimize "Full"
+	
+	filter { "action:vs*" }
+		defines { "_CRT_SECURE_NO_WARNINGS", "_SCL_SECURE_NO_WARNINGS" }
+		buildoptions { "/EHsc" }
+		characterset "MBCS" -- force Win32 API to use *A variants (i.e. can pass char* for strings)
+
+
 	includedirs({ 
 		ALL_SRC_DIR, 
 		ALL_EXTERN_DIR,
@@ -43,7 +37,7 @@ workspace "ApplicationTools"
 			WIN_SRC_DIR, 
 			WIN_EXTERN_DIR,
 			})
-		
+
 	project "ApplicationTools"
 		kind "StaticLib"
 		language "C++"
@@ -78,25 +72,6 @@ workspace "ApplicationTools"
 				WIN_EXTERN_DIR .. "**.c",
 				WIN_EXTERN_DIR .. "**.cpp",
 				})
-		
-	project "ApplicationTools_Tests"
-		kind "ConsoleApp"
-		language "C++"
-		targetdir "../bin"
-		uuid "DC3DA4C6-C837-CD18-B1A4-63299D3D3385"
-		
-		includedirs { TESTS_DIR, TESTS_EXTERN_DIR }
-		files({ 
-			TESTS_DIR    .. "**.h",
-			TESTS_DIR    .. "**.hpp",
-			TESTS_DIR    .. "**.c",
-			TESTS_DIR    .. "**.cpp",
-			})
-		removefiles({ 
-			TESTS_EXTERN_DIR .. "**.h", 
-			TESTS_EXTERN_DIR .. "**.hpp",
-			})
-			
-		links { "ApplicationTools" }
-		filter { "platforms:Win*" }
-			links { "shlwapi" }
+
+		if (APT_LOG_CALLBACK_ONLY or false) then defines { "APT_LOG_CALLBACK_ONLY" } end
+end

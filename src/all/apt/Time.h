@@ -2,7 +2,7 @@
 #ifndef apt_time_h
 #define apt_time_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/log.h>
 #include <apt/static_initializer.h>
 #include <apt/String.h>
@@ -31,7 +31,7 @@ public:
 	static void Init();
 	static void Shutdown();
 
-}; // class Time
+};
 APT_DECLARE_STATIC_INIT(Time, Time::Init, Time::Shutdown);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ public:
 private:
 	sint64 m_raw;
 
-}; // class Timestamp
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -131,7 +131,7 @@ public:
 private:	
 	sint64 m_raw;
 
-}; // class DateTime
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // AutoTimer
@@ -168,4 +168,4 @@ public:
 
 } // namespace apt
 
-#endif // APT_Time_h
+#endif // apt_Time_h

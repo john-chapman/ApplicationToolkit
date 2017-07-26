@@ -21,3 +21,7 @@ Committed dependencies:
 - [LodePNG](http://lodev.org/lodepng/)
 - [RapidJSON](http://rapidjson.org/)
 - [stb](https://github.com/nothings/stb)
+
+## Change Log ##
+
+- 2017-07-26 (v1.01): Renamed def.h -> apt.h, added version and change log, improved premake script.

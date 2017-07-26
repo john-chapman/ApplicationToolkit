@@ -56,7 +56,7 @@
 #undef float32
 #undef float64
 
-#include <apt/def.h>
+#include <apt/apt.h>
 
 namespace apt {
 

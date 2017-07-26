@@ -2,7 +2,7 @@
 #ifndef apt_memory_h
 #define apt_memory_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 
 namespace apt {
 
@@ -46,8 +46,7 @@ struct aligned: private internal::aligned_base<kAlignment>
 {
 	aligned()                                           { APT_ASSERT((uint)this % kAlignment == 0); }
 
-	// note that malloc_aligned is called with APT_ALIGNOF(tType) which will be
-	// the min of the natural alignment of tType and kAlignment
+	// \note malloc_aligned is called with APT_ALIGNOF(tType) which will be the min of the natural alignment of tType and kAlignment
 	void* operator new(std::size_t _size)               { return malloc_aligned(_size, APT_ALIGNOF(tType)); }
 	void  operator delete(void* _ptr)                   { free_aligned(_ptr); }
 	void* operator new[](std::size_t _size)             { return malloc_aligned(_size, APT_ALIGNOF(tType)); }
@@ -55,7 +54,7 @@ struct aligned: private internal::aligned_base<kAlignment>
 	void* operator new(std::size_t _size, void* _ptr)   { APT_ASSERT((uint)_ptr % kAlignment == 0); return _ptr; }
 	void  operator delete(void*, void*)                 { ; } // dummy, matches placement new
 
-}; // class aligned
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // storage
@@ -70,8 +69,7 @@ class storage: private aligned< storage<tType, kCount>, APT_ALIGNOF(tType) >
 public:
 	storage(): aligned< storage<tType, kCount>, APT_ALIGNOF(tType) >() {}
 	operator tType*() { return (tType*)m_buf; }
-
-}; // class storage
+};
 
 } // namespace apt
 

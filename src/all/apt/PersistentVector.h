@@ -2,7 +2,7 @@
 #ifndef apt_PersistentVector_h
 #define apt_PersistentVector_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/memory.h>
 
 #include <algorithm>   // std::copy

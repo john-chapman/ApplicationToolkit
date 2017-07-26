@@ -2,7 +2,7 @@
 #ifndef apt_FileSystem_h
 #define apt_FileSystem_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/File.h>
 #include <apt/String.h>
 #include <apt/Time.h>
@@ -111,7 +111,7 @@ private:
 	// Get a path to an existing file based on _path and _rootHint. Return false if no existing file was found.
 	static bool FindExisting(PathStr& ret_, const char* _path, RootType _rootHint);
 
-}; // class FileSystem
+};
 
 } // namespace apt
 

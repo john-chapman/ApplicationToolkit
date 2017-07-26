@@ -2,7 +2,7 @@
 #ifndef apt_RingBuffer_h
 #define apt_RingBuffer_h
 
-#include <apt/def.h>
+#include <apt/apt.h>
 #include <apt/memory.h>
 
 #include <cstring>
@@ -130,7 +130,7 @@ private:
 		return *ret;
 	}
 
-}; // class RingBuffer
+};
 
 } // namespace apt
 

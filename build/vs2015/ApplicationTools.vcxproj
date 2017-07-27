@@ -243,35 +243,93 @@
     <ClInclude Include="..\..\src\win\apt\win.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\all\apt\ArgList.cpp" />
-    <ClCompile Include="..\..\src\all\apt\File.cpp" />
-    <ClCompile Include="..\..\src\all\apt\FileSystem.cpp" />
-    <ClCompile Include="..\..\src\all\apt\Image.cpp" />
-    <ClCompile Include="..\..\src\all\apt\Ini.cpp" />
-    <ClCompile Include="..\..\src\all\apt\Json.cpp" />
-    <ClCompile Include="..\..\src\all\apt\MemoryPool.cpp" />
-    <ClCompile Include="..\..\src\all\apt\String.cpp" />
-    <ClCompile Include="..\..\src\all\apt\StringHash.cpp" />
-    <ClCompile Include="..\..\src\all\apt\TextParser.cpp" />
-    <ClCompile Include="..\..\src\all\apt\Time.cpp" />
-    <ClCompile Include="..\..\src\all\apt\apt.cpp" />
-    <ClCompile Include="..\..\src\all\apt\hash.cpp" />
-    <ClCompile Include="..\..\src\all\apt\log.cpp" />
-    <ClCompile Include="..\..\src\all\apt\math.cpp" />
-    <ClCompile Include="..\..\src\all\apt\memory.cpp" />
-    <ClCompile Include="..\..\src\all\apt\types.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\allocator_eastl.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\assert.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\fixed_pool.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\hashtable.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\intrusive_list.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\numeric_limits.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\red_black_tree.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\string_eastl.cpp" />
-    <ClCompile Include="..\..\src\all\extern\EASTL\source\thread_support.cpp" />
-    <ClCompile Include="..\..\src\all\extern\dds.cpp" />
-    <ClCompile Include="..\..\src\all\extern\lodepng.cpp" />
-    <ClCompile Include="..\..\src\all\extern\noise1234.cpp" />
+    <ClCompile Include="..\..\src\all\apt\ArgList.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\File.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\FileSystem.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\Image.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\Ini.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\Json.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\MemoryPool.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\String.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\StringHash.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\TextParser.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\Time.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\apt.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\hash.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\log.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\math.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\memory.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\types.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\allocator_eastl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\assert.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\fixed_pool.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\hashtable.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\intrusive_list.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\numeric_limits.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\red_black_tree.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\string_eastl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\EASTL\source\thread_support.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\dds.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\lodepng.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\all\extern\noise1234.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\win\apt\FileImpl.cpp" />
     <ClCompile Include="..\..\src\win\apt\FileSystemImpl.cpp" />
     <ClCompile Include="..\..\src\win\apt\TimeImpl.cpp" />

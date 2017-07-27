@@ -11,29 +11,38 @@ workspace "ApplicationTools"
 		architecture "x86_64"
 
 	group "libs"
-		ApplicationTools("../")
+		ApplicationTools_Project(
+			"../",    -- _libRoot
+			"../lib"  -- _targetDir
+			)
 	group ""
-		
+
 	project "ApplicationTools_Tests"
 		kind "ConsoleApp"
 		language "C++"
 		targetdir "../bin"
-		uuid "DC3DA4C6-C837-CD18-B1A4-63299D3D3385"
-		
+
+		filter { "configurations:debug" }
+			targetsuffix "_debug"
+			symbols "On"
+			optimize "Off"
+
+		filter { "configurations:release" }
+			symbols "Off"
+			optimize "Full"
+
 		local TESTS_DIR         = "../tests/"
 		local TESTS_EXTERN_DIR  = TESTS_DIR .. "extern/"
 		includedirs { TESTS_DIR, TESTS_EXTERN_DIR }
-		files({ 
+		files({
 			TESTS_DIR .. "**.h",
 			TESTS_DIR .. "**.hpp",
 			TESTS_DIR .. "**.c",
 			TESTS_DIR .. "**.cpp",
 			})
-		removefiles({ 
-			TESTS_EXTERN_DIR .. "**.h", 
+		removefiles({
+			TESTS_EXTERN_DIR .. "**.h",
 			TESTS_EXTERN_DIR .. "**.hpp",
 			})
-			
-		links { "ApplicationTools" }
-		filter { "platforms:Win*" }
-			links { "shlwapi" }
+
+		ApplicationTools_Link()

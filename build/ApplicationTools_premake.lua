@@ -1,5 +1,47 @@
--- Options (define as globals prior to dofile(ApplicationTools_premake.lua)
--- APT_LOG_CALLBACK_ONLY   - disable APT_LOG* writing to stdout/stderr by default
+--[[
+	Usage #1: External Project File
+	-------------------------------
+	To use one of the bundled project files, call dofile() at the top of your premake script:
+		
+		dofile("extern/ApplicationTools/build/ApplicationTools_premake.lua")
+		
+	The call ApplicationTools_ProjectExternal() inside your workspace declaration:
+		
+		workspace "MyWorkspace"
+			function ApplicationTools_External("extern/ApplicationTools")
+			
+	Finally, for each project which needs to link ApplicationTools:
+		
+		project "MyProject"
+			ApplicationTools_Link()
+			
+	This is the least flexible of the two options but has the advantage of being able to update ApplicationTools without rebuilding your project files.
+	
+	Usage #2: Local Project File
+	----------------------------
+	To customize the project, specify config options (see the list below), then call dofile() at the top of your premake script:
+		
+		APT_LOG_CALLBACK_ONLY = true
+		dofile("extern/ApplicationTools/build/ApplicationTools_premake.lua")
+		
+	Then call ApplicationTools_Project() inside your workspace declaration:
+		
+		workspace "MyWorkspace"
+			ApplicationTools_Project(
+				"extern/ApplicationTools", -- lib root
+				"build/lib"                -- build output location
+				)
+				
+	Finally, for each project which needs to link ApplicationTools:
+		project "MyProject"
+			ApplicationTools_Link()
+	
+	This option provides the most flexibility, but don't forget to rebuild your project files after updating.
+
+	Config Options
+	--------------
+	APT_LOG_CALLBACK_ONLY   - Disable APT_LOG* writing to stdout/stderr (default: false).
+--]]
 
 local APT_UUID        = "6ADD11F4-56D6-3046-7F08-16CB6B601052"
 local SRC_DIR         = "/src/"
@@ -8,12 +50,12 @@ local ALL_EXTERN_DIR  = ALL_SRC_DIR .. "extern/"
 local WIN_SRC_DIR     = SRC_DIR .. "win/"
 local WIN_EXTERN_DIR  = WIN_SRC_DIR .. "extern/"
 
-local function ApplicationTools_Common(_libRoot)
-	SRC_DIR         = _libRoot .. SRC_DIR
-	ALL_SRC_DIR     = _libRoot .. ALL_SRC_DIR
-	ALL_EXTERN_DIR  = _libRoot .. ALL_EXTERN_DIR
-	WIN_SRC_DIR     = _libRoot .. WIN_SRC_DIR
-	WIN_EXTERN_DIR  = _libRoot .. WIN_EXTERN_DIR
+local function ApplicationTools_Common(_root)
+	SRC_DIR         = _root .. SRC_DIR
+	ALL_SRC_DIR     = _root .. ALL_SRC_DIR
+	ALL_EXTERN_DIR  = _root .. ALL_EXTERN_DIR
+	WIN_SRC_DIR     = _root .. WIN_SRC_DIR
+	WIN_EXTERN_DIR  = _root .. WIN_EXTERN_DIR
 
 	defines { "EA_COMPILER_NO_EXCEPTIONS" }
 	rtti "Off"
@@ -38,11 +80,11 @@ local function ApplicationTools_Common(_libRoot)
 			})
 end
 
-function ApplicationTools_Project(_libRoot, _targetDir)
-	_libRoot   = _libRoot or ""
+function ApplicationTools_Project(_root, _targetDir)
+	_root   = _root or ""
 	_targetDir = _targetDir or "../lib"
 
-	ApplicationTools_Common(_libRoot)
+	ApplicationTools_Common(_root)
 
 	project "ApplicationTools"
 		kind "StaticLib"
@@ -91,13 +133,13 @@ function ApplicationTools_Project(_libRoot, _targetDir)
 		if (APT_LOG_CALLBACK_ONLY or false) then defines { "APT_LOG_CALLBACK_ONLY" } end
 end
 
-function ApplicationTools_ProjectExternal(_libRoot)
-	_libRoot = _libRoot or ""
+function ApplicationTools_ProjectExternal(_root)
+	_root = _root or ""
 
-	ApplicationTools_Common(_libRoot)
+	ApplicationTools_Common(_root)
 
 	externalproject "ApplicationTools"
-		location(_libRoot .. "build/" .. _ACTION)
+		location(_root .. "build/" .. _ACTION)
 		uuid(APT_UUID)
 		kind "StaticLib"
 		language "C++"

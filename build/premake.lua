@@ -12,11 +12,11 @@ workspace "ApplicationTools"
 
 	group "libs"
 		ApplicationTools_Project(
-			"../",    -- _libRoot
+			"../",    -- _root
 			"../lib"  -- _targetDir
 			)
 	group ""
-
+	
 	project "ApplicationTools_Tests"
 		kind "ConsoleApp"
 		language "C++"

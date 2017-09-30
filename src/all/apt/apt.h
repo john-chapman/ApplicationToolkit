@@ -169,6 +169,7 @@ template <typename tType> class Pool;
 template <typename tType> class RingBuffer;
 class Serializer;
 template <uint kCapacity> class String;
+class StringBase;
 class StringHash;
 class TextParser;
 class Timestamp;

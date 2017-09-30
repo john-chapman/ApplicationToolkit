@@ -189,7 +189,6 @@ private:
 	bool insideArray();
 	
 };
-class Serializer: public JsonSerializer {}; // \todo Absract base class?
 
 } // namespace apt
 

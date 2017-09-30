@@ -105,6 +105,7 @@
     <ClInclude Include="..\..\src\all\apt\PersistentVector.h" />
     <ClInclude Include="..\..\src\all\apt\Pool.h" />
     <ClInclude Include="..\..\src\all\apt\RingBuffer.h" />
+    <ClInclude Include="..\..\src\all\apt\Serializer.h" />
     <ClInclude Include="..\..\src\all\apt\String.h" />
     <ClInclude Include="..\..\src\all\apt\StringHash.h" />
     <ClInclude Include="..\..\src\all\apt\TextParser.h" />
@@ -250,6 +251,7 @@
     <ClCompile Include="..\..\src\all\apt\Ini.cpp" />
     <ClCompile Include="..\..\src\all\apt\Json.cpp" />
     <ClCompile Include="..\..\src\all\apt\MemoryPool.cpp" />
+    <ClCompile Include="..\..\src\all\apt\Serializer.cpp" />
     <ClCompile Include="..\..\src\all\apt\String.cpp" />
     <ClCompile Include="..\..\src\all\apt\StringHash.cpp" />
     <ClCompile Include="..\..\src\all\apt\TextParser.cpp" />

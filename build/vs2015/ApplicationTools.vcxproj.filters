@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="extern">
@@ -424,6 +424,7 @@
     <ClInclude Include="..\..\src\win\apt\win.h">
       <Filter>win</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\all\apt\Serializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\all\apt\ArgList.cpp" />
@@ -491,6 +492,7 @@
     <ClCompile Include="..\..\src\win\apt\platform.cpp">
       <Filter>win</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\all\apt\Serializer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\all\extern\EASTL\EASTL.natvis">

@@ -4,15 +4,17 @@
 
 using namespace apt;
 
-TEST_CASE("ArrayOfArray", "[JsonSerializer]")
+TEST_CASE("ArrayOfArray", "[SerializerJson]")
 {
 	Json json;
 
-	{	JsonSerializer js(&json, JsonSerializer::Mode_Write);
-		js.beginArray("ArrayOfArrays");
-		for (int i = 0; i < 4; ++i) {
-			js.beginArray();
-				for (int j = 0; j < 3; ++j) {
+	{	SerializerJson js(&json, SerializerJson::Mode_Write);
+		uint in = 4;
+		js.beginArray(in, "ArrayOfArrays");
+		for (int i = 0; i < in; ++i) {
+			uint jn = 3;
+			js.beginArray(jn);
+				for (int j = 0; j < jn; ++j) {
 					int v = i + j;
 					js.value(v);
 				}
@@ -20,11 +22,15 @@ TEST_CASE("ArrayOfArray", "[JsonSerializer]")
 		}
 		js.endArray();
 	}
-	{	JsonSerializer js(&json, JsonSerializer::Mode_Read);
-		js.beginArray("ArrayOfArrays");
-		for (int i = 0; i < 4; ++i) {
-			js.beginArray();
-				for (int j = 0; j < 3; ++j) {
+	{	SerializerJson js(&json, SerializerJson::Mode_Read);
+		uint in = 4;
+		js.beginArray(in, "ArrayOfArrays");
+		REQUIRE(in== 4);
+		for (int i = 0; i < in; ++i) {
+			uint jn = 3;
+			js.beginArray(jn);
+			REQUIRE(jn == 3);
+				for (int j = 0; j < jn; ++j) {
 					int v;
 					js.value(v);
 					REQUIRE(v == i + j);

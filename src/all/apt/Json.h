@@ -4,6 +4,7 @@
 
 #include <apt/apt.h>
 #include <apt/FileSystem.h>
+#include <apt/Serializer.h>
 
 namespace apt {
 
@@ -66,7 +67,8 @@ namespace apt {
 ////////////////////////////////////////////////////////////////////////////////
 class Json
 {
-	friend class JsonSerializer;
+	friend class JsonSerializer; // \todo remove
+	friend class SerializerJson; 
 public:
 	enum ValueType
 	{
@@ -98,8 +100,7 @@ public:
 	// Get the type of the current value.
 	ValueType getType() const;
 
-	// Get the current value. tType is expected to match the type of the current value exactly (i.e. getValue<int>() must be called only 
-	// if the value type is ValueType_Number).
+	// Get the current value. tType is expected to match the type of the current value exactly (i.e. getValue<int>() must be called only if the value type is ValueType_Number).
 	// \note Ptr returned by getValue<const char*> is only valid during the lifetime of the Json object.
 	template <typename tType>
 	tType getValue() const;
@@ -187,8 +188,47 @@ private:
 
 	// Return whether the read/write head is inside an array.
 	bool insideArray();
-	
 };
+
+////////////////////////////////////////////////////////////////////////////////
+// SerializerJson
+////////////////////////////////////////////////////////////////////////////////
+class SerializerJson: public Serializer
+{
+public:
+	SerializerJson(Json* _json_, Mode _mode);
+
+	Json* getJson() { return m_json; }
+
+	bool beginObject(const char* _name = nullptr) override;
+	void endObject() override;
+
+	bool beginArray(uint& _length_, const char* _name = nullptr) override;
+	void endArray() override;
+
+	bool value(bool&       _value_, const char* _name = nullptr) override;
+	bool value(sint8&      _value_, const char* _name = nullptr) override;
+	bool value(uint8&      _value_, const char* _name = nullptr) override;
+	bool value(sint16&     _value_, const char* _name = nullptr) override;
+	bool value(uint16&     _value_, const char* _name = nullptr) override;
+	bool value(sint32&     _value_, const char* _name = nullptr) override;
+	bool value(uint32&     _value_, const char* _name = nullptr) override;
+	bool value(sint64&     _value_, const char* _name = nullptr) override;
+	bool value(uint64&     _value_, const char* _name = nullptr) override;
+	bool value(float32&    _value_, const char* _name = nullptr) override;
+	bool value(float64&    _value_, const char* _name = nullptr) override;
+	bool value(StringBase& _value_, const char* _name = nullptr) override;
+	
+	bool binary(void* _data_, uint& _size_, const char* _name = nullptr) override { APT_ASSERT(false); return false; } // \todo
+
+private:
+	Json* m_json;
+
+	// 
+	int string(const char* _value_, const char* _name);
+
+}; // class SerializerJson
+
 
 } // namespace apt
 

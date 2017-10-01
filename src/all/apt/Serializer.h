@@ -22,11 +22,12 @@ public:
 		Mode_Write
 	};
 
-	Mode         getMode() const                       { return m_mode;                }
-	void         setMode(Mode _mode)                   { m_mode = _mode;               }
-	const char*  getError() const                      { return (const char*)m_errStr; }
+	Mode         getMode() const                       { return m_mode;  }
+	void         setMode(Mode _mode)                   { m_mode = _mode; }
+	const char*  getError() const                      { return m_errStr.isEmpty() ? nullptr : (const char*)m_errStr; }
 	void         setError(const char* _msg, ...);
 
+	// Return false if _name is not found, or if the end of the current array is reached.
 	virtual bool beginObject(const char* _name = nullptr) = 0;
 	virtual void endObject() = 0;
 
@@ -60,6 +61,12 @@ public:
 	{
 		return value((StringBase&)_value_, _name); 
 	}
+
+	virtual bool binary(void* _data_, uint& _size_, const char* _name = nullptr) = 0;
+
+	// Return tType as a string.
+	template <typename tType>
+	static const char* ValueTypeToStr();
 
 protected:
 	Mode m_mode;

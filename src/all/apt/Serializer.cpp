@@ -10,23 +10,27 @@ using namespace apt;
 
 void Serializer::setError(const char* _msg, ...)
 {
-	va_list args;
-	va_start(args, _msg);
-	m_errStr.setfv(_msg, args);
-	va_end(args);
+	if (_msg) {
+		va_list args;
+		va_start(args, _msg);
+		m_errStr.setfv(_msg, args);
+		va_end(args);
+	} else {
+		m_errStr.clear();
+	}
 }
 
-template <typename T, uint Tlen>
-static bool ValueImpl(Serializer& _serializer_, T& _value_, const char* _name)
+template <typename tType, uint kLen>
+static bool ValueImpl(Serializer& _serializer_, tType& _value_, const char* _name)
 {
-	uint len = Tlen; \
+	uint len = kLen; \
 	if (_serializer_.beginArray(len, _name)) { \
 		bool ret = true;
-		if (len != Tlen) {
-			_serializer_.setError("Error serializing vec/mat %s: array length was %d, expected %d", _name ? _name : "", (int)len, (int)Tlen);
+		if (len != kLen) {
+			_serializer_.setError("Error serializing %s '%s': array length was %d, expected %d", Serializer::ValueTypeToStr<tType>(), _name ? _name : "", (int)len, (int)kLen);
 			ret = false;
 		} else {
-			for (int i = 0; i < (int)Tlen; ++i) { 
+			for (int i = 0; i < (int)kLen; ++i) { 
 				ret &= _serializer_.value(_value_[i]);
 			}
 		}
@@ -41,6 +45,35 @@ bool Serializer::value(vec4& _value_, const char* _name) { return ValueImpl<vec4
 bool Serializer::value(mat2& _value_, const char* _name) { return ValueImpl<mat2, 2*2>(*this, _value_, _name); }
 bool Serializer::value(mat3& _value_, const char* _name) { return ValueImpl<mat3, 3*3>(*this, _value_, _name); }
 bool Serializer::value(mat4& _value_, const char* _name) { return ValueImpl<mat4, 4*4>(*this, _value_, _name); }
+
+// PROTECTED
+
+template <typename tType>
+const char* Serializer::ValueTypeToStr()
+{
+	return "Unknown value type";
+}
+	template <> const char* Serializer::ValueTypeToStr<bool>()        { return "bool";       }
+	template <> const char* Serializer::ValueTypeToStr<sint8>()       { return "sint8";      }
+	template <> const char* Serializer::ValueTypeToStr<uint8>()       { return "uint8";      }
+	template <> const char* Serializer::ValueTypeToStr<sint16>()      { return "sint16";     }
+	template <> const char* Serializer::ValueTypeToStr<uint16>()      { return "uint16";     }
+	template <> const char* Serializer::ValueTypeToStr<sint32>()      { return "sint32";     }
+	template <> const char* Serializer::ValueTypeToStr<uint32>()      { return "uint32";     }
+	template <> const char* Serializer::ValueTypeToStr<sint64>()      { return "sint64";     }
+	template <> const char* Serializer::ValueTypeToStr<uint64>()      { return "uint64";     }
+	template <> const char* Serializer::ValueTypeToStr<float32>()     { return "float32";    }
+	template <> const char* Serializer::ValueTypeToStr<float64>()     { return "float64";    }
+	template <> const char* Serializer::ValueTypeToStr<StringBase>()  { return "StringBase"; }
+	template <> const char* Serializer::ValueTypeToStr<vec2>()        { return "vec2";       }
+	template <> const char* Serializer::ValueTypeToStr<vec3>()        { return "vec3";       }
+	template <> const char* Serializer::ValueTypeToStr<vec4>()        { return "vec4";       }
+	template <> const char* Serializer::ValueTypeToStr<mat2>()        { return "mat2";       }
+	template <> const char* Serializer::ValueTypeToStr<mat3>()        { return "mat3";       }
+	template <> const char* Serializer::ValueTypeToStr<mat4>()        { return "mat4";       }
+
+
+//---
 
 template <typename T>
 static bool SerializeImpl(Serializer& _serializer_, T& _value_, const char* _name)

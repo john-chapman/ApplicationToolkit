@@ -146,51 +146,6 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// JsonSerializer
-////////////////////////////////////////////////////////////////////////////////
-class JsonSerializer
-{
-public:
-	enum Mode
-	{
-		Mode_Read,
-		Mode_Write
-	};
-	JsonSerializer(Json* _json_, Mode _mode);
-
-	bool beginObject(const char* _name = nullptr);
-	void endObject();
-
-	bool beginArray(const char* _name = nullptr);
-	void endArray();
-	
-	// Length of the current array (or -1 if not in an array).
-	int getArrayLength() const { return m_json->getArrayLength(); }
-
-	// Visit a named value in the current object/array.
-	template <typename tType>
-	bool value(const char* _name, tType& _value_);
-	template <typename tType>
-	bool value(tType& _value_);
-
-	// Visit a named string in the current object/array. Pass nullptr as _string_ to get the string length.
-	// Return the string length, excluding the terminating null.
-	// \note This is the 'raw' api, prefer to use value(StringBase&).
-	int string(const char* _name, char* _string_);
-	int string(char* _string_);
-
-	Mode getMode() const     { return m_mode; }
-	void setMode(Mode _mode) { m_mode = _mode; }
-
-private:
-	Json* m_json;
-	Mode  m_mode;
-
-	// Return whether the read/write head is inside an array.
-	bool insideArray();
-};
-
-////////////////////////////////////////////////////////////////////////////////
 // SerializerJson
 ////////////////////////////////////////////////////////////////////////////////
 class SerializerJson: public Serializer

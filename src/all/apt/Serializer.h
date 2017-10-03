@@ -34,6 +34,13 @@ public:
 	virtual bool beginArray(uint& _length_, const char* _name = nullptr) = 0;
 	virtual void endArray() = 0;
 
+	// Variant for fixed-sized arrays or cases where _length_ isn't required.
+	bool         beginArray(const char* _name = nullptr)
+	{ 
+		uint n = 0;
+		return beginArray(n, _name);
+	}
+
 	virtual bool value(bool&       _value_, const char* _name = nullptr) = 0;
 	virtual bool value(sint8&      _value_, const char* _name = nullptr) = 0;
 	virtual bool value(uint8&      _value_, const char* _name = nullptr) = 0;
@@ -106,7 +113,7 @@ bool Serialize(Serializer& _serializer_, mat4&        _value_, const char* _name
 template <uint kCapacity>
 bool Serialize(Serializer& _serializer_, String<kCapacity>& _value_, const char* _name = nullptr)
 {
-	return Serialize((StringBase&)_value_, _name); 
+	return Serialize(_serializer_, (StringBase&)_value_, _name); 
 }
 
 } // namespace apt

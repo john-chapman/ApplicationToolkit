@@ -22,5 +22,6 @@ Committed dependencies:
 - [stb](https://github.com/nothings/stb)
 
 ## Change Log ##
+- `2017-10-03 (v1.03):` New serialization API, replaced JsonSerializer -> SerializerJson.
 - `2017-09-09 (v1.02):` FileSystem::ListFiles/ListDirs take a null-separated list of filter pattern strings.
 - `2017-07-26 (v1.01):` Renamed def.h -> apt.h, added version and change log, new premake script.

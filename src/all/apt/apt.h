@@ -2,7 +2,7 @@
 #ifndef apt_h
 #define apt_h
 
-#define APT_VERSION "1.02"
+#define APT_VERSION "1.03"
 
 // Compiler
 #if defined(__GNUC__)
@@ -162,12 +162,12 @@ class FileSystem;
 class Image;
 class Ini;
 class Json;
-class JsonSerializer;
 class MemoryPool;
 template <typename tType> class PersistentVector;
 template <typename tType> class Pool;
 template <typename tType> class RingBuffer;
 class Serializer;
+class SerializerJson;
 template <uint kCapacity> class String;
 class StringBase;
 class StringHash;

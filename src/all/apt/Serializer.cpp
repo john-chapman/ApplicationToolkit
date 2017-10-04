@@ -21,7 +21,7 @@ void Serializer::setError(const char* _msg, ...)
 }
 
 template <typename tType, uint kLen>
-static bool ValueImpl(Serializer& _serializer_, tType& _value_, const char* _name)
+static bool ValueVecMatImpl(Serializer& _serializer_, tType& _value_, const char* _name)
 {
 	uint len = kLen; \
 	if (_serializer_.beginArray(len, _name)) { \
@@ -30,8 +30,9 @@ static bool ValueImpl(Serializer& _serializer_, tType& _value_, const char* _nam
 			_serializer_.setError("Error serializing %s '%s': array length was %d, expected %d", Serializer::ValueTypeToStr<tType>(), _name ? _name : "", (int)len, (int)kLen);
 			ret = false;
 		} else {
+			float* v = (float*)&_value_; // access vec/mat as a flat array
 			for (int i = 0; i < (int)kLen; ++i) { 
-				ret &= _serializer_.value(_value_[i]);
+				ret &= _serializer_.value(v[i]);
 			}
 		}
 		_serializer_.endArray();
@@ -39,12 +40,12 @@ static bool ValueImpl(Serializer& _serializer_, tType& _value_, const char* _nam
 	}
 	return false;
 }
-bool Serializer::value(vec2& _value_, const char* _name) { return ValueImpl<vec2,   2>(*this, _value_, _name); }
-bool Serializer::value(vec3& _value_, const char* _name) { return ValueImpl<vec3,   3>(*this, _value_, _name); }
-bool Serializer::value(vec4& _value_, const char* _name) { return ValueImpl<vec4,   4>(*this, _value_, _name); }
-bool Serializer::value(mat2& _value_, const char* _name) { return ValueImpl<mat2, 2*2>(*this, _value_, _name); }
-bool Serializer::value(mat3& _value_, const char* _name) { return ValueImpl<mat3, 3*3>(*this, _value_, _name); }
-bool Serializer::value(mat4& _value_, const char* _name) { return ValueImpl<mat4, 4*4>(*this, _value_, _name); }
+bool Serializer::value(vec2& _value_, const char* _name) { return ValueVecMatImpl<vec2,   2>(*this, _value_, _name); }
+bool Serializer::value(vec3& _value_, const char* _name) { return ValueVecMatImpl<vec3,   3>(*this, _value_, _name); }
+bool Serializer::value(vec4& _value_, const char* _name) { return ValueVecMatImpl<vec4,   4>(*this, _value_, _name); }
+bool Serializer::value(mat2& _value_, const char* _name) { return ValueVecMatImpl<mat2, 2*2>(*this, _value_, _name); }
+bool Serializer::value(mat3& _value_, const char* _name) { return ValueVecMatImpl<mat3, 3*3>(*this, _value_, _name); }
+bool Serializer::value(mat4& _value_, const char* _name) { return ValueVecMatImpl<mat4, 4*4>(*this, _value_, _name); }
 
 // PROTECTED
 

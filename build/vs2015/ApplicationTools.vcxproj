@@ -236,6 +236,7 @@
     <ClInclude Include="..\..\src\all\extern\EASTL\version.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\weak_ptr.h" />
     <ClInclude Include="..\..\src\all\extern\lodepng.h" />
+    <ClInclude Include="..\..\src\all\extern\miniz.h" />
     <ClInclude Include="..\..\src\all\extern\noise1234.h" />
     <ClInclude Include="..\..\src\all\extern\stb_image.h" />
     <ClInclude Include="..\..\src\all\extern\stb_image_write.h" />
@@ -273,6 +274,7 @@
     <ClCompile Include="..\..\src\all\extern\EASTL\source\thread_support.cpp" />
     <ClCompile Include="..\..\src\all\extern\dds.cpp" />
     <ClCompile Include="..\..\src\all\extern\lodepng.cpp" />
+    <ClCompile Include="..\..\src\all\extern\miniz.c" />
     <ClCompile Include="..\..\src\all\extern\noise1234.cpp" />
     <ClCompile Include="..\..\src\win\apt\FileImpl.cpp" />
     <ClCompile Include="..\..\src\win\apt\FileSystemImpl.cpp" />

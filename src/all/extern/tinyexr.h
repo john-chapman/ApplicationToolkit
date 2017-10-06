@@ -439,7 +439,6 @@ extern int LoadEXRFromMemory(float *out_rgba, const unsigned char *memory,
 
 #if TINYEXR_USE_MINIZ
 #else
-#include "zlib.h"
 #endif
 
 #if TINYEXR_USE_ZFP
@@ -466,6 +465,22 @@ typedef long long tinyexr_int64;
 #endif
 #endif
 
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4204)  // nonstandard extension used : non-constant
+                                 // aggregate initializer (also supported by GNU
+                                 // C and C99, so no big deal)
+#pragma warning(disable : 4244)  // 'initializing': conversion from '__int64' to
+                                 // 'int', possible loss of data
+#pragma warning( \
+    disable : 4267)  // 'argument': conversion from '__int64' to 'int',
+                     // possible loss of data
+#pragma warning(disable : 4996)  // 'strdup': The POSIX name for this item is
+                                 // deprecated. Instead, use the ISO C and C++
+                                 // conformant name: _strdup.
+#endif
+
 #if TINYEXR_USE_MINIZ
 
 namespace miniz {
@@ -485,6 +500,7 @@ namespace miniz {
 #endif
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
+
 
 /* miniz.c v1.15 - public domain deflate/inflate, zlib-subset, ZIP
    reading/writing/appending, PNG writing
@@ -4366,21 +4382,6 @@ mz_uint tdefl_create_comp_flags_from_zip_params(int level, int window_bits,
   return comp_flags;
 }
 #endif  // MINIZ_NO_ZLIB_APIS
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4204)  // nonstandard extension used : non-constant
-                                 // aggregate initializer (also supported by GNU
-                                 // C and C99, so no big deal)
-#pragma warning(disable : 4244)  // 'initializing': conversion from '__int64' to
-                                 // 'int', possible loss of data
-#pragma warning( \
-    disable : 4267)  // 'argument': conversion from '__int64' to 'int',
-                     // possible loss of data
-#pragma warning(disable : 4996)  // 'strdup': The POSIX name for this item is
-                                 // deprecated. Instead, use the ISO C and C++
-                                 // conformant name: _strdup.
-#endif
 
 // Simple PNG writer function by Alex Evans, 2011. Released into the public
 // domain: https://gist.github.com/908299, more context at

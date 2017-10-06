@@ -13,11 +13,12 @@ Common application tools:
 The project is intended to be compiled as a static lib. A [premake](https://premake.github.io/) script is provided in `build/` (requires premake5). See [build/ApplicationTools_premake.lua](https://github.com/john-chapman/ApplicationTools/blob/master/build/ApplicationTools_premake.lua) for details.
 
 ## Dependencies ##
-Committed dependencies:
+Embedded dependencies:
 
 - [EASTL](https://github.com/electronicarts/EASTL)
 - [GLM](https://github.com/g-truc/glm)
 - [LodePNG](http://lodev.org/lodepng/)
+- [Miniz](https://github.com/richgel999/miniz)
 - [RapidJSON](http://rapidjson.org/)
 - [stb](https://github.com/nothings/stb)
 

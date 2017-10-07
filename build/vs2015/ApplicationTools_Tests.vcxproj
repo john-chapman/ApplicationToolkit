@@ -101,6 +101,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\tests\ApplicationTools_tests.cpp" />
+    <ClCompile Include="..\..\tests\compress_tests.cpp" />
     <ClCompile Include="..\..\tests\Factory_tests.cpp" />
     <ClCompile Include="..\..\tests\FileSystem_tests.cpp" />
     <ClCompile Include="..\..\tests\Json_tests.cpp" />

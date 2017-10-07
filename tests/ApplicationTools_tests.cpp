@@ -5,8 +5,6 @@
 #include <apt/platform.h>
 #include <apt/Time.h>
 
-		#include <miniz.h>
-
 using namespace apt;
 
 TEST_CASE("adhoc")
@@ -21,11 +19,4 @@ TEST_CASE("adhoc")
 		APT_PLATFORM_VERIFY(SetCurrentDirectory(buf));
 		APT_LOG("Set current directory: '%s'", buf);
 	#endif
-/*	Compression todo:
-	- See notes in miniz.h (line 100+). Make header-only, Strip unused APIs (need to add global macros)
-	- Raw buffer compress/decompress via tdefl/tinfl (expose options?)
-	- Look closer at the ZIP archive functions, inform redesign of Filesystem/File classes:
-		- Keep files open, add seek interface.
-		- How to manage archives? Filesystem class is all static functions, need a 'setimpl' or something? Look at other libs.
-*/
 }

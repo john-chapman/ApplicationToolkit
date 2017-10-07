@@ -34,8 +34,8 @@ void apt::internal::Log(const char* _fmt, ...)
 	va_list args;
 	va_start(args, _fmt);
 	#ifndef APT_LOG_CALLBACK_ONLY
-		APT_VERIFY((vfprintf(stdout, _fmt, args)) > 0);
-		APT_VERIFY((fprintf(stdout, "\n")) > 0);
+		APT_VERIFY((vfprintf(stdout, _fmt, args)) >= 0);
+		APT_VERIFY((fprintf(stdout, "\n")) >= 0);
 	#endif
 	DispatchLogCallback(_fmt, args, LogType_Log);
 	va_end(args);

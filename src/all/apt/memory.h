@@ -4,6 +4,9 @@
 
 #include <apt/apt.h>
 
+#include <cstdlib>
+#include <cstring>
+
 namespace apt {
 
 // Allocate _size bytes with _align aligment.

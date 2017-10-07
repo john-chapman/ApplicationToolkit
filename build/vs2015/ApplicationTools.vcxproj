@@ -95,6 +95,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\all\apt\ArgList.h" />
+    <ClInclude Include="..\..\src\all\apt\compress.h" />
     <ClInclude Include="..\..\src\all\apt\Factory.h" />
     <ClInclude Include="..\..\src\all\apt\File.h" />
     <ClInclude Include="..\..\src\all\apt\FileSystem.h" />
@@ -246,6 +247,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\all\apt\ArgList.cpp" />
+    <ClCompile Include="..\..\src\all\apt\compress.cpp" />
     <ClCompile Include="..\..\src\all\apt\File.cpp" />
     <ClCompile Include="..\..\src\all\apt\FileSystem.cpp" />
     <ClCompile Include="..\..\src\all\apt\Image.cpp" />
@@ -274,7 +276,6 @@
     <ClCompile Include="..\..\src\all\extern\EASTL\source\thread_support.cpp" />
     <ClCompile Include="..\..\src\all\extern\dds.cpp" />
     <ClCompile Include="..\..\src\all\extern\lodepng.cpp" />
-    <ClCompile Include="..\..\src\all\extern\miniz.c" />
     <ClCompile Include="..\..\src\all\extern\noise1234.cpp" />
     <ClCompile Include="..\..\src\win\apt\FileImpl.cpp" />
     <ClCompile Include="..\..\src\win\apt\FileSystemImpl.cpp" />

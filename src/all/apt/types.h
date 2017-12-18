@@ -305,6 +305,20 @@ inline tType BitfieldExtract(tType _base, int _offset, int _count)
 	return (_base & mask) >> _offset;
 }
 
+// Reverse the sequence of _bits.
+template <typename tType>
+inline tType BitfieldReverse(tType _bits) 
+{ 
+	tType ret = _bits;
+	int s = sizeof(tType) * 8 - 1;
+	for (_bits >>= 1; _bits != 0; _bits >>= 1) {   
+		ret <<= 1;
+		ret |= _bits & 1;
+		--s;
+	}
+	ret <<= s;
+	return ret;
+}
 
 namespace internal {
 	union iee754_f32

@@ -66,11 +66,18 @@ namespace apt {
 	mat4 LookAt(const vec3& _from, const vec3& _to, const vec3& _up = vec3(0.0f, 1.0f, 0.0f));
 
 	// Convert between radians and degrees.
-	inline float Degrees(float _radians) { return _radians * (180.0f / kPi); }
-	inline float Radians(float _degrees) { return _degrees * (kPi / 180.0f); }
+	inline float Degrees(float _radians)      { return _radians * (180.0f / kPi); }
+	inline float Radians(float _degrees)      { return _degrees * (kPi / 180.0f); }
 
-	// Return the fractional part of _x.
-	inline float Fract(float _x)         { float intpart; return modf(_x, &intpart); }
+	// Return the fractional part of _x (elementwise for vector/matrix types).
+	template <typename tType>
+	inline tType Fract(const tType& _x)       { return linalg::fract(_x); }
+		inline float Fract(float _x)          { return _x - std::floor(_x); }
+
+	// Return the -1 if _x < 0, else 1 (elementwise for vector/matrix types).
+	template <typename tType>
+	inline tType Sign(const tType& _x)        { return linalg::copysign(tType(1), _x); }
+		inline float Sign(const float& _x)    { return std::copysign(1.0f, _x); }
 
 	// \todo Rename, add a templated interface for integral types, plus interface for e.g. random rotations
 	class LCG

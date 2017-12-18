@@ -2,6 +2,7 @@
 #include <catch.hpp>
 
 #include <apt/log.h>
+#include <apt/math.h>
 #include <apt/platform.h>
 #include <apt/Time.h>
 
@@ -20,6 +21,4 @@ TEST_CASE("adhoc")
 		APT_PLATFORM_VERIFY(SetCurrentDirectory(buf));
 		APT_LOG("Set current directory: '%s'", buf);
 	#endif
-
-	linalg::aliases::float2 f2(0.0f, 1.0f);
 }

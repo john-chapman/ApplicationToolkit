@@ -73,6 +73,8 @@ namespace linalg
         T                           x,y;
         constexpr                   vec()                               : x(), y() {}
         constexpr                   vec(T x_, T y_)                     : x(x_), y(y_) {}
+        template<class U>
+        constexpr                   vec(U x_, U y_)                     : vec(static_cast<T>(x_), static_cast<T>(y_)) {}
         constexpr explicit          vec(T s)                            : vec(s, s) {}
         constexpr explicit          vec(const T * p)                    : vec(p[0], p[1]) {}
         template<class U>
@@ -85,6 +87,8 @@ namespace linalg
         T                           x,y,z;
         constexpr                   vec()                               : x(), y(), z() {}
         constexpr                   vec(T x_, T y_, T z_)               : x(x_), y(y_), z(z_) {}
+        template <class U>
+        constexpr                   vec(U x_, U y_, U z_)               : vec(static_cast<T>(x_), static_cast<T>(y_), static_cast<T>(z_)) {}
         constexpr                   vec(const vec<T,2> & xy, T z_)      : vec(xy.x, xy.y, z_) {}
         constexpr explicit          vec(T s)                            : vec(s, s, s) {}
         constexpr explicit          vec(const T * p)                    : vec(p[0], p[1], p[2]) {}
@@ -100,6 +104,8 @@ namespace linalg
         T                           x,y,z,w;
         constexpr                   vec()                               : x(), y(), z(), w() {}
         constexpr                   vec(T x_, T y_, T z_, T w_)         : x(x_), y(y_), z(z_), w(w_) {}
+        template <class U>
+        constexpr                   vec(U x_, U y_, U z_, U w_)         : vec(static_cast<T>(x_), static_cast<T>(y_), static_cast<T>(z_), static_cast<T>(w_)) {}
         constexpr                   vec(const vec<T,2> & xy, T z_, T w_): vec(xy.x, xy.y, z_, w_) {}
         constexpr                   vec(const vec<T,3> & xyz, T w_)     : vec(xyz.x, xyz.y, xyz.z, w_) {}
         constexpr explicit          vec(T s)                            : vec(s, s, s, s) {}

@@ -158,6 +158,7 @@
 //    result_of
 //
 //    integral_constant
+//    bool_constant
 //    true_type
 //    false_type
 //
@@ -263,6 +264,9 @@ namespace eastl
 		static const T value = v;
 		typedef T value_type;
 		typedef integral_constant<T, v> type;
+
+		EA_CONSTEXPR operator value_type() const EA_NOEXCEPT { return value; }
+		EA_CONSTEXPR value_type operator()() const EA_NOEXCEPT { return value; }
 	};
 
 
@@ -461,6 +465,93 @@ namespace eastl
 		template <bool B, class T, class F>
 		using conditional_t = typename conditional<B, T, F>::type;
 	#endif
+
+
+
+	///////////////////////////////////////////////////////////////////////
+	// conjunction 
+	//
+	// This is a C++17 standard utility class that performs a short-circuiting
+	// logical AND on a sequence of type traits.
+	//
+	// http://en.cppreference.com/w/cpp/types/conjunction
+	//
+	#if !defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
+		template <class...>
+		struct conjunction : eastl::true_type {};
+
+		template <class B>
+		struct conjunction<B> : B {};
+
+	    template <class B, class... Bn>
+	    struct conjunction<B, Bn...> : conditional<bool(B::value), conjunction<Bn...>, B>::type {};
+
+        #if EASTL_VARIABLE_TEMPLATES_ENABLED
+			#if EASTL_INLINE_VARIABLE_ENABLED
+				template<class... Bn>
+				inline constexpr bool conjunction_v = conjunction<Bn...>::value;
+			#else
+				template<class... Bn>
+				static const constexpr bool conjunction_v = conjunction<Bn...>::value;
+			#endif
+		#endif
+    #endif
+
+
+
+	///////////////////////////////////////////////////////////////////////
+	// disjunction 
+	//
+	// This is a C++17 standard utility class that performs a short-circuiting
+	// logical OR on a sequence of type traits.
+	//
+	// http://en.cppreference.com/w/cpp/types/disjunction
+	//
+	#if !defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
+		template <class...>
+		struct disjunction : eastl::false_type {};
+
+		template <class B>
+		struct disjunction<B> : B {};
+
+	    template <class B, class... Bn>
+	    struct disjunction<B, Bn...> : conditional<bool(B::value), B, disjunction<Bn...>>::type {};
+
+        #if EASTL_VARIABLE_TEMPLATES_ENABLED
+			#if EASTL_INLINE_VARIABLE_ENABLED
+				template<class... B>
+				inline constexpr bool disjunction_v = disjunction<B...>::value;
+			#else
+				template<class... B>
+				static const constexpr bool disjunction_v = disjunction<B...>::value;
+			#endif
+		#endif
+    #endif
+
+
+
+	///////////////////////////////////////////////////////////////////////
+	// negation 
+	//
+	// This is a C++17 standard utility class that performs a logical NOT on a
+	// single type trait.
+	//
+	// http://en.cppreference.com/w/cpp/types/negation
+	//
+	template <class B>
+	struct negation : eastl::bool_constant<!bool(B::value)> {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		#if EASTL_INLINE_VARIABLE_ENABLED
+			template<class B>
+			inline constexpr bool negation_v = negation<B>::value;
+		#else
+			template<class B>
+			static const constexpr bool negation_v = negation<B>::value;
+		#endif
+	#endif
+
+
 
 	///////////////////////////////////////////////////////////////////////
 	// identity
@@ -925,27 +1016,27 @@ namespace eastl
 		#define EASTL_TYPE_TRAIT_static_min_CONFORMANCE 1
 		#define EASTL_TYPE_TRAIT_static_max_CONFORMANCE 1
 
-		template <size_t I0, size_t ...IN>
+		template <size_t I0, size_t ...in>
 		struct static_min;
 
 		template <size_t I0>
 		struct static_min<I0>
 			{ static const size_t value = I0; };
 
-		template <size_t I0, size_t I1, size_t ...IN>
-		struct static_min<I0, I1, IN...>
-			{ static const size_t value = ((I0 <= I1) ? static_min<I0, IN...>::value : static_min<I1, IN...>::value); };
+		template <size_t I0, size_t I1, size_t ...in>
+		struct static_min<I0, I1, in...>
+			{ static const size_t value = ((I0 <= I1) ? static_min<I0, in...>::value : static_min<I1, in...>::value); };
 
-		template <size_t I0, size_t ...IN>
+		template <size_t I0, size_t ...in>
 		struct static_max;
 
 		template <size_t I0>
 		struct static_max<I0>
 			{ static const size_t value = I0; };
 
-		template <size_t I0, size_t I1, size_t ...IN>
-		struct static_max<I0, I1, IN...>
-			{ static const size_t value = ((I0 >= I1) ? static_max<I0, IN...>::value : static_max<I1, IN...>::value); };
+		template <size_t I0, size_t I1, size_t ...in>
+		struct static_max<I0, I1, in...>
+			{ static const size_t value = ((I0 >= I1) ? static_max<I0, in...>::value : static_max<I1, in...>::value); };
 	#endif
 
 

@@ -75,6 +75,9 @@
     <ClInclude Include="..\..\src\all\extern\EABase\eastdarg.h">
       <Filter>extern\EABase</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\all\extern\EABase\eaunits.h">
+      <Filter>extern\EABase</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\all\extern\EABase\nullptr.h">
       <Filter>extern\EABase</Filter>
     </ClInclude>

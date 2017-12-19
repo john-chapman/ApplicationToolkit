@@ -125,6 +125,7 @@
     <ClInclude Include="..\..\src\all\extern\EABase\eahave.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\earesult.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\eastdarg.h" />
+    <ClInclude Include="..\..\src\all\extern\EABase\eaunits.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\nullptr.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\version.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\algorithm.h" />

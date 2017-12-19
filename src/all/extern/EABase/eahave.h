@@ -480,7 +480,7 @@
 
 // #include <system_error> 
 #if !defined(EA_HAVE_CPP11_SYSTEM_ERROR) && !defined(EA_NO_HAVE_CPP11_SYSTEM_ERROR)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_SYSTEM_ERROR 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_CLANG) && (EA_COMPILER_VERSION >= 301) && !defined(EA_PLATFORM_APPLE)
 		#define EA_HAVE_CPP11_SYSTEM_ERROR 1
@@ -577,12 +577,9 @@
 	#elif defined(__GNUC__) && defined(__CYGWIN__)
 		#define EA_HAVE_ISNAN(x)  __isnand(x)        /* declared nowhere, it seems. */
 		#define EA_HAVE_ISINF(x)  __isinfd(x)
-	#elif defined(EA_PLATFORM_MINGW)                 /* Meant to workaround a GCC limitation where cmath undefines isnan, both GCC and clang have std::isnan */
+	#else
 		#define EA_HAVE_ISNAN(x)  std::isnan(x)      /* declared in <cmath> */
 		#define EA_HAVE_ISINF(x)  std::isinf(x)
-	#else /* Most GCC, EDG, Dinkumware. */
-		#define EA_HAVE_ISNAN(x)  isnan(x)           /* declared in <math.h> */
-		#define EA_HAVE_ISINF(x)  isinf(x)
 	#endif
 #endif
 
@@ -688,7 +685,7 @@
 
 // <arpa/inet.h> inet_ntop()
 #if !defined(EA_HAVE_inet_ntop_IMPL) && !defined(EA_NO_HAVE_inet_ntop_IMPL)
-	#if (defined(EA_PLATFORM_UNIX) || defined(EA_PLATFORM_POSIX)) && !defined(EA_PLATFORM_SONY) 
+	#if (defined(EA_PLATFORM_UNIX) || defined(EA_PLATFORM_POSIX)) && !defined(EA_PLATFORM_SONY) && !defined(CS_UNDEFINED_STRING) 
 		#define EA_HAVE_inet_ntop_IMPL 1  /* This doesn't identify if the platform SDK has some alternative function that does the same thing; */
 		#define EA_HAVE_inet_pton_IMPL 1  /* it identifies strictly the <arpa/inet.h> inet_ntop and inet_pton functions. For example, Microsoft has InetNtop in <Ws2tcpip.h> */
 	#else
@@ -783,7 +780,7 @@
 
 // <iterator>: std::begin, std::end, std::prev, std::next, std::move_iterator.
 #if !defined(EA_HAVE_CPP11_ITERATOR_IMPL) && !defined(EA_NO_HAVE_CPP11_ITERATOR_IMPL)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_ITERATOR_IMPL 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006)
 		#define EA_HAVE_CPP11_ITERATOR_IMPL 1
@@ -796,7 +793,7 @@
 
 // <memory>: std::weak_ptr, std::shared_ptr, std::unique_ptr, std::bad_weak_ptr, std::owner_less
 #if !defined(EA_HAVE_CPP11_SMART_POINTER_IMPL) && !defined(EA_NO_HAVE_CPP11_SMART_POINTER_IMPL)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_SMART_POINTER_IMPL 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004)
 		#define EA_HAVE_CPP11_SMART_POINTER_IMPL 1
@@ -809,7 +806,7 @@
 
 // <functional>: std::function, std::mem_fn, std::bad_function_call, std::is_bind_expression, std::is_placeholder, std::reference_wrapper, std::hash, std::bind, std::ref, std::cref.
 #if !defined(EA_HAVE_CPP11_FUNCTIONAL_IMPL) && !defined(EA_NO_HAVE_CPP11_FUNCTIONAL_IMPL)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_FUNCTIONAL_IMPL 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004)
 		#define EA_HAVE_CPP11_FUNCTIONAL_IMPL 1
@@ -822,7 +819,7 @@
 
 // <exception> std::current_exception, std::rethrow_exception, std::exception_ptr, std::make_exception_ptr
 #if !defined(EA_HAVE_CPP11_EXCEPTION_IMPL) && !defined(EA_NO_HAVE_CPP11_EXCEPTION_IMPL)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_EXCEPTION_IMPL 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004)
 		#define EA_HAVE_CPP11_EXCEPTION_IMPL 1

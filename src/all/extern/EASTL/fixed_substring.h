@@ -87,11 +87,10 @@ namespace eastl
 		typedef typename base_type::const_iterator  const_iterator;
 
 		using base_type::npos;
-		using base_type::mpBegin;
-		using base_type::mpEnd;
-		using base_type::mpCapacity;
+		using base_type::mPair;
 		using base_type::reset_lose_memory;
-		using base_type::mAllocator;
+		using base_type::internalLayout;
+		using base_type::get_allocator;
 
 	public:
 		fixed_substring()
@@ -103,7 +102,7 @@ namespace eastl
 			: base_type()
 		{
 			#if EASTL_NAME_ENABLED
-				mAllocator.set_name(x.get_allocator().get_name());
+				get_allocator().set_name(x.get_allocator().get_name());
 			#endif
 
 			assign(x);
@@ -116,7 +115,7 @@ namespace eastl
 			: base_type()
 		{
 			#if EASTL_NAME_ENABLED
-				mAllocator.set_name(x.get_allocator().get_name());
+				get_allocator().set_name(x.get_allocator().get_name());
 			#endif
 
 			assign(x, position, n);
@@ -162,45 +161,45 @@ namespace eastl
 		this_type& assign(const base_type& x)
 		{
 			// By design, we need to cast away const-ness here. 
-			mpBegin    = const_cast<value_type*>(x.data());
-			mpEnd      = mpBegin + x.size();
-			mpCapacity = mpEnd;
+			internalLayout().heap.mpBegin    = const_cast<value_type*>(x.data());
+			internalLayout().heap.mpEnd      = internalLayout().heap.mpBegin + x.size();
+			internalLayout().heap.mpCapacity = internalLayout().heap.mpEnd;
 			return *this;
 		}
 
 		this_type& assign(const base_type& x, size_type position, size_type n)
 		{
 			// By design, we need to cast away const-ness here. 
-			mpBegin    = const_cast<value_type*>(x.data()) + position;
-			mpEnd      = mpBegin + n;
-			mpCapacity = mpEnd;
+			internalLayout().heap.mpBegin    = const_cast<value_type*>(x.data()) + position;
+			internalLayout().heap.mpEnd      = internalLayout().heap.mpBegin + n;
+			internalLayout().heap.mpCapacity = internalLayout().heap.mpEnd;
 			return *this;
 		}
 
 		this_type& assign(const value_type* p, size_type n)
 		{
 			// By design, we need to cast away const-ness here. 
-			mpBegin    = const_cast<value_type*>(p);
-			mpEnd      = mpBegin + n;
-			mpCapacity = mpEnd;
+			internalLayout().heap.mpBegin    = const_cast<value_type*>(p);
+			internalLayout().heap.mpEnd      = internalLayout().heap.mpBegin + n;
+			internalLayout().heap.mpCapacity = internalLayout().heap.mpEnd;
 			return *this;
 		}
 
 		this_type& assign(const value_type* p)
 		{
 			// By design, we need to cast away const-ness here. 
-			mpBegin    = const_cast<value_type*>(p);
-			mpEnd      = mpBegin + CharStrlen(p);
-			mpCapacity = mpEnd;
+			internalLayout().heap.mpBegin    = const_cast<value_type*>(p);
+			internalLayout().heap.mpEnd      = internalLayout().heap.mpBegin + CharStrlen(p);
+			internalLayout().heap.mpCapacity = internalLayout().heap.mpEnd;
 			return *this;
 		}
 
 		this_type& assign(const value_type* pBegin, const value_type* pEnd)
 		{
 			// By design, we need to cast away const-ness here. 
-			mpBegin    = const_cast<value_type*>(pBegin);
-			mpEnd      = const_cast<value_type*>(pEnd);
-			mpCapacity = mpEnd;
+			internalLayout().heap.mpBegin    = const_cast<value_type*>(pBegin);
+			internalLayout().heap.mpEnd      = const_cast<value_type*>(pEnd);
+			internalLayout().heap.mpCapacity = internalLayout().heap.mpEnd;
 			return *this;
 		}
 

@@ -176,67 +176,128 @@ Json::ValueType Json::getType() const
 	return GetValueType(m_impl->m_value->GetType()); 
 }
 
-template <> bool Json::getValue<bool>() const
+template <> bool Json::getValue<bool>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Bool, "Json::getValue: value was not a boolean");
-	return m_impl->m_value->GetBool();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Bool, "Json::getValue: value was not a bool");
+	return jsonValue->GetBool();
 }
-template <> sint64 Json::getValue<sint64>() const
+
+template <> sint64 Json::getValue<sint64>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return m_impl->m_value->GetInt64();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetInt64();
 }
-template <> sint32 Json::getValue<sint32>() const
+template <> sint32 Json::getValue<sint32>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return m_impl->m_value->GetInt();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetInt();
 }
-template <> sint16 Json::getValue<sint16>() const
+template <> sint16 Json::getValue<sint16>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return (sint16)m_impl->m_value->GetInt();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetInt();
 }
-template <> sint8 Json::getValue<sint8>() const
+template <> sint8 Json::getValue<sint8>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return (sint8)m_impl->m_value->GetInt();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetInt();
 }
-template <> uint64 Json::getValue<uint64>() const
+template <> uint64 Json::getValue<uint64>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return m_impl->m_value->GetUint64();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetUint64();
 }
-template <> uint32 Json::getValue<uint32>() const
+template <> uint32 Json::getValue<uint32>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return m_impl->m_value->GetUint();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetUint();
 }
-template <> uint16 Json::getValue<uint16>() const
+template <> uint16 Json::getValue<uint16>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return (uint16)m_impl->m_value->GetUint();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetUint();
 }
-template <> uint8 Json::getValue<uint8>() const
+template <> uint8 Json::getValue<uint8>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return (uint8)m_impl->m_value->GetUint();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetUint();
 }
-template <> float32 Json::getValue<float32>() const
+template <> float32 Json::getValue<float32>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return m_impl->m_value->GetFloat();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetFloat();
 }
-template <> float64 Json::getValue<float64>() const
+template <> float64 Json::getValue<float64>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_Number, "Json::getValue: value was not a number");
-	return m_impl->m_value->GetDouble();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Number, "Json::getValue: value was not a number");
+	return jsonValue->GetDouble();
 }
-template <> const char* Json::getValue<const char*>() const
+template <> const char* Json::getValue<const char*>(int _i) const
 {
-	APT_ASSERT_MSG(getType() == ValueType_String, "Json::getValue: value was not a string");
-	return m_impl->m_value->GetString();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
+	}
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_String, "Json::getValue: value was not a string");
+	return jsonValue->GetString();
 }
-template <> vec2 Json::getValue<vec2>() const
+template <> vec2 Json::getValue<vec2>(int _i) const
 {
 	vec2 ret;
 	Json* json = const_cast<Json*>(this);
@@ -250,7 +311,7 @@ template <> vec2 Json::getValue<vec2>() const
 	}
 	return ret;
 }
-template <> vec3 Json::getValue<vec3>() const
+template <> vec3 Json::getValue<vec3>(int _i) const
 {
 	vec3 ret;
 	Json* json = const_cast<Json*>(this);
@@ -264,7 +325,7 @@ template <> vec3 Json::getValue<vec3>() const
 	}
 	return ret;
 }
-template <> vec4 Json::getValue<vec4>() const
+template <> vec4 Json::getValue<vec4>(int _i) const
 {
 	vec4 ret;
 	Json* json = const_cast<Json*>(this);
@@ -278,7 +339,7 @@ template <> vec4 Json::getValue<vec4>() const
 	}
 	return ret;
 }
-template <> mat2 Json::getValue<mat2>() const
+template <> mat2 Json::getValue<mat2>(int _i) const
 {
 	mat2 ret;
 	Json* json = const_cast<Json*>(this);
@@ -292,7 +353,7 @@ template <> mat2 Json::getValue<mat2>() const
 	}
 	return ret;
 }
-template <> mat3 Json::getValue<mat3>() const
+template <> mat3 Json::getValue<mat3>(int _i) const
 {
 	mat3 ret;
 	Json* json = const_cast<Json*>(this);
@@ -306,7 +367,7 @@ template <> mat3 Json::getValue<mat3>() const
 	}
 	return ret;
 }
-template <> mat4 Json::getValue<mat4>() const
+template <> mat4 Json::getValue<mat4>(int _i) const
 {
 	mat4 ret;
 	Json* json = const_cast<Json*>(this);
@@ -397,7 +458,6 @@ void Json::beginArray(const char* _name)
 	if (_name && find(_name)) {
 	  // object already existed, check the type
 		APT_ASSERT(GetValueType(m_impl->m_value->GetType()) == ValueType_Array);
-		return;
 	} else {
 		if (GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
 			if (_name) {

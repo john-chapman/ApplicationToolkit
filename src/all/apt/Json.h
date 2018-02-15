@@ -102,7 +102,11 @@ public:
 	// Get the current value. tType is expected to match the type of the current value exactly (i.e. getValue<int>() must be called only if the value type is ValueType_Number).
 	// \note Ptr returned by getValue<const char*> is only valid during the lifetime of the Json object.
 	template <typename tType>
-	tType getValue() const;
+	tType getValue(int _i = -1) const;
+		
+	// Create and set a named value. If the object already exists this modifies the type and value of the existing object.
+	template <typename tType>
+	void setValue(const char* _name, tType _value);
 
 	// Enter the current object (call immediately after find() or next()). Return false if the current value is not an object.
 	bool enterObject();
@@ -114,7 +118,7 @@ public:
 	// Leave the current array.
 	void leaveArray();
 
-	// Return length of the current array (or -1 if not in an array).
+	// Return number of elements in the current array (or -1 if not in an array).
 	int getArrayLength() const;
 
 	// Create and enter an object. If the object already exists this has the same effect as a call to find() followed by
@@ -123,17 +127,13 @@ public:
 	// Leave the current object.
 	void endObject() { leaveObject(); }
 	
-	// Create and set a named value. If the object already exists this modifies the type and value of the existing object.
-	template <typename tType>
-	void setValue(const char* _name, tType _value);
-
 	// Create and enter an array. If the array already exists this has the effect as a call to find() followed by a 
 	// call to enterArray(). If _name is nullptr the array is expected to be an array member.
 	void beginArray(const char* _name = nullptr);
 	// Leave the current array.
 	void endArray() { leaveArray(); }
 
-	// Create and set an array member.
+	// Push _value into the current array.
 	template <typename tType>
 	void pushValue(tType _value);
 	

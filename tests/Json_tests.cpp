@@ -5,6 +5,27 @@
 
 using namespace apt;
 
+TEST_CASE("ArrayAccess", "[Json]")
+{
+	const int arr[] = { 3, 5, 7, 6 };
+
+	Json json;
+	json.beginArray("ArrayAccess");
+		for (auto v : arr) {
+			json.pushValue(v);
+		}
+	json.endArray();
+
+	json.beginArray("ArrayAccess");
+		int n = APT_ARRAY_COUNT(arr);
+		REQUIRE(json.getArrayLength() == n);
+		for (int i = 0; i < n; ++i) {
+			auto v = json.getValue<int>(i);
+			REQUIRE(json.getValue<int>(i) == arr[i]);
+		}
+	json.endArray();
+}
+
 TEST_CASE("ArrayOfArray", "[SerializerJson]")
 {
 	Json json;
@@ -26,7 +47,7 @@ TEST_CASE("ArrayOfArray", "[SerializerJson]")
 	{	SerializerJson js(json, SerializerJson::Mode_Read);
 		uint in = 4;
 		js.beginArray(in, "ArrayOfArrays");
-		REQUIRE(in== 4);
+		REQUIRE(in == 4);
 		for (int i = 0; i < in; ++i) {
 			uint jn = 3;
 			js.beginArray(jn);

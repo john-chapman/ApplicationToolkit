@@ -99,7 +99,7 @@ public:
 	// Get the type of the current value.
 	ValueType getType() const;
 
-	// Get the current value. tType is expected to match the type of the current value exactly (i.e. getValue<int>() must be called only if the value type is ValueType_Number).
+	// Get the current value. tType is expected to match the type of the current value (i.e. getValue<int>() must be called only if the value type is ValueType_Number).
 	// \note Ptr returned by getValue<const char*> is only valid during the lifetime of the Json object.
 	template <typename tType>
 	tType getValue(int _i = -1) const;

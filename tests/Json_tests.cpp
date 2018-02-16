@@ -10,19 +10,39 @@ TEST_CASE("ArrayAccess", "[Json]")
 	const int arr[] = { 3, 5, 7, 6 };
 
 	Json json;
-	json.beginArray("ArrayAccess");
+	json.beginArray("ArrayInt");
 		for (auto v : arr) {
 			json.pushValue(v);
 		}
 	json.endArray();
 
-	json.beginArray("ArrayAccess");
+	json.beginArray("ArrayInt");
+	{
 		int n = APT_ARRAY_COUNT(arr);
 		REQUIRE(json.getArrayLength() == n);
 		for (int i = 0; i < n; ++i) {
 			auto v = json.getValue<int>(i);
 			REQUIRE(json.getValue<int>(i) == arr[i]);
 		}
+	}
+	json.endArray();
+
+
+
+	json.beginArray("ArrayVec2");
+		for (auto v : arr) {
+			json.pushValue(vec2((float)v));
+		}
+	json.endArray();
+	json.beginArray("ArrayVec2");
+	{
+		int n = APT_ARRAY_COUNT(arr);
+		REQUIRE(json.getArrayLength() == n);
+		for (int i = 0; i < n; ++i) {
+			auto v = json.getValue<vec2>(i);
+			REQUIRE(json.getValue<vec2>(i) == vec2((float)arr[i]));
+		}
+	}
 	json.endArray();
 }
 

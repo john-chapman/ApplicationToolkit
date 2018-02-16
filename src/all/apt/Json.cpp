@@ -299,45 +299,39 @@ template <> const char* Json::getValue<const char*>(int _i) const
 }
 template <> vec2 Json::getValue<vec2>(int _i) const
 {
-	vec2 ret;
-	Json* json = const_cast<Json*>(this);
-	if (json->enterArray()) {
-		APT_ASSERT_MSG(m_impl->top()->Size() == 2, "Json::getValue: invalid vec2, size = %d", m_impl->top()->Size());
-		int i = 0;
-		while (json->next()) {
-			ret[i++] = getValue<float>();
-		}
-		json->leaveArray();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
 	}
-	return ret;
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Array, "Json::getValue: value was not an array");
+	APT_ASSERT_MSG(jsonValue->Size() == 2, "Json::getValue: invalid vec2, size = %d", jsonValue->Size());
+	auto& arr = jsonValue->GetArray();
+	return vec2(arr[0].GetFloat(), arr[1].GetFloat());
 }
 template <> vec3 Json::getValue<vec3>(int _i) const
 {
-	vec3 ret;
-	Json* json = const_cast<Json*>(this);
-	if (json->enterArray()) {
-		APT_ASSERT_MSG(m_impl->top()->Size() == 3, "Json::getValue: invalid vec3, size = %d", m_impl->top()->Size());
-		int i = 0;
-		while (json->next()) {
-			ret[i++] = getValue<float>();
-		}
-		json->leaveArray();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
 	}
-	return ret;
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Array, "Json::getValue: value was not an array");
+	APT_ASSERT_MSG(jsonValue->Size() == 3, "Json::getValue: invalid vec3, size = %d", jsonValue->Size());
+	auto& arr = jsonValue->GetArray();
+	return vec3(arr[0].GetFloat(), arr[1].GetFloat(), arr[2].GetFloat());
 }
 template <> vec4 Json::getValue<vec4>(int _i) const
 {
-	vec4 ret;
-	Json* json = const_cast<Json*>(this);
-	if (json->enterArray()) {
-		APT_ASSERT_MSG(m_impl->top()->Size() == 4, "Json::getValue: invalid vec4, size = %d", m_impl->top()->Size());
-		int i = 0;
-		while (json->next()) {
-			ret[i++] = getValue<float>();
-		}
-		json->leaveArray();
+	const rapidjson::Value* jsonValue = m_impl->m_value;
+	if (_i >= 0 && GetValueType(m_impl->top()->GetType()) == ValueType_Array) {
+		APT_ASSERT_MSG(_i < (int)m_impl->top()->GetArray().Size(), "Json::getValue: array index out of bounds");
+		jsonValue = &m_impl->top()->GetArray()[_i];
 	}
-	return ret;
+	APT_ASSERT_MSG(GetValueType(jsonValue->GetType()) == ValueType_Array, "Json::getValue: value was not an array");
+	APT_ASSERT_MSG(jsonValue->Size() == 4, "Json::getValue: invalid vec4, size = %d", jsonValue->Size());
+	auto& arr = jsonValue->GetArray();
+	return vec4(arr[0].GetFloat(), arr[1].GetFloat(), arr[2].GetFloat(), arr[3].GetFloat());
 }
 template <> mat2 Json::getValue<mat2>(int _i) const
 {

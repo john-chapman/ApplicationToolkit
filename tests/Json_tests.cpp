@@ -5,42 +5,82 @@
 
 using namespace apt;
 
-TEST_CASE("ArrayAccess", "[Json]")
+template <typename tType>
+static void _ValueAccessTest(const char* _name, Json& _json_)
 {
-	const int arr[] = { 3, 5, 7, 6 };
+	_json_.setValue(_name, tType(1));
+	REQUIRE(_json_.getValue<tType>(_name) == tType(1));
+}
+#define ValueAccessTest(t) _ValueAccessTest<t>(#t, json)
 
-	Json json;
-	json.beginArray("ArrayInt");
-		for (auto v : arr) {
-			json.pushValue(v);
+template <typename tType>
+static void _ArrayAccessTest(const char* _name, Json& _json_)
+{
+	static const int kArrayValues[] = { 3, 5, 7, 1, 9 };
+	_json_.beginArray(_name);
+		for (auto v : kArrayValues) {
+			_json_.pushValue(tType(v));
 		}
-	json.endArray();
+	_json_.endArray();
 
-	json.beginArray("ArrayInt");
+	_json_.beginArray(_name);
 	{
-		int n = APT_ARRAY_COUNT(arr);
-		REQUIRE(json.getArrayLength() == n);
+		int n = APT_ARRAY_COUNT(kArrayValues);
+		REQUIRE(_json_.getArrayLength() == n);
 		for (int i = 0; i < n; ++i) {
-			auto v = json.getValue<int>(i);
-			REQUIRE(json.getValue<int>(i) == arr[i]);
+			auto v = _json_.getValue<tType>(i);
+			REQUIRE(_json_.getValue<tType>(i) == tType(kArrayValues[i]));
 		}
 	}
-	json.endArray();
+	_json_.endArray();
+}
+#define ArrayAccessTest(t) _ArrayAccessTest<t>(#t, json)
 
+// instantiate _macro for all types
+#define TestTypes(_macro) \
+	_macro(sint8);   \
+	_macro(uint8);   \
+	_macro(sint16);  \
+	_macro(uint16);  \
+	_macro(sint32);  \
+	_macro(uint32);  \
+	_macro(sint64);  \
+	_macro(uint64);  \
+	_macro(float32); \
+	_macro(float64); \
+	_macro(vec2);    \
+	_macro(vec3);    \
+	_macro(vec4);    \
+	_macro(mat2);    \
+	_macro(mat3);    \
+	_macro(mat4)
 
+TEST_CASE("ValueAccess", "[Json]")
+{
+	Json json;
+	TestTypes(ValueAccessTest);
+}
 
-	json.beginArray("ArrayVec2");
-		for (auto v : arr) {
-			json.pushValue(vec2((float)v));
+TEST_CASE("ArrayAccess", "[Json]")
+{
+	Json json;
+	//TestTypes(ArrayAccessTest);
+
+	const int arr[] = { 3, 5, 7, 2, 9 };
+	json.beginArray("ArrayMat2");
+		for (auto v: arr) {
+			json.pushValue(mat2((float)v));
 		}
 	json.endArray();
-	json.beginArray("ArrayVec2");
+
+	Json::Write(json, "fuck.json");
+	json.beginArray("ArrayMat2");
 	{
 		int n = APT_ARRAY_COUNT(arr);
 		REQUIRE(json.getArrayLength() == n);
 		for (int i = 0; i < n; ++i) {
-			auto v = json.getValue<vec2>(i);
-			REQUIRE(json.getValue<vec2>(i) == vec2((float)arr[i]));
+			auto v = json.getValue<mat2>(i);
+			REQUIRE(json.getValue<mat2>(i) == mat2((float)arr[i]));
 		}
 	}
 	json.endArray();

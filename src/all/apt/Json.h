@@ -14,19 +14,24 @@ namespace apt {
 // 
 //  Json json("json.json") // use Json::Read() if you need to check the return code
 //  
-//  if (json.find("Value")) {                    // find a value in the DOM root
-//     if (json.getType() == Json::ValueType_Number) {    // check it's the right type
-//        int v = json.getValue<int>();          // retrieve/store the value
+//  if (json.find("Value")) {                          // find a value in the DOM root
+//     if (json.getType() == Json::ValueType_Number) { // check it's the right type
+//        int v = json.getValue<int>();                // retrieve/store the value
 //     }
 //  }
 //  
 //  if (json.find("Array")) {
 //     if (json.enterArray()) {
-//        while (json.next()) {                      // get the next value while one exists
+//        while (json.next()) {                               // get the next value while one exists
 //           if (json.getType() == Json::ValueType_Number) {  // check it's the right type
-//              int v = json.getValue<int>();        // retrieve/store the value
+//              int v = json.getValue<int>();                 // retrieve/store the value
 //           }
 //        }
+//        int n = json.getArrayLength();
+//        for (int i = 0; i < n; ++i) {
+//           int v = json.getValue<int>(i);  // alternatively access array elements directly
+//        }
+//
 //        json.leaveArray(); // must leave the array before proceeding
 //     }
 //  }
@@ -103,6 +108,10 @@ public:
 	// \note Ptr returned by getValue<const char*> is only valid during the lifetime of the Json object.
 	template <typename tType>
 	tType getValue(int _i = -1) const;
+
+	// Get a named value. Equivalent to find() followed by getValue().
+	template <typename tType>
+	tType getValue(const char* _name, int _i = -1) { APT_VERIFY(find(_name)); return getValue<tType>(_i); }
 		
 	// Create and set a named value. If the object already exists this modifies the type and value of the existing object.
 	template <typename tType>

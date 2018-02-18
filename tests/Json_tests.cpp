@@ -16,7 +16,7 @@ static void _ValueAccessTest(const char* _name, Json& _json_)
 template <typename tType>
 static void _ArrayAccessTest(const char* _name, Json& _json_)
 {
-	static const int kArrayValues[] = { 3, 5, 7, 1, 9 };
+	static const float kArrayValues[] = { 3, 5, 7, 1, 9 };
 	_json_.beginArray(_name);
 		for (auto v : kArrayValues) {
 			_json_.pushValue(tType(v));
@@ -64,26 +64,7 @@ TEST_CASE("ValueAccess", "[Json]")
 TEST_CASE("ArrayAccess", "[Json]")
 {
 	Json json;
-	//TestTypes(ArrayAccessTest);
-
-	const int arr[] = { 3, 5, 7, 2, 9 };
-	json.beginArray("ArrayMat2");
-		for (auto v: arr) {
-			json.pushValue(mat2((float)v));
-		}
-	json.endArray();
-
-	Json::Write(json, "fuck.json");
-	json.beginArray("ArrayMat2");
-	{
-		int n = APT_ARRAY_COUNT(arr);
-		REQUIRE(json.getArrayLength() == n);
-		for (int i = 0; i < n; ++i) {
-			auto v = json.getValue<mat2>(i);
-			REQUIRE(json.getValue<mat2>(i) == mat2((float)arr[i]));
-		}
-	}
-	json.endArray();
+	TestTypes(ArrayAccessTest);
 }
 
 TEST_CASE("ArrayOfArray", "[SerializerJson]")

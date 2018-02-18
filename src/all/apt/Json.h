@@ -54,6 +54,13 @@ namespace apt {
 //        json.pushValue(i);
 //    }
 //  json.endArray();
+//
+//  json.beginArray("Array"); // arrays can be modified
+//     int n = json.getArrayLength();
+//     for (int i = 0; i < n; ++i) {
+//        json.setValue(i, 0);
+//     }
+//  json.endArray();
 //  
 //  json.beginArray("ArrayOfArrays");
 //     for (int i = 0; i < 4; ++i) {
@@ -104,18 +111,23 @@ public:
 	// Get the type of the current value.
 	ValueType getType() const;
 
-	// Get the current value. tType is expected to match the type of the current value (i.e. getValue<int>() must be called only if the value type is ValueType_Number).
-	// \note Ptr returned by getValue<const char*> is only valid during the lifetime of the Json object.
+	// Get the current value. tType must match the type of the current value (i.e. getValue<int>() must be called only if the value type is ValueType_Number).
+	// _i permits array access (when in an array). 0 <= _i < getArrayLength().
+	// Note that the ptr returned by getValue<const char*> is only valid during the lifetime of the Json object.
 	template <typename tType>
 	tType getValue(int _i = -1) const;
 
-	// Get a named value. Equivalent to find() followed by getValue().
+	// Get a named value. Equivalent to find(_name) followed by getValue(_i).
 	template <typename tType>
 	tType getValue(const char* _name, int _i = -1) { APT_VERIFY(find(_name)); return getValue<tType>(_i); }
 		
 	// Create and set a named value. If the object already exists this modifies the type and value of the existing object.
 	template <typename tType>
 	void setValue(const char* _name, tType _value);
+
+    // Set the _ith element of an array. 0 <= _i < getArrayLength().
+	template <typename tType>
+	void setValue(int _i, tType _value);
 
 	// Enter the current object (call immediately after find() or next()). Return false if the current value is not an object.
 	bool enterObject();

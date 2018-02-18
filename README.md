@@ -25,6 +25,7 @@ Embedded dependencies:
 - [stb](https://github.com/nothings/stb)
 
 ## Change Log ##
+- `2018-02-18 (v0.09):` Json: Direct array access overloads of `setValue()`, `getValue()`, bug fixes.
 - `2018-01-21 (v0.08):` FileSystem: "null-separated string" interfaces now use std::initializer_list.
 - `2018-01-14 (v0.07):` Type traits + tag dispatch for math utility functions. Moved Min, Max, Clamp, Saturate into math.h.
 - `2018-01-06 (v0.06):` Rand API.

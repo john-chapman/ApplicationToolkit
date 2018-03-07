@@ -168,6 +168,9 @@ namespace apt {
 	inline tType Saturate(const tType& _x)                                      { return Clamp(_x, tType(0), tType(1)); }
 	#define APT_SATURATE(_x) apt::Saturate(_x)
 
+	// Return the result of the euclidian division of _x by _y	
+	template <typename tType>
+	inline tType Mod(const tType& _x, const tType& _y)                          { return _x - _y * std::floor(_x / _y);}
 
 	namespace internal {
 		template <typename tType>

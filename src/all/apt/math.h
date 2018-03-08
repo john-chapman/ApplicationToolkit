@@ -144,7 +144,7 @@ namespace apt {
 	template <typename tType>
 	tType Ceil(const tType& _x);
 
-	// Return the result of the euclidian division of _x by _y	
+	// Return the remainder of _x / _y.
 	template <typename tType>
 	inline tType Mod(const tType& _x, const tType& _y)                           { return _x - _y * Floor(_x / _y); }
 

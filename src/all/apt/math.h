@@ -59,6 +59,7 @@ namespace apt {
 	mat4 RotationMatrix(const vec3& _axis, float _radians);
 	mat4 RotationMatrix(const quat& _q);
 	quat RotationQuaternion(const vec3& _axis, float _radians);
+	quat RotationQuaternion(const mat3& _rotation);
 	mat4 ScaleMatrix(const vec3& _scale);
 
 	// Extract translation/rotation/scale from _m.
@@ -90,17 +91,19 @@ namespace apt {
 	vec3 ToEulerXYZ(const mat3& _m);
 	mat3 FromEulerXYZ(const vec3& _euler);
 
-	// Return the transpose of _m.
+	// Return the transpose of a matrix.
 	mat4 Transpose(const mat4& _m);
 	mat3 Transpose(const mat3& _m);
 	mat2 Transpose(const mat2& _m);
 
-	// Return the inverse of _m.
+	// Return the inverse of a matrix/quaternion.
 	mat4 Inverse(const mat4& _m);
 	mat3 Inverse(const mat3& _m);
 	mat2 Inverse(const mat2& _m);
+	quat Inverse(const quat& _q);   // can use Conjugate(_q) if _q is unit length
+	quat Conjugate(const quat& _q); // equivalent to Inverse(_q) if _q is unit length
 
-	// Return the inverse of _m for an affine matrix.
+	// Return the inverse of an affine matrix.
 	mat4 AffineInverse(const mat4& _m);
 	mat3 AffineInverse(const mat3& _m);
 

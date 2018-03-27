@@ -61,6 +61,11 @@ quat apt::RotationQuaternion(const vec3& _axis, float _radians)
 	return linalg::rotation_quat(_axis, _radians);
 }
 
+quat apt::RotationQuaternion(const mat3& _rotation)
+{
+	return linalg::rotation_quat(_rotation);
+}
+
 mat4 apt::ScaleMatrix(const vec3& _scale)
 {
 	return linalg::scaling_matrix(_scale);
@@ -165,7 +170,14 @@ mat2 apt::Inverse(const mat2& _m)
 {
 	return linalg::inverse(_m);
 }
-
+quat apt::Inverse(const quat& _q)
+{
+	return linalg::qinv(_q);
+}
+quat apt::Conjugate(const quat& _q)
+{
+	return linalg::qconj(_q);
+}
 
 mat4 apt::AffineInverse(const mat4& _m)
 {

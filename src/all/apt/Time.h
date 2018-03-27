@@ -12,48 +12,40 @@ namespace apt {
 class Time
 {
 public:
-	// High-resolution time stamp. Use for interval measurements.
+	// See TimeStamp.
 	static Timestamp GetTimestamp();
+	static sint64    GetSystemFrequency();
 	
-	// High-resolution date-time, synchronized to UTC.
-	static DateTime GetDateTime();
-	
-	// Frequency of the system timer in ticks/second.
-	static sint64 GetSystemFrequency();
-	
+	// See DateTime.
+	static DateTime  GetDateTime(); // UTC
+	static DateTime  GetSystemEpoch();
+	static DateTime  ToLocal(DateTime _utc);
+	static DateTime  ToUTC(DateTime _local);
+
 	// Interval since the application began.
 	static Timestamp GetApplicationElapsed();
 
 	static void Init();
 	static void Shutdown();
-
 };
 APT_DECLARE_STATIC_INIT(Time, Time::Init, Time::Shutdown);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Timestamp
-// High-resolution unsynchronized timestamp, with functions for converting 
-// between ticks and seconds/milliseconds/microseconds. Use for interval
-// measurments.
+// High resolution unsynchronized timestamp, use for interval measurments. 
 ////////////////////////////////////////////////////////////////////////////////
 class Timestamp
 {
 	friend class Time;
 public:
-	// Default/value-initializing ctor.
-	Timestamp(sint64 _raw = 0): m_raw(_raw) {}
+	Timestamp(sint64 _raw = 0ll): m_raw(_raw) {}
 
-	// Raw time value in system-dependent units.
+	// Raw time in system ticks.
 	sint64 getRaw() const { return m_raw; }
 
-	// Raw value converted to seconds.
 	double asSeconds() const;
-
-	// Raw value converted to milliseconds (10^-3s).
-	double asMilliseconds() const;
-
-	// Raw value converted to microseconds (10^-6s).
-	double asMicroseconds() const;
+	double asMilliseconds() const; // (10^-3s)
+	double asMicroseconds() const; // (10^-6s)
 	
 	// Return a string with an appropriate units e.g. "2.43s", "17.2ms", "400us".
 	// Note that return value is a ptr to a local static buffer - for normal use this should be fine, just print the string and don't keep the ptr.
@@ -77,13 +69,17 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 // DateTime
-// High-resolution datetime, synchronized to UTC.
+// System datetime, use for file timestamps. 
+// Note that the raw representation is relative to the system epoch (e.g. 
+// 1601-01-01 under Win32), therefore calling get*() or asString() on the delta
+// between two DateTime objects will give incorrect results for year, month and
+// day. If necessary this can be corrected as e.g. 
+//   dy = delta.getYear() - Time::GetSystemEpoch().getYear().
 ////////////////////////////////////////////////////////////////////////////////
 class DateTime
 {
 	friend class Time;
 public:
-	// Default/value-initializing ctor.
 	DateTime(sint64 _raw = 0ll): m_raw(_raw) {}
 
 	// Raw time value in system-dependent units.

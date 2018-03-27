@@ -7,6 +7,28 @@
 
 using namespace apt;
 
+static SYSTEMTIME ToSystemTime(sint64 _raw)
+{
+	LARGE_INTEGER li;
+	li.QuadPart = _raw;
+	FILETIME ft;
+	ft.dwLowDateTime  = li.LowPart;
+	ft.dwHighDateTime = li.HighPart;
+	SYSTEMTIME st;
+	FileTimeToSystemTime(&ft, &st);	
+	return st;
+}
+
+static DateTime ToDateTime(SYSTEMTIME _st)
+{
+	FILETIME ft;
+	SystemTimeToFileTime(&_st, &ft);
+	LARGE_INTEGER li;
+	li.LowPart  = ft.dwLowDateTime;
+	li.HighPart = ft.dwHighDateTime;
+	return DateTime(li.QuadPart);
+}
+
 /*******************************************************************************
 	
                                  Time
@@ -24,9 +46,9 @@ Timestamp Time::GetTimestamp()
 	return Timestamp(t.QuadPart);
 }
 
-Timestamp Time::GetApplicationElapsed()
+sint64 Time::GetSystemFrequency() 
 {
-	return GetTimestamp() - *s_appInit;
+	return *s_sysFreq;
 }
 
 DateTime Time::GetDateTime() 
@@ -40,9 +62,30 @@ DateTime Time::GetDateTime()
 	return DateTime(li.QuadPart);
 }
 
-sint64 Time::GetSystemFrequency() 
+DateTime Time::ToLocal(DateTime _utc)
 {
-	return *s_sysFreq;
+	SYSTEMTIME utc = ToSystemTime(_utc.getRaw());
+	SYSTEMTIME ret;
+	SystemTimeToTzSpecificLocalTime(NULL, &utc, &ret);
+	return ToDateTime(ret);
+}
+
+DateTime Time::ToUTC(DateTime _local)
+{
+	SYSTEMTIME local = ToSystemTime(_local.getRaw());
+	SYSTEMTIME ret;
+	TzSpecificLocalTimeToSystemTime(NULL, &local, &ret);
+	return ToDateTime(ret);
+}
+
+DateTime Time::GetSystemEpoch()
+{
+	return DateTime(0ll);
+}
+
+Timestamp Time::GetApplicationElapsed()
+{
+	return GetTimestamp() - *s_appInit;
 }
 
 void Time::Init()
@@ -84,30 +127,18 @@ double Timestamp::asMicroseconds() const
 
 *******************************************************************************/
 
-static SYSTEMTIME GetSystemTime(apt::sint64 raw)
-{
-	LARGE_INTEGER li;
-	li.QuadPart = raw;
-	FILETIME ft;
-	ft.dwLowDateTime  = li.LowPart;
-	ft.dwHighDateTime = li.HighPart;
-	SYSTEMTIME st;
-	FileTimeToSystemTime(&ft, &st);
-	return st;
-}
-
-sint32 DateTime::getYear() const         { return (sint32)GetSystemTime(m_raw).wYear; }
-sint32 DateTime::getMonth() const        { return (sint32)GetSystemTime(m_raw).wMonth; }
-sint32 DateTime::getDay() const          { return (sint32)GetSystemTime(m_raw).wDay; }
-sint32 DateTime::getHour() const         { return (sint32)GetSystemTime(m_raw).wHour; }
-sint32 DateTime::getMinute() const       { return (sint32)GetSystemTime(m_raw).wMinute; }
-sint32 DateTime::getSecond() const       { return (sint32)GetSystemTime(m_raw).wSecond; }
-sint32 DateTime::getMillisecond() const  { return (sint32)GetSystemTime(m_raw).wMilliseconds; }
+sint32 DateTime::getYear() const         { return (sint32)ToSystemTime(m_raw).wYear; }
+sint32 DateTime::getMonth() const        { return (sint32)ToSystemTime(m_raw).wMonth; }
+sint32 DateTime::getDay() const          { return (sint32)ToSystemTime(m_raw).wDay; }
+sint32 DateTime::getHour() const         { return (sint32)ToSystemTime(m_raw).wHour; }
+sint32 DateTime::getMinute() const       { return (sint32)ToSystemTime(m_raw).wMinute; }
+sint32 DateTime::getSecond() const       { return (sint32)ToSystemTime(m_raw).wSecond; }
+sint32 DateTime::getMillisecond() const  { return (sint32)ToSystemTime(m_raw).wMilliseconds; }
 
 const char* apt::DateTime::asString(const char* _format) const
 {
 	static String<128> s_buf;
-	SYSTEMTIME st = GetSystemTime(m_raw);
+	SYSTEMTIME st = ToSystemTime(m_raw);
 	if (!_format) { // default ISO 8601 format
 		s_buf.setf("%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 	} else {

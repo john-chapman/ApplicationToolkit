@@ -25,6 +25,7 @@ Embedded dependencies:
 - [stb](https://github.com/nothings/stb)
 
 ## Change Log ##
+- `2018-02-22 (v0.11):` DateTime conversions between local and UTC.
 - `2018-02-22 (v0.10):` Deprecated macros APT_ALIGNOF, APT_ALIGNAS, APT_THREAD_LOCAL. Minor fixes/cleaning.
 - `2018-02-18 (v0.09):` Json: Direct array access overloads of `setValue()`, `getValue()`, bug fixes.
 - `2018-01-21 (v0.08):` FileSystem: "null-separated string" interfaces now use std::initializer_list.

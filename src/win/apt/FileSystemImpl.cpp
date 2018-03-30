@@ -1,8 +1,10 @@
 #include <apt/FileSystem.h>
 
 #include <apt/log.h>
+#include <apt/memory.h>
 #include <apt/platform.h>
 #include <apt/win.h>
+#include <apt/Pool.h>
 #include <apt/String.h>
 #include <apt/TextParser.h>
 
@@ -11,6 +13,7 @@
 #include <cstring>
 
 #include <EASTL/vector.h>
+#include <EASTL/vector_map.h>
 
 #pragma comment(lib, "shlwapi")
 
@@ -396,6 +399,158 @@ int FileSystem::ListDirs(PathStr retList_[], int _maxResults, const char* _path,
     }
 
 	return ret;
+}
+
+
+namespace {
+
+	struct Watch
+	{
+		OVERLAPPED m_overlapped = {};
+		HANDLE     m_hDir       = INVALID_HANDLE_VALUE;
+		DWORD      m_filter     = 0;
+		UINT       m_bufSize    = 1024 * 32; // 32kb
+		BYTE*      m_buf        = NULL;
+
+		FileSystem::FileActionCallback& m_dispatchCallback;
+		eastl::vector<eastl::pair<FileSystem::PathStr, FileSystem::FileAction> > m_dispatchQueue;
+	};
+	static Pool<Watch> s_WatchPool;
+	static eastl::vector_map<StringHash, Watch*> s_WatchMap;
+
+	void CALLBACK WatchCompletion(DWORD _err, DWORD _bytes, LPOVERLAPPED _overlapped);
+	void          WatchUpdate(Watch* _watch);
+
+
+	void CALLBACK WatchCompletion(DWORD _err, DWORD _bytes, LPOVERLAPPED _overlapped)
+	{
+		if (_err == ERROR_OPERATION_ABORTED) { // CancellIo was called
+			return;
+		}
+		APT_ASSERT(_err == ERROR_SUCCESS);
+		APT_ASSERT(_bytes != 0); // overflow? notifications losts in this case?
+
+		Watch* watch = (Watch*)_overlapped; // m_overlapped is the first member, so this works
+
+		APT_LOG_DBG(" --- ");
+
+		TCHAR fileName[MAX_PATH];
+		for (DWORD off = 0;;) {
+			PFILE_NOTIFY_INFORMATION info = (PFILE_NOTIFY_INFORMATION)(watch->m_buf + off);		
+			off += info->NextEntryOffset;
+
+		 // unicode -> utf8
+			int count = WideCharToMultiByte(CP_UTF8, 0, info->FileName, info->FileNameLength / sizeof(WCHAR), fileName, MAX_PATH - 1, NULL, NULL);
+			fileName[count] = '\0';
+
+			const char* action = "--";
+			#define CASE_ENUM(e) case e: action = #e; break
+			switch(info->Action) {
+				CASE_ENUM(FILE_ACTION_ADDED);
+				CASE_ENUM(FILE_ACTION_REMOVED);
+				CASE_ENUM(FILE_ACTION_MODIFIED);
+				CASE_ENUM(FILE_ACTION_RENAMED_NEW_NAME);
+				CASE_ENUM(FILE_ACTION_RENAMED_OLD_NAME);
+				default : "?";
+			};
+			#undef CASE_ENUM
+			APT_LOG("%s : %s", fileName, action);
+			
+			if (info->NextEntryOffset == 0) {
+				break;
+			}
+		}
+
+	 // reissue ReadDirectoryChangesW; it seems that we don't actually miss any notifications which happen between the start of the completion routine
+	 // and the reissue, so it's safe to wait until the dispatch is done
+		WatchUpdate(watch);
+	}
+
+	void WatchUpdate(WatchData* _watch)
+	{
+		APT_PLATFORM_VERIFY(ReadDirectoryChangesW(
+			_watch->m_hDir,
+			_watch->m_buf,
+			_watch->m_bufSize,
+			TRUE, // watch subtree
+			_watch->m_filter,
+			NULL,
+ 			&_watch->m_overlapped, 
+			WatchCompletion
+			));
+	}
+}
+
+static void FileSystem::BeginNotifications(const char* _dir, FileActionCallback& _callback)
+{
+	StringHash dirHash(_dir);
+	if (s_WatchMap.find(dirHash) != s_WatchMap.end()) {
+		APT_ASSERT(false);
+		return;
+	}
+
+	Watch* watch = s_WatchPool.alloc();
+	watch->m_hDir = CreateFileA(
+		_dir,                                                    // path
+		FILE_LIST_DIRECTORY,                                     // desired access
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,  // share mode
+		NULL,                                                    // security attribs
+		OPEN_EXISTING,                                           // create mode
+		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,       // file attribs
+		NULL                                                     // template handle
+		);
+	APT_PLATFORM_ASSERT(ret->m_hDir != INVALID_HANDLE_VALUE);
+
+	s_WatchMap[dirHash] = watch;
+	watch->m_buf = (BYTE*)malloc_aligned(watch->m_bufSize, sizeof(DWORD));
+	watch->m_filter = 0
+			| FILE_NOTIFY_CHANGE_CREATION
+			| FILE_NOTIFY_CHANGE_SIZE
+			| FILE_NOTIFY_CHANGE_ATTRIBUTES 
+			| FILE_NOTIFY_CHANGE_FILE_NAME 
+			| FILE_NOTIFY_CHANGE_DIR_NAME 
+			;
+	UpdateWindow(watch);
+}
+
+void FileSystem::EndNotifications(const char* _dir)
+{
+	StringHash dirHash(_dir);
+	if (s_WatchMap.find(dirHash) == s_WatchMap.end()) {
+		APT_ASSERT(false);
+		return;
+	}
+
+	Watch* watch = s_WatchMap[dirHash];
+	free_aligned(watch->m_buf);
+	s_WatchPool.free(watch);
+}
+
+void FileSystem::DispatchNotifications(const char* _dir)
+{
+	SleepEx(0, TRUE);
+
+	if (_dir) {
+		auto it = s_WatchMap.find(StringHash(_dir));
+		if (it == s_WatchMap.end()) {
+			APT_ASSERT(false);
+			return;
+		}
+		Watch& watch = *it->second;
+		for (auto& file : watch.m_dispatchQueue) {
+			watch.m_dispatchCallback(file.first.c_str(), file.second);
+		}
+		watch.m_dispatchQueue.clear();
+
+	} else {
+		for (auto& it : s_WatchMap) {
+			Watch& watch = *it->second;
+			for (auto& file : watch.m_dispatchQueue) {
+				watch.m_dispatchCallback(file.first.c_str(), file.second);
+			}
+			watch.m_dispatchQueue.clear();
+		}
+	}
 }
 
 // PROTECTED

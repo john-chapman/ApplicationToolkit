@@ -111,12 +111,36 @@ public:
 	static bool        PlatformSelect(PathStr& ret_, std::initializer_list<const char*> _filterList = { "*" });
 	static int         PlatformSelectMulti(PathStr retList_[], int _maxResults, std::initializer_list<const char*> _filterList = { "*" });
 
+ // Inspection
+
 	// List up to _maxResults files in _path, with optional recursion.
 	// Return the number of files which would be found if not limited by _maxResults.
 	static int         ListFiles(PathStr retList_[], int _maxResults, const char* _path, std::initializer_list<const char*> _filterList = { "*" }, bool _recursive = false);
 	// List up to _maxResults dirs in _path, with optional recursion. _filters is a null-separated list of filter strings.
 	// Return the number of dirs which would be found if not limited by _maxResults.
 	static int         ListDirs(PathStr retList_[], int _maxResults, const char* _path, std::initializer_list<const char*> _filterList= { "*" }, bool _recursive = false);
+
+
+ // File action notifications
+
+	enum FileAction_
+	{
+		FileAction_Created,
+		FileAction_Deleted,
+		FileAction_Modified,
+
+		FileAction_Count
+	};
+	typedef int FileAction;
+
+	typedef void (FileActionCallback)(const char* _path, FileAction _action);
+
+	// Begin receiving notifications for changes to _dir (and its subtree). _callback will be called once for each event. See DispatchNotifcations().
+	static void        BeginNotifications(const char* _dir, FileActionCallback& _callback);
+	// Stop receiving notifications for changes to _dir.
+	static void        EndNotifications(const char* _dir);
+	// Dispatch file action notifications. If _dir is 0, dispatch to all registered callbacks. This should be called frequently.
+	static void        DispatchNotifications(const char* _dir = nullptr);
 
 private:
 	static PathStr    s_roots[RootType_Count];

@@ -11,16 +11,15 @@ namespace apt {
 
 ////////////////////////////////////////////////////////////////////////////////
 // FileSystem
-// Manage file access. A fixed number of directory 'roots' may be set, which 
-// are searched in reverse order when resolving a relative path (e.g. 
-// RootType_Application is checked before RootType_Common).
+// Manage file access. 
+// A fixed number of directory 'roots' may be set, which are searched in reverse 
+// order when resolving a relative path (e.g. RootType_Application is checked 
+// before RootType_Common).
 ////////////////////////////////////////////////////////////////////////////////
-class FileSystem : private non_instantiable<FileSystem>
+class FileSystem
 {
 public:
-	typedef File::PathStr PathStr;
-
-	enum RootType
+	enum RootType_
 	{
 		RootType_Root,         // By default, the working directory of the executable.
 		RootType_Common,       // Shared path for common files.
@@ -29,6 +28,7 @@ public:
 		RootType_Count,
 		RootType_Default = RootType_Application
 	};
+	typedef int RootType;
 
 	// Get/set a path for the specified root type.
 	static const char* GetRoot(RootType _type);
@@ -67,7 +67,7 @@ public:
  // Path manipulation
 
 	// Concatenates _path + s_separator + s_root[_root]. If _path is absolute the root is ignored.
-	static void        MakePath(StringBase& ret_, const char* _path, RootType _root);
+	static PathStr     MakePath(const char* _path, RootType _root);
 
 	// Match _str against _pattern with wildcard characters: 
 	// '?' matches a single character, '*' matches zero or more characters.
@@ -75,37 +75,29 @@ public:
 	// Call Matches() for each of a list of patterns e.g. { "*.txt", "*.png" }.	
 	static bool        MatchesMulti(std::initializer_list<const char*> _patternList, const char* _str);
 
-	// Make _path relative to _root. It is safe for _path to point to the string buffer in ret_.
-	static void        MakeRelative(StringBase& ret_, const char* _path, RootType _root = RootType_Root);
-	static void        MakeRelative(StringBase& _ret_, RootType _root = RootType_Root) { MakeRelative(_ret_, (const char*)_ret_, _root); }
-	
+	// Make _path relative to _root.
+	static PathStr     MakeRelative(const char* _path, RootType _root = RootType_Root);
 	// Return true if _path is absolute.
 	static bool        IsAbsolute(const char* _path);
 
-	// Strip any root from _path, or the whole path if _path is absolute.. It is safe for _path to point to the string buffer in ret_.
-	static void        StripRoot(StringBase& ret_, const char* _path);
-	static void        StripRoot(StringBase& _ret_) { StripRoot(_ret_, (const char*)_ret_); }
-	// Strip path from _path. It is safe for _path to point to the string buffer in ret_.
-	static void        StripPath(StringBase& ret_, const char* _path);
-	static void        StripPath(StringBase& _ret_) { StripPath(_ret_, (const char*)_ret_); }
+	// Strip any root from _path, or the whole path if _path is absolute.
+	static PathStr     StripRoot(const char* _path);
+	// Strip path from _path.
+	static PathStr     StripPath(const char* _path);
 
-	// Extract path from _path (remove file name + extension). It is safe for _path to point the string buffer in ret_.
-	static void        GetPath(StringBase& ret_, const char* _path);
-	static void        GetPath(StringBase& _ret_) { GetFileName(_ret_, (const char*)_ret_); }
-	// Extract file name from _path (remove path + extension). It is safe for _path to point to the string buffer in ret_.
-	static void        GetFileName(StringBase& ret_, const char* _path);
-	static void        GetFileName(StringBase& _ret_) { GetFileName(_ret_, (const char*)_ret_); }
+	// Extract path from _path (remove file name + extension).
+	static PathStr     GetPath(const char* _path);
+	// Extract file name from _path (remove path + extension).
+	static PathStr     GetFileName(const char* _path);
 	// Extract extension from _path (remove path + file name). It is safe for _path to point to the string buffer in ret_.
-	static void        GetExtension(StringBase& ret_, const char* _path) { ret_.set(FindExtension(_path)); }
-	static void        GetExtension(StringBase& _ret_) { GetExtension(_ret_, (const char*)_ret_); }
+	static PathStr     GetExtension(const char* _path) { return PathStr(FindExtension(_path)); }
 
 	// Return ptr to the character following the last occurrence of '.' in _path.
 	static const char* FindExtension(const char* _path);
-	// Compare _ext with the extension from _path (case insensitive).
-	static bool        CompareExtension(const char* _ext, const char* _path);
-
 	// Return ptr to the character following the last occurrence of '\' or '/' in _path.
 	static const char* FindFileNameAndExtension(const char* _path);
+	// Compare _ext with the extension from _path (case insensitive).
+	static bool        CompareExtension(const char* _ext, const char* _path);
 	
 	// Select a file/files via the platform UI.
 	static bool        PlatformSelect(PathStr& ret_, std::initializer_list<const char*> _filterList = { "*" });
@@ -136,7 +128,7 @@ public:
 	typedef void (FileActionCallback)(const char* _path, FileAction _action);
 
 	// Begin receiving notifications for changes to _dir (and its subtree). _callback will be called once for each event. See DispatchNotifcations().
-	static void        BeginNotifications(const char* _dir, FileActionCallback& _callback);
+	static void        BeginNotifications(const char* _dir, FileActionCallback* _callback);
 	// Stop receiving notifications for changes to _dir.
 	static void        EndNotifications(const char* _dir);
 	// Dispatch file action notifications. If _dir is 0, dispatch to all registered callbacks. This should be called frequently.
@@ -144,7 +136,6 @@ public:
 
 private:
 	static PathStr    s_roots[RootType_Count];
-	static int        s_rootLengths[RootType_Count];
 	static const char s_separator; // per-platform default separator
 	
 	// Get a path to an existing file based on _path and _rootHint. Return false if no existing file was found.

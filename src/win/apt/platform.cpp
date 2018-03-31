@@ -6,9 +6,9 @@
 
 #pragma comment(lib, "version")
 
-apt::String<128> apt::GetPlatformErrorString(uint64 _err)
+const char * apt::GetPlatformErrorString(uint64 _err)
 {
-	String<128> ret;
+	static thread_local String<1024> ret;
 	APT_VERIFY(
 		FormatMessage(
 			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
@@ -20,12 +20,12 @@ apt::String<128> apt::GetPlatformErrorString(uint64 _err)
 			NULL
 		) != 0
 	);
-	return ret;
+	return (const char*)ret;
 }
 
-apt::String<128> apt::GetPlatformInfoString()
+const char* apt::GetPlatformInfoString()
 {
-	String<128> ret;
+	static thread_local String<1024> ret;
 
  // OS version
 	ret.appendf("\tOS:     ");
@@ -88,5 +88,5 @@ apt::String<128> apt::GetPlatformInfoString()
 		ret.appendf("%lluMb", meminf.ullTotalPhys / 1024 / 1024);
 	}
 
-	return ret;
+	return (const char*)ret;
 }

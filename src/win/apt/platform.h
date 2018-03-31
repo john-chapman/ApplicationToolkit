@@ -1,22 +1,21 @@
 #pragma once
 
 #include <apt/apt.h>
-#include <apt/String.h>
 
 #if !(APT_PLATFORM_WIN)
 	#error apt: APT_PLATFORM_WIN was not defined, probably the build system was configured incorrectly
 #endif
 
 // ASSERT/VERIFY with platform-specific error string (use to wrap OS calls).
-#define APT_PLATFORM_ASSERT(_err) APT_ASSERT_MSG(_err, (const char*)apt::GetPlatformErrorString((uint64)::GetLastError()))
-#define APT_PLATFORM_VERIFY(_err) APT_VERIFY_MSG(_err, (const char*)apt::GetPlatformErrorString((uint64)::GetLastError()))
+#define APT_PLATFORM_ASSERT(_err) APT_ASSERT_MSG(_err, apt::GetPlatformErrorString((uint64)::GetLastError()))
+#define APT_PLATFORM_VERIFY(_err) APT_VERIFY_MSG(_err, apt::GetPlatformErrorString((uint64)::GetLastError()))
 
 namespace apt {
 
 // Format a system error code as a string.
-String<128> GetPlatformErrorString(uint64 _err);
+const char* GetPlatformErrorString(uint64 _err);
 
 // Return a string containing OS, CPU and system memory info.
-String<128> GetPlatformInfoString(); 
+const char* GetPlatformInfoString(); 
 
 } // namespace apt

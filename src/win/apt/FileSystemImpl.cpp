@@ -6,6 +6,7 @@
 #include <apt/win.h>
 #include <apt/Pool.h>
 #include <apt/String.h>
+#include <apt/StringHash.h>
 #include <apt/TextParser.h>
 
 #include <Shlwapi.h>
@@ -159,7 +160,7 @@ bool FileSystem::CreateDir(const char* _path)
 	return true;
 }
 
-void FileSystem::MakeRelative(StringBase& ret_, const char* _path, RootType _root)
+PathStr FileSystem::MakeRelative(const char* _path, RootType _root)
 {
 	TCHAR root[MAX_PATH] = {};
 	if (IsAbsolute((const char*)s_roots[_root])) {
@@ -179,8 +180,9 @@ void FileSystem::MakeRelative(StringBase& ret_, const char* _path, RootType _roo
 	if (strncmp(tmp, ".\\", 2) == 0) { // remove "./" from the path start - not strictly necessary but it makes nicer looking relative paths for the most common case
 		tmp += 2;
 	}	
-	ret_.set(tmp);
-	ret_.replace('\\', s_separator);
+	PathStr ret(tmp);
+	ret.replace('\\', s_separator);
+	return ret;
 }
 
 bool FileSystem::IsAbsolute(const char* _path)
@@ -188,13 +190,13 @@ bool FileSystem::IsAbsolute(const char* _path)
 	return PathIsRelative(_path) == FALSE;
 }
 
-void FileSystem::StripRoot(StringBase& ret_, const char* _path)
+PathStr FileSystem::StripRoot(const char* _path)
 {
 	TCHAR path[MAX_PATH] = {};
 	APT_PLATFORM_VERIFY(GetFullPathName(_path, MAX_PATH, path, NULL));
 
 	for (int r = 0; r < RootType_Count; ++r) {
-		if (s_rootLengths[r] == 0) {
+		if (s_roots[r].isEmpty()) {
 			continue;
 		}
 		TCHAR root[MAX_PATH];
@@ -205,15 +207,16 @@ void FileSystem::StripRoot(StringBase& ret_, const char* _path)
 		}
 		const char* rootBeg = strstr(path, root);
 		if (rootBeg != nullptr) {
-			ret_.set(path + strlen(root) + 1);
-			ret_.replace('\\', s_separator);
-			return;
+			PathStr ret(path + strlen(root) + 1);
+			ret.replace('\\', s_separator);
+			return ret;
 		}
 	}
  // no root found, strip the whole path if not absolute
 	if (!IsAbsolute(_path)) {
-		StripPath(ret_, _path);
+		return StripPath(_path);
 	}
+	return _path;
 }
 
 bool FileSystem::PlatformSelect(PathStr& ret_, std::initializer_list<const char*> _filterList)
@@ -353,9 +356,9 @@ int FileSystem::ListDirs(PathStr retList_[], int _maxResults, const char* _path,
 	eastl::vector<PathStr> dirs;
 	dirs.push_back(_path);
 	int ret = 0;
-	// \note there are 2 choices of behavior here: 'direct' recursion (where sub directories appear immediately after the parent in the list), or
-	// 'deferred' recursion, which is what is implemented. In theory, the latter is better because you can fill a small list of the first couple of levels
-	// of the hierarchy and then manually recurse into those directories as needed.
+	// There are 2 choices of behavior here: 'direct' recursion (where sub directories appear immediately after the parent in the list), or 'deferred' 
+	// recursion, which is what is implemented. In theory, the latter is better because you can fill a small list of the first couple of levels of 
+	// the hierarchy and then manually recurse into those directories as needed.
 	while (!dirs.empty()) {
 		PathStr root = (PathStr&&)dirs.back();
 		dirs.pop_back();
@@ -403,7 +406,12 @@ int FileSystem::ListDirs(PathStr retList_[], int _maxResults, const char* _path,
 
 
 namespace {
-
+/* Notes:
+	- Changes within symbolic link subdirs don't generate events.
+	- Deleting a subdir doesn't generate events for its subtree.
+	- Duplicate 'modified' actions are received consecutively but may be split over 2 calls to DispatchNotifications(),
+	  hence store the last received action inside the watch struct (the queue gets cleared, so can't use queue.back()).
+*/
 	struct Watch
 	{
 		OVERLAPPED m_overlapped = {};
@@ -412,10 +420,11 @@ namespace {
 		UINT       m_bufSize    = 1024 * 32; // 32kb
 		BYTE*      m_buf        = NULL;
 
-		FileSystem::FileActionCallback& m_dispatchCallback;
-		eastl::vector<eastl::pair<FileSystem::PathStr, FileSystem::FileAction> > m_dispatchQueue;
+		eastl::pair<PathStr, FileSystem::FileAction> m_prevAction;
+		FileSystem::FileActionCallback* m_dispatchCallback;
+		eastl::vector<eastl::pair<PathStr, FileSystem::FileAction> > m_dispatchQueue;
 	};
-	static Pool<Watch> s_WatchPool;
+	static Pool<Watch> s_WatchPool(8);
 	static eastl::vector_map<StringHash, Watch*> s_WatchMap;
 
 	void CALLBACK WatchCompletion(DWORD _err, DWORD _bytes, LPOVERLAPPED _overlapped);
@@ -428,11 +437,9 @@ namespace {
 			return;
 		}
 		APT_ASSERT(_err == ERROR_SUCCESS);
-		APT_ASSERT(_bytes != 0); // overflow? notifications losts in this case?
+		APT_ASSERT(_bytes != 0); // overflow? notifications lost in this case?
 
 		Watch* watch = (Watch*)_overlapped; // m_overlapped is the first member, so this works
-
-		APT_LOG_DBG(" --- ");
 
 		TCHAR fileName[MAX_PATH];
 		for (DWORD off = 0;;) {
@@ -443,18 +450,36 @@ namespace {
 			int count = WideCharToMultiByte(CP_UTF8, 0, info->FileName, info->FileNameLength / sizeof(WCHAR), fileName, MAX_PATH - 1, NULL, NULL);
 			fileName[count] = '\0';
 
-			const char* action = "--";
-			#define CASE_ENUM(e) case e: action = #e; break
-			switch(info->Action) {
-				CASE_ENUM(FILE_ACTION_ADDED);
-				CASE_ENUM(FILE_ACTION_REMOVED);
-				CASE_ENUM(FILE_ACTION_MODIFIED);
-				CASE_ENUM(FILE_ACTION_RENAMED_NEW_NAME);
-				CASE_ENUM(FILE_ACTION_RENAMED_OLD_NAME);
-				default : "?";
+			FileSystem::FileAction action = FileSystem::FileAction_Count;
+			switch (info->Action) {
+				case FILE_ACTION_ADDED: 
+				case FILE_ACTION_RENAMED_NEW_NAME:
+					action = FileSystem::FileAction_Created; 
+					break;
+				case FILE_ACTION_REMOVED:
+				case FILE_ACTION_RENAMED_OLD_NAME:
+					action = FileSystem::FileAction_Deleted; 
+					break;
+				case FILE_ACTION_MODIFIED:
+				default:
+					action = FileSystem::FileAction_Modified;
+					break;
 			};
-			#undef CASE_ENUM
-			APT_LOG("%s : %s", fileName, action);
+
+		 // check to see if the action was duplicated - this happens often for FILE_ACTION_MODIFIED
+			bool duplicate = false;
+			auto& prev = watch->m_prevAction;
+			if (prev.second == action) { // action matches
+				if (prev.first.getLength() == count) { // path length matches
+					if (memcmp(prev.first.c_str(), fileName, count) == 0) { // compare the strings
+						duplicate = true;
+					}
+				}
+			}
+			if (!duplicate) {
+				watch->m_prevAction = eastl::make_pair(PathStr(fileName), action);
+				watch->m_dispatchQueue.push_back(watch->m_prevAction);
+			}
 			
 			if (info->NextEntryOffset == 0) {
 				break;
@@ -466,7 +491,7 @@ namespace {
 		WatchUpdate(watch);
 	}
 
-	void WatchUpdate(WatchData* _watch)
+	void WatchUpdate(Watch* _watch)
 	{
 		APT_PLATFORM_VERIFY(ReadDirectoryChangesW(
 			_watch->m_hDir,
@@ -481,13 +506,15 @@ namespace {
 	}
 }
 
-static void FileSystem::BeginNotifications(const char* _dir, FileActionCallback& _callback)
+void FileSystem::BeginNotifications(const char* _dir, FileActionCallback* _callback)
 {
 	StringHash dirHash(_dir);
 	if (s_WatchMap.find(dirHash) != s_WatchMap.end()) {
 		APT_ASSERT(false);
 		return;
 	}
+
+	CreateDirectoryA(_dir, NULL); // create if it doesn't already exist
 
 	Watch* watch = s_WatchPool.alloc();
 	watch->m_hDir = CreateFileA(
@@ -499,7 +526,7 @@ static void FileSystem::BeginNotifications(const char* _dir, FileActionCallback&
 		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,       // file attribs
 		NULL                                                     // template handle
 		);
-	APT_PLATFORM_ASSERT(ret->m_hDir != INVALID_HANDLE_VALUE);
+	APT_PLATFORM_ASSERT(watch->m_hDir != INVALID_HANDLE_VALUE);
 
 	s_WatchMap[dirHash] = watch;
 	watch->m_buf = (BYTE*)malloc_aligned(watch->m_bufSize, sizeof(DWORD));
@@ -510,7 +537,8 @@ static void FileSystem::BeginNotifications(const char* _dir, FileActionCallback&
 			| FILE_NOTIFY_CHANGE_FILE_NAME 
 			| FILE_NOTIFY_CHANGE_DIR_NAME 
 			;
-	UpdateWindow(watch);
+	watch->m_dispatchCallback = _callback;
+	WatchUpdate(watch);
 }
 
 void FileSystem::EndNotifications(const char* _dir)
@@ -522,6 +550,9 @@ void FileSystem::EndNotifications(const char* _dir)
 	}
 
 	Watch* watch = s_WatchMap[dirHash];
+	APT_PLATFORM_VERIFY(CancelIo(watch->m_hDir));
+	SleepEx(0, TRUE); // flush any pending calls to the completion routine
+	APT_PLATFORM_VERIFY(CloseHandle(watch->m_hDir));
 	free_aligned(watch->m_buf);
 	s_WatchPool.free(watch);
 }
@@ -544,7 +575,7 @@ void FileSystem::DispatchNotifications(const char* _dir)
 
 	} else {
 		for (auto& it : s_WatchMap) {
-			Watch& watch = *it->second;
+			Watch& watch = *it.second;
 			for (auto& file : watch.m_dispatchQueue) {
 				watch.m_dispatchCallback(file.first.c_str(), file.second);
 			}

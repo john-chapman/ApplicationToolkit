@@ -78,11 +78,6 @@ DateTime Time::ToUTC(DateTime _local)
 	return ToDateTime(ret);
 }
 
-DateTime Time::GetSystemEpoch()
-{
-	return DateTime(0ll);
-}
-
 Timestamp Time::GetApplicationElapsed()
 {
 	return GetTimestamp() - *s_appInit;

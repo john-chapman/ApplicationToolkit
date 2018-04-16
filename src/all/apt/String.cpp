@@ -1,10 +1,11 @@
 #include <apt/String.h>
 
+#include <apt/memory.h>
+
 #include <algorithm>
 #include <cctype>
 #include <cstdarg>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 
 #ifndef va_copy
@@ -269,7 +270,7 @@ void apt::swap(StringBase& _a_, StringBase& _b_)
 			StringBase& smaller = _a_.m_capacity < _b_.m_capacity ? _a_ : _b_;
 			StringBase& larger  = _a_.m_capacity < _b_.m_capacity ? _b_ : _a_;
 
-			char* buf = (char*)malloc(larger.m_capacity * sizeof(char));
+			char* buf = (char*)APT_MALLOC(larger.m_capacity * sizeof(char));
 			memcpy(buf, larger.m_buf, larger.m_capacity * sizeof(char));
 			memcpy(larger.m_buf, smaller.m_buf, smaller.m_capacity * sizeof(char));
 
@@ -280,7 +281,7 @@ void apt::swap(StringBase& _a_, StringBase& _b_)
 		 // one is heap, alloc the other and swap (can't return to being local)
 			StringBase& local = _a_.isLocal() ? _a_ : _b_;
 
-			char* buf = (char*)malloc(local.m_capacity * sizeof(char));
+			char* buf = (char*)APT_MALLOC(local.m_capacity * sizeof(char));
 			memcpy(buf, local.m_buf, local.m_capacity * sizeof(char));
 			local.m_buf = buf;
 
@@ -341,7 +342,7 @@ StringBase& StringBase::operator=(StringBase&& _rhs_)
 StringBase::~StringBase()
 {
 	if (m_buf && !isLocal()) {
-		free(m_buf);
+		APT_FREE(m_buf);
 	}
 }
 
@@ -350,16 +351,16 @@ StringBase::~StringBase()
 void StringBase::alloc(uint _capacity)
 {
 	if (m_buf && !isLocal()) {
-		free(m_buf);
+		APT_FREE(m_buf);
 	}
-	m_buf = (char*)malloc(_capacity * sizeof(char));
+	m_buf = (char*)APT_MALLOC(_capacity * sizeof(char));
 	m_capacity = _capacity;
 }
 
 void StringBase::realloc(uint _capacity)
 {
 	if (!m_buf || isLocal()) {
-		m_buf = (char*)malloc(_capacity * sizeof(char));
+		m_buf = (char*)APT_MALLOC(_capacity * sizeof(char));
 		strncpy(m_buf, getLocalBuf(), m_length + 1);
 		m_capacity = _capacity;
 	

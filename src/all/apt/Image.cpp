@@ -2,6 +2,7 @@
 
 #include <apt/log.h>
 #include <apt/math.h>
+#include <apt/memory.h>
 #include <apt/File.h>
 #include <apt/FileSystem.h>
 #include <apt/Time.h>
@@ -77,7 +78,7 @@ static uint GetImageSize(uint _w, uint _h, uint _d, Image::CompressionType _comp
 
 Image* Image::Create1d(uint _width, Layout _layout, DataType _dataType, uint _mipmapCount, uint _arrayCount, CompressionType _compressionType)
 {
-	Image* ret = new Image;
+	Image* ret = APT_NEW(Image);
 	APT_ASSERT(ret);
 	ret->init();
 	ret->m_type        = _arrayCount > 1 ? Type_1dArray : Type_1d;
@@ -94,7 +95,7 @@ Image* Image::Create1d(uint _width, Layout _layout, DataType _dataType, uint _mi
 
 Image* Image::Create2d(uint _width, uint _height, Layout _layout, DataType _dataType, uint _mipmapCount, uint _arrayCount, CompressionType _compressionType)
 {
-	Image* ret = new Image;
+	Image* ret = APT_NEW(Image);
 	APT_ASSERT(ret);
 	ret->init();
 	ret->m_type        = _arrayCount > 1 ? Type_2dArray : Type_2d;
@@ -113,7 +114,7 @@ Image* Image::Create2d(uint _width, uint _height, Layout _layout, DataType _data
 
 Image* Image::Create3d(uint _width, uint _height, uint _depth, Layout _layout, DataType _dataType, uint _mipmapCount, uint _arrayCount, CompressionType _compressionType)
 {
-	Image* ret = new Image;
+	Image* ret = APT_NEW(Image);
 	APT_ASSERT(ret);
 	ret->init();
 	ret->m_type        = _arrayCount > 1 ? Type_3dArray : Type_3d;
@@ -132,7 +133,7 @@ Image* Image::Create3d(uint _width, uint _height, uint _depth, Layout _layout, D
 
 Image* Image::CreateCubemap(uint _width, Layout _layout, DataType _dataType, uint _mipmapCount, uint _arrayCount, CompressionType _compressionType)
 {
-	Image* ret = new Image;
+	Image* ret = APT_NEW(Image);
 	APT_ASSERT(ret);
 	ret->init();
 	ret->m_type        = _arrayCount > 1 ? Type_CubemapArray : Type_Cubemap;
@@ -152,7 +153,7 @@ void Image::Destroy(Image*& _img_)
 {
 	APT_ASSERT(_img_);
 	if (_img_) {
-		delete _img_;
+		APT_DELETE(_img_);
 		_img_ = 0;
 	}
 }
@@ -366,7 +367,7 @@ void Image::alloc()
 	} while (i < lim);
 
 	uint imageCount = isCubemap() ? m_arrayCount * 6 : m_arrayCount;
-	m_data = (char*)malloc(m_arrayLayerSize * imageCount);
+	m_data = (char*)APT_MALLOC(m_arrayLayerSize * imageCount);
 	APT_ASSERT(m_data);
 }
 
@@ -485,13 +486,19 @@ bool Image::IsDataTypeBpc(DataType _type, int _bpc)
 #define STBI_ONLY_PSD
 #define STBI_ONLY_TGA
 #define STBI_FAILURE_USERMSG
-#define STBI_ASSERT(x) APT_ASSERT(x)
+#define STBI_ASSERT(x)        APT_ASSERT(x)
+#define STBI_MALLOC(size)     APT_MALLOC(size)
+#define STBI_REALLOC(p, size) APT_REALLOC(p, size)
+#define STBI_FREE(p)          APT_FREE(p)
 #include <stb_image.h>
 
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBI_WRITE_NO_STDIO
-#define STBIW_ASSERT(x) APT_ASSERT(x)
+#define STBIW_ASSERT(x)        APT_ASSERT(x)
+#define STBIW_MALLOC(size)     APT_MALLOC(size)
+#define STBIW_REALLOC(p, size) APT_REALLOC(p, size)
+#define STBIW_FREE(p)          APT_FREE(p)
 #include <cstdio>
 #include <stb_image_write.h>
 static void StbiWriteFile(void* file_, void* _data, int _size)
@@ -508,6 +515,9 @@ static void StbiWriteFile(void* file_, void* _data, int _size)
 }
 
 #include <lodepng.h>
+void* lodepng_malloc(size_t size)                   { return APT_MALLOC(size); }
+void* lodepng_realloc(void* ptr, size_t new_size)   { return APT_REALLOC(ptr, new_size); }
+void  lodepng_free(void* ptr)                       { APT_FREE(ptr); }
 static void SwapByteOrder(char* _d_, unsigned _dsize)
 {
     for (unsigned i = 0; i < _dsize; i += 2) {
@@ -598,7 +608,7 @@ bool Image::ReadPng(Image& img_, const char* _data, uint _dataSize)
 	memcpy(img_.m_data, d, x * y * cmp * DataTypeSizeBytes(dataType)); // \todo, avoid this?
 
 Image_ReadPng_end:
-	free(d);
+	APT_FREE(d);
 	lodepng_state_cleanup(&state);
 	if (err) {
 		APT_LOG_ERR("lodepng error: '%s'", lodepng_error_text(err));
@@ -627,7 +637,7 @@ bool Image::WritePng(File& file_, const Image& _img)
 		case DataType_Uint8N:  bitdepth = 8;   break;
 		case DataType_Uint16N: bitdepth = 16;
 		                       // \hack \todo Can lodepng be modified to swizzle the bytes automatically on x86?
-	                            buf = (char*)malloc(_img.getRawImageSize());
+	                            buf = (char*)APT_MALLOC(_img.getRawImageSize());
 	                            memcpy(buf, _img.getRawImage(), _img.getRawImageSize());
 		                        SwapByteOrder(buf, (unsigned)_img.getRawImageSize()); break;
 		default:                APT_ASSERT_MSG(false, "Unsupported data type");
@@ -656,8 +666,8 @@ bool Image::WritePng(File& file_, const Image& _img)
 
 Image_WritePng_end:
 	lodepng_state_cleanup(&state);
-	free(buf);
-	free(d);
+	APT_FREE(buf);
+	APT_FREE(d);
 	if (err) {
 		APT_LOG_ERR("lodepng error: '%s'", lodepng_error_text(err));
 		return false;
@@ -756,7 +766,7 @@ bool Image::WriteExr(File& file_, const Image& _img)
 	float* channels[4] = {};
 	for (int i = 0; i < exr.num_channels; ++i) {
 		int k = exr.num_channels - i - 1;
-		channels[i] = (float*)malloc(sizeof(float) * _img.m_width * _img.m_height);
+		channels[i] = (float*)APT_MALLOC(sizeof(float) * _img.m_width * _img.m_height);
 		for (uint j = 0, n = _img.m_width * _img.m_height; j < n; ++j) {
 			channels[i][j] = ((float*)_img.m_data)[j * exr.num_channels + k];
 		}
@@ -766,8 +776,8 @@ bool Image::WriteExr(File& file_, const Image& _img)
 	exr.height = (int)_img.m_height;
 
 	header.num_channels = exr.num_channels;
-	header.channels = (EXRChannelInfo*)malloc(sizeof(EXRChannelInfo) * header.num_channels);
-	header.pixel_types = (int*)malloc(sizeof(int) * header.num_channels);
+	header.channels = (EXRChannelInfo*)APT_MALLOC(sizeof(EXRChannelInfo) * header.num_channels);
+	header.pixel_types = (int*)APT_MALLOC(sizeof(int) * header.num_channels);
 	header.requested_pixel_types = header.pixel_types;
 	const char* channelNames[] = { "A", "B", "G", "R" };
 	const char** name = channelNames + (4 - header.num_channels);
@@ -781,11 +791,11 @@ bool Image::WriteExr(File& file_, const Image& _img)
 	if (!err) {
 		file_.setData((char*)data, dataSize);
 	}
-	free(data);
-	free(header.channels);
-	free(header.pixel_types);
+	APT_FREE(data);
+	APT_FREE(header.channels);
+	APT_FREE(header.pixel_types);
 	for (int i = 0; i < exr.num_channels; ++i) {
-		free(channels[i]);
+		APT_FREE(channels[i]);
 	}
 	if (err) {
 		APT_LOG_ERR("ReadExr: '%s'", err);

@@ -1,6 +1,6 @@
 #pragma once
 
-#define APT_VERSION "0.11"
+#define APT_VERSION "0.12"
 
 #include <apt/config.h>
 
@@ -129,6 +129,8 @@ class TextParser;
 class Timestamp;
 class DateTime;
 
+typedef String<128> PathStr;
+
 ////////////////////////////////////////////////////////////////////////////////
 // non_copyable
 // Mixin class, forces a derived class to be non-copyable.
@@ -139,25 +141,11 @@ template <typename tType>
 class non_copyable
 {
 protected:
-	inline  non_copyable() {}
-	inline ~non_copyable() {}
-private:
-	non_copyable(const non_copyable&);
-	non_copyable& operator=(const non_copyable&);
-};
+	non_copyable() = default;
+	~non_copyable() = default;
 
-////////////////////////////////////////////////////////////////////////////////
-// non_instantiable
-// Mixin class, forces a derived class to be non-instantiable. Note that by
-// definition a non-instantiable class is also non-copyable.
-// The template parameter permits Empty Base Optimization (see
-//   http://en.wikibooks.org/wiki/More_C++_Idioms/Non-copyable_Mixin).
-////////////////////////////////////////////////////////////////////////////////
-template <typename tType>
-class non_instantiable: private non_copyable<tType>
-{
-private:
-	non_instantiable();
+	non_copyable(const non_copyable&) = delete;
+	non_copyable& operator=(const non_copyable&) = delete;
 };
 
 } // namespace apt

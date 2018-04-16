@@ -2,6 +2,7 @@
 
 #include <apt/log.h>
 #include <apt/math.h>
+#include <apt/memory.h>
 #include <apt/FileSystem.h>
 #include <apt/String.h>
 #include <apt/Time.h>
@@ -132,7 +133,7 @@ bool Json::Write(const Json& _json, const char* _path, FileSystem::RootType _roo
 Json::Json(const char* _path, FileSystem::RootType _rootHint)
 	: m_impl(nullptr)
 {
-	m_impl = new Impl;
+	m_impl = APT_NEW(Impl);
 	m_impl->m_dom.SetObject();
 	m_impl->push(&m_impl->m_dom);
 
@@ -144,7 +145,7 @@ Json::Json(const char* _path, FileSystem::RootType _rootHint)
 Json::~Json()
 {
 	if (m_impl) {
-		delete m_impl;
+		APT_DELETE(m_impl);
 	}
 }
 
@@ -1117,7 +1118,7 @@ bool SerializerJson::binary(void*& _data_, uint& _sizeBytes_, const char* _name,
 		value((StringBase&)str, _name);
 		bool compressed = str[0] == '1' ? true : false;
 		uint binSizeBytes = Base64DecSizeBytes((char*)str + 1, str.getLength() - 1);
-		char* bin = (char*)malloc(binSizeBytes);
+		char* bin = (char*)APT_MALLOC(binSizeBytes);
 		Base64Decode((char*)str + 1, str.getLength() - 1, bin, binSizeBytes);
 
 		char* ret = bin;
@@ -1130,13 +1131,13 @@ bool SerializerJson::binary(void*& _data_, uint& _sizeBytes_, const char* _name,
 			if (retSizeBytes != _sizeBytes_) {
 				setError("Error serializing %s, buffer size was %llu (expected %llu)", _sizeBytes_, retSizeBytes);
 				if (compressed) {
-					free(ret);
+					APT_FREE(ret);
 				}
 				return false;
 			}
 			memcpy(_data_, ret, retSizeBytes);
 			if (compressed) {
-				free(ret);
+				APT_FREE(ret);
 			}
 		} else {
 			_data_ = ret;

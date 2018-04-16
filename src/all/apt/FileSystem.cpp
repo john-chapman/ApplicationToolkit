@@ -17,8 +17,7 @@ const char* FileSystem::GetRoot(RootType _type)
 
 void FileSystem::SetRoot(RootType _type, const char* _path)
 {
-	s_roots[_type].set(_path); 
-	s_rootLengths[_type] = (int)strlen(_path);
+	s_roots[_type].set(_path);
 }
 
 bool FileSystem::Read(File& file_, const char* _path, RootType _rootHint)
@@ -43,8 +42,7 @@ bool FileSystem::ReadIfExists(File& file_, const char* _path, RootType _rootHint
 
 bool FileSystem::Write(const File& _file, const char* _path, RootType _root)
 {
-	PathStr fullPath;
-	MakePath(fullPath, _path ? _path : _file.getPath(), _root);
+	PathStr fullPath = MakePath(_path ? _path : _file.getPath(), _root);
 	return File::Write(_file, (const char*)fullPath);
 }
 
@@ -113,22 +111,21 @@ bool FileSystem::MatchesMulti(std::initializer_list<const char*> _patternList, c
 	return false;
 }
 
-void FileSystem::MakePath(StringBase& ret_, const char* _path, RootType _root)
+PathStr FileSystem::MakePath(const char* _path, RootType _root)
 {
 	APT_ASSERT(_root < RootType_Count);
 	bool useRoot = !s_roots[_root].isEmpty() && !IsAbsolute(_path);
 	if (useRoot) {
 	 // check if the root already exists in path as a directory
 		const char* r = strstr((const char*)s_roots[_root], _path);
-		if (!r || *(r + s_rootLengths[_root]) != s_separator) {
-			ret_.setf("%s%c%s", (const char*)s_roots[_root], s_separator, _path);
-			return;
+		if (!r || *(r + s_roots[_root].getLength()) != s_separator) {
+			return PathStr("%s%c%s", (const char*)s_roots[_root], s_separator, _path);
 		}
 	}
-	ret_.set(_path);
+	return PathStr(_path);
 }
 
-void FileSystem::StripPath(StringBase& ret_, const char* _path)
+PathStr FileSystem::StripPath(const char* _path)
 {
 	const char* beg = _path;
 	while (*_path) {
@@ -137,10 +134,10 @@ void FileSystem::StripPath(StringBase& ret_, const char* _path)
 		}
 		++_path;
 	}
-	ret_.set(beg);
+	return PathStr(beg);
 }
 
-void FileSystem::GetPath(StringBase& ret_, const char* _path)
+PathStr FileSystem::GetPath(const char* _path)
 {
 	const char* beg = _path;
 	const char* end = _path;
@@ -150,10 +147,10 @@ void FileSystem::GetPath(StringBase& ret_, const char* _path)
 		}
 		++_path;
 	}
-	ret_.set(beg, end - beg);
+	return PathStr(beg, end - beg);
 }
 
-void FileSystem::GetFileName(StringBase& ret_, const char* _path)
+PathStr FileSystem::GetFileName(const char* _path)
 {
 	const char* beg = _path;
 	while (*_path) {
@@ -166,7 +163,7 @@ void FileSystem::GetFileName(StringBase& ret_, const char* _path)
 	while (*end && *end != '.') {
 		++end;
 	}
-	ret_.set(beg, end - beg);
+	return PathStr(beg, end - beg);
 }
 
 const char* FileSystem::FindExtension(const char* _path)
@@ -201,13 +198,12 @@ const char* FileSystem::FindFileNameAndExtension(const char* _path)
 
 // PRIVATE
 
-FileSystem::PathStr FileSystem::s_roots[RootType_Count];
-int FileSystem::s_rootLengths[RootType_Count];
+PathStr FileSystem::s_roots[RootType_Count];
 
 bool FileSystem::FindExisting(PathStr& ret_, const char* _path, RootType _rootHint)
 {
 	for (int r = (int)_rootHint; r != -1; --r) {
-		MakePath(ret_, _path, (RootType)r);
+		ret_ = MakePath(_path, (RootType)r);
 		if (File::Exists((const char*)ret_)) {
 			return true;
 		}

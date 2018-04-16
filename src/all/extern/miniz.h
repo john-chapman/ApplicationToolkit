@@ -4,6 +4,7 @@
 	- Remove 'include miniz.h'
 	- Disabled warning line 3720 (32 bit shift implicitly converted to 64 bits).
 	- Configs are defined below as convenience.
+	- Replaced MZ_MALLOC/MZ_REALLOC/MZ_FREE macros with APT_ equivalents.
 */
 #define MINIZ_NO_STDIO
 #define MINIZ_NO_TIME
@@ -12,6 +13,7 @@
 //#define MINIZ_NO_ZLIB_APIS
 //#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
 //#define MINIZ_NO_MALLOC
+#include <apt/memory.h>
 
 /* miniz.c 2.0.6 beta - public domain deflate/inflate, zlib-subset, ZIP reading/writing/appending, PNG writing
    See "unlicense" statement at the end of this file.
@@ -525,15 +527,18 @@ typedef struct mz_dummy_time_t_tag
 
 #define MZ_ASSERT(x) assert(x)
 
-#ifdef MINIZ_NO_MALLOC
-#define MZ_MALLOC(x) NULL
-#define MZ_FREE(x) (void)x, ((void)0)
-#define MZ_REALLOC(p, x) NULL
-#else
-#define MZ_MALLOC(x) malloc(x)
-#define MZ_FREE(x) free(x)
-#define MZ_REALLOC(p, x) realloc(p, x)
-#endif
+//#ifdef MINIZ_NO_MALLOC
+//#define MZ_MALLOC(x) NULL
+//#define MZ_FREE(x) (void)x, ((void)0)
+//#define MZ_REALLOC(p, x) NULL
+//#else
+//#define MZ_MALLOC(x) malloc(x)
+//#define MZ_FREE(x) free(x)
+//#define MZ_REALLOC(p, x) realloc(p, x)
+//#endif
+#define MZ_MALLOC(x)     APT_MALLOC(x)
+#define MZ_FREE(x)       APT_FREE(x)
+#define MZ_REALLOC(p, x) APT_REALLOC(p, x)
 
 #define MZ_MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MZ_MIN(a, b) (((a) < (b)) ? (a) : (b))

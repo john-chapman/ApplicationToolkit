@@ -18,7 +18,6 @@ public:
 	
 	// See DateTime.
 	static DateTime  GetDateTime(); // UTC
-	static DateTime  GetSystemEpoch();
 	static DateTime  ToLocal(DateTime _utc);
 	static DateTime  ToUTC(DateTime _local);
 
@@ -69,12 +68,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 // DateTime
-// System datetime, use for file timestamps. 
-// Note that the raw representation is relative to the system epoch (e.g. 
-// 1601-01-01 under Win32), therefore calling get*() or asString() on the delta
-// between two DateTime objects will give incorrect results for year, month and
-// day. If necessary this can be corrected as e.g. 
-//   dy = delta.getYear() - Time::GetSystemEpoch().getYear().
+// System datetime, use for file timestamps.
 ////////////////////////////////////////////////////////////////////////////////
 class DateTime
 {
@@ -83,7 +77,7 @@ public:
 	DateTime(sint64 _raw = 0ll): m_raw(_raw) {}
 
 	// Raw time value in system-dependent units.
-	sint64 getRaw() const { return m_raw; }
+	uint64 getRaw() const { return m_raw; }
 
 	sint32 getYear() const;
 	sint32 getMonth() const;
@@ -108,18 +102,13 @@ public:
 	// Note that return value is a ptr to a local static buffer - for normal use this should be fine, just print the string and don't keep the ptr.
 	const char*    asString(const char* _format = nullptr) const;
 
-	const DateTime operator- (const DateTime& rhs) const  { return m_raw -  rhs.m_raw; }
-	const DateTime operator+ (const DateTime& rhs) const  { return m_raw +  rhs.m_raw; }
-	DateTime&      operator-=(const DateTime& rhs)        { m_raw -= rhs.m_raw; return *this; }
-	DateTime&      operator+=(const DateTime& rhs)        { m_raw += rhs.m_raw; return *this; }
-
 	bool           operator> (const DateTime& rhs) const  { return m_raw >  rhs.m_raw; }
 	bool           operator>=(const DateTime& rhs) const  { return m_raw >= rhs.m_raw; }
 	bool           operator< (const DateTime& rhs) const  { return m_raw <  rhs.m_raw; }
 	bool           operator<=(const DateTime& rhs) const  { return m_raw <= rhs.m_raw; }
 
 private:	
-	sint64 m_raw;
+	uint64 m_raw;
 
 };
 

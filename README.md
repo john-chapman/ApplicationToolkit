@@ -1,13 +1,13 @@
 Common application tools:
 
-- Platform/compiler/architecture defines + related macros.
+- Platform/compiler/architecture defines and related macros.
 - Assert macros (+ callback for app-specific behavior).
 - Logging macros (+ callback for app-specific behavior).
 - Math types/functions.
 - Time functions.
 - Hash functions (FNV1a).
 - Compression functions.
-- File + file system tools.
+- File and file system tools.
 - Common file format load/parse (image files, JSON, INI).
 - Misc useful base/template classes for common idioms (factory, static initializer, etc.).
 
@@ -25,7 +25,9 @@ Embedded dependencies:
 - [stb](https://github.com/nothings/stb)
 
 ## Change Log ##
-- `2018-02-22 (v0.11):` DateTime conversions between local and UTC.
+- `2018-04-01 (v0.13):` Memory alloc/free API via `APT_` macros.
+- `2018-03-31 (v0.12):` FileSystem notifications API. Path manipulation API changes, `FileSystem::PathStr` -> `apt::PathStr`.
+- `2018-03-27 (v0.11):` DateTime conversions between local and UTC.
 - `2018-02-22 (v0.10):` Deprecated macros APT_ALIGNOF, APT_ALIGNAS, APT_THREAD_LOCAL. Minor fixes/cleaning.
 - `2018-02-18 (v0.09):` Json: Direct array access overloads of `setValue()`, `getValue()`, bug fixes.
 - `2018-01-21 (v0.08):` FileSystem: "null-separated string" interfaces now use std::initializer_list.

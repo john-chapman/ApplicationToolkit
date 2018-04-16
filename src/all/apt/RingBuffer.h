@@ -30,12 +30,12 @@ public:
 
 	~RingBuffer()
 	{
-		free_aligned(m_buffer);
+		APT_FREE_ALIGNED(m_buffer);
 	}
 
 	void reserve(uint _capacity)
 	{
-		tType* newBuffer = (tType*)realloc_aligned(m_buffer, _capacity * sizeof(tType), APT_ALIGNOF(tType));
+		tType* newBuffer = (tType*)APT_REALLOC_ALIGNED(m_buffer, _capacity * sizeof(tType), alignof(tType));
 
 		tType* end = m_buffer + _capacity;
 		if (m_front >= end) {

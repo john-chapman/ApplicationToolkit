@@ -2,7 +2,41 @@
 
 #include <cstdlib>
 
-void* apt::malloc_aligned(uint _size, uint _align) 
+#if 1
+	void* operator new(size_t _size)
+	{ 
+		return APT_MALLOC(_size); 
+	}
+	void  operator delete(void* _ptr)
+	{ 
+		APT_FREE(_ptr); 
+	}
+	void* operator new[](size_t _size)
+	{ 
+		return APT_MALLOC(_size); 
+	}
+	void  operator delete[](void* _ptr)
+	{
+		APT_FREE(_ptr); 
+	}
+#endif
+
+void* apt::internal::malloc(size_t _size)
+{
+	return ::malloc(_size);
+}
+
+void* apt::internal::realloc(void* _ptr, size_t _size)
+{
+	return ::realloc(_ptr, _size);
+}
+
+void apt::internal::free(void* _ptr)
+{
+	::free(_ptr);
+}
+
+void* apt::internal::malloc_aligned(size_t _size, size_t _align) 
 {
 #ifdef APT_COMPILER_MSVC
 	return _aligned_malloc(_size, _align);
@@ -11,10 +45,10 @@ void* apt::malloc_aligned(uint _size, uint _align)
 #endif
 }
 
-void* apt::realloc_aligned(void* _p, uint _size, uint _align)
+void* apt::internal::realloc_aligned(void* _ptr, size_t _size, size_t _align)
 {
 #ifdef APT_COMPILER_MSVC
-	return _aligned_realloc(_p, _size, _align);
+	return _aligned_realloc(_ptr, _size, _align);
 #else
 	if (_p) {
 		return realloc(_p, _size);
@@ -24,12 +58,12 @@ void* apt::realloc_aligned(void* _p, uint _size, uint _align)
 #endif
 }
 
-void apt::free_aligned(void* _p) 
+void apt::internal::free_aligned(void* _ptr) 
 {
 #ifdef APT_COMPILER_MSVC
-	_aligned_free(_p);
+	_aligned_free(_ptr);
 #else
-	free(_p);
+	free(_ptr);
 #endif
 }
 
@@ -47,7 +81,7 @@ void apt::free_aligned(void* _p)
 
 void* operator new[](size_t size, const char* /*name*/, int /*flags*/, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/) THROW_SPEC_1(std::bad_alloc)
 {
-	return malloc(size);
+	return APT_MALLOC(size);
 }
 
 void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* /*name*/, int flags, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/) THROW_SPEC_1(std::bad_alloc)

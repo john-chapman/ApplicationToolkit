@@ -6,7 +6,6 @@
 #include <apt/platform.h>
 #include <apt/Time.h>
 
-#include <linalg/linalg.h>
 using namespace apt;
 
 TEST_CASE("adhoc")

@@ -1,9 +1,12 @@
 #include <apt/FileSystem.h>
 
 #include <apt/log.h>
+#include <apt/memory.h>
 #include <apt/platform.h>
 #include <apt/win.h>
+#include <apt/Pool.h>
 #include <apt/String.h>
+#include <apt/StringHash.h>
 #include <apt/TextParser.h>
 
 #include <Shlwapi.h>
@@ -11,6 +14,7 @@
 #include <cstring>
 
 #include <EASTL/vector.h>
+#include <EASTL/vector_map.h>
 
 #pragma comment(lib, "shlwapi")
 
@@ -69,7 +73,7 @@ GetFileDateTime_End:
 	const char* err = nullptr;
 	WIN32_FILE_ATTRIBUTE_DATA attr;
 	if (GetFileAttributesEx(_fullPath, GetFileExInfoStandard, &attr) == 0) {
-		err = GetPlatformErrorString(GetLastError());
+		err = (const char*)GetPlatformErrorString(GetLastError());
 		goto GetFileDateTime_End;
 	}
 	created_ = FileTimeToDateTime(attr.ftCreationTime);
@@ -156,7 +160,7 @@ bool FileSystem::CreateDir(const char* _path)
 	return true;
 }
 
-void FileSystem::MakeRelative(StringBase& ret_, const char* _path, RootType _root)
+PathStr FileSystem::MakeRelative(const char* _path, RootType _root)
 {
 	TCHAR root[MAX_PATH] = {};
 	if (IsAbsolute((const char*)s_roots[_root])) {
@@ -176,8 +180,9 @@ void FileSystem::MakeRelative(StringBase& ret_, const char* _path, RootType _roo
 	if (strncmp(tmp, ".\\", 2) == 0) { // remove "./" from the path start - not strictly necessary but it makes nicer looking relative paths for the most common case
 		tmp += 2;
 	}	
-	ret_.set(tmp);
-	ret_.replace('\\', s_separator);
+	PathStr ret(tmp);
+	ret.replace('\\', s_separator);
+	return ret;
 }
 
 bool FileSystem::IsAbsolute(const char* _path)
@@ -185,13 +190,13 @@ bool FileSystem::IsAbsolute(const char* _path)
 	return PathIsRelative(_path) == FALSE;
 }
 
-void FileSystem::StripRoot(StringBase& ret_, const char* _path)
+PathStr FileSystem::StripRoot(const char* _path)
 {
 	TCHAR path[MAX_PATH] = {};
 	APT_PLATFORM_VERIFY(GetFullPathName(_path, MAX_PATH, path, NULL));
 
 	for (int r = 0; r < RootType_Count; ++r) {
-		if (s_rootLengths[r] == 0) {
+		if (s_roots[r].isEmpty()) {
 			continue;
 		}
 		TCHAR root[MAX_PATH];
@@ -202,15 +207,16 @@ void FileSystem::StripRoot(StringBase& ret_, const char* _path)
 		}
 		const char* rootBeg = strstr(path, root);
 		if (rootBeg != nullptr) {
-			ret_.set(path + strlen(root) + 1);
-			ret_.replace('\\', s_separator);
-			return;
+			PathStr ret(path + strlen(root) + 1);
+			ret.replace('\\', s_separator);
+			return ret;
 		}
 	}
  // no root found, strip the whole path if not absolute
 	if (!IsAbsolute(_path)) {
-		StripPath(ret_, _path);
+		return StripPath(_path);
 	}
+	return _path;
 }
 
 bool FileSystem::PlatformSelect(PathStr& ret_, std::initializer_list<const char*> _filterList)
@@ -350,9 +356,9 @@ int FileSystem::ListDirs(PathStr retList_[], int _maxResults, const char* _path,
 	eastl::vector<PathStr> dirs;
 	dirs.push_back(_path);
 	int ret = 0;
-	// \note there are 2 choices of behavior here: 'direct' recursion (where sub directories appear immediately after the parent in the list), or
-	// 'deferred' recursion, which is what is implemented. In theory, the latter is better because you can fill a small list of the first couple of levels
-	// of the hierarchy and then manually recurse into those directories as needed.
+	// There are 2 choices of behavior here: 'direct' recursion (where sub directories appear immediately after the parent in the list), or 'deferred' 
+	// recursion, which is what is implemented. In theory, the latter is better because you can fill a small list of the first couple of levels of 
+	// the hierarchy and then manually recurse into those directories as needed.
 	while (!dirs.empty()) {
 		PathStr root = (PathStr&&)dirs.back();
 		dirs.pop_back();
@@ -396,6 +402,200 @@ int FileSystem::ListDirs(PathStr retList_[], int _maxResults, const char* _path,
     }
 
 	return ret;
+}
+
+
+namespace {
+/* Notes:
+	- Changes within symbolic link subdirs don't generate events.
+	- Deleting a subdir doesn't generate events for its subtree.
+	- Duplicate 'modified' actions are received consecutively but may be split over 2 calls to DispatchNotifications(),
+	  hence store the last received action inside the watch struct (the queue gets cleared, so can't use queue.back()).
+*/
+	struct Watch
+	{
+		OVERLAPPED m_overlapped = {};
+		HANDLE     m_hDir       = INVALID_HANDLE_VALUE;
+		DWORD      m_filter     = 0;
+		UINT       m_bufSize    = 1024 * 32; // 32kb
+		BYTE*      m_buf        = NULL;
+
+		eastl::pair<PathStr, FileSystem::FileAction> m_prevAction;
+		FileSystem::FileActionCallback* m_dispatchCallback;
+		eastl::vector<eastl::pair<PathStr, FileSystem::FileAction> > m_dispatchQueue;
+	};
+	static Pool<Watch> s_WatchPool(8);
+	static eastl::vector_map<StringHash, Watch*> s_WatchMap;
+
+	void CALLBACK WatchCompletion(DWORD _err, DWORD _bytes, LPOVERLAPPED _overlapped);
+	void          WatchUpdate(Watch* _watch);
+
+
+	void CALLBACK WatchCompletion(DWORD _err, DWORD _bytes, LPOVERLAPPED _overlapped)
+	{
+		if (_err == ERROR_OPERATION_ABORTED) { // CancellIo was called
+			return;
+		}
+		APT_ASSERT(_err == ERROR_SUCCESS);
+		APT_ASSERT(_bytes != 0); // overflow? notifications lost in this case?
+
+		Watch* watch = (Watch*)_overlapped; // m_overlapped is the first member, so this works
+
+		TCHAR fileName[MAX_PATH];
+		for (DWORD off = 0;;) {
+			PFILE_NOTIFY_INFORMATION info = (PFILE_NOTIFY_INFORMATION)(watch->m_buf + off);		
+			off += info->NextEntryOffset;
+
+		 // unicode -> utf8
+			int count = WideCharToMultiByte(CP_UTF8, 0, info->FileName, info->FileNameLength / sizeof(WCHAR), fileName, MAX_PATH - 1, NULL, NULL);
+			fileName[count] = '\0';
+
+			FileSystem::FileAction action = FileSystem::FileAction_Count;
+			switch (info->Action) {
+				case FILE_ACTION_ADDED: 
+				case FILE_ACTION_RENAMED_NEW_NAME:
+					action = FileSystem::FileAction_Created; 
+					break;
+				case FILE_ACTION_REMOVED:
+				case FILE_ACTION_RENAMED_OLD_NAME:
+					action = FileSystem::FileAction_Deleted; 
+					break;
+				case FILE_ACTION_MODIFIED:
+				default:
+					action = FileSystem::FileAction_Modified;
+					break;
+			};
+
+		 // check to see if the action was duplicated - this happens often for FILE_ACTION_MODIFIED
+			bool duplicate = false;
+			auto& prev = watch->m_prevAction;
+			if (prev.second == action) { // action matches
+				if (prev.first.getLength() == count) { // path length matches
+					if (memcmp(prev.first.c_str(), fileName, count) == 0) { // compare the strings
+						duplicate = true;
+					}
+				}
+			}
+			if (!duplicate) {
+				watch->m_prevAction = eastl::make_pair(PathStr(fileName), action);
+				watch->m_prevAction.first.replace('\\', '/');
+				watch->m_dispatchQueue.push_back(watch->m_prevAction);
+			}
+			
+			if (info->NextEntryOffset == 0) {
+				break;
+			}
+		}
+
+	 // reissue ReadDirectoryChangesW; it seems that we don't actually miss any notifications which happen between the start of the completion routine
+	 // and the reissue, so it's safe to wait until the dispatch is done
+		WatchUpdate(watch);
+	}
+
+	void WatchUpdate(Watch* _watch)
+	{
+		APT_PLATFORM_VERIFY(ReadDirectoryChangesW(
+			_watch->m_hDir,
+			_watch->m_buf,
+			_watch->m_bufSize,
+			TRUE, // watch subtree
+			_watch->m_filter,
+			NULL,
+ 			&_watch->m_overlapped, 
+			WatchCompletion
+			));
+	}
+}
+
+void FileSystem::BeginNotifications(const char* _dir, FileActionCallback* _callback)
+{
+	StringHash dirHash(_dir);
+	if (s_WatchMap.find(dirHash) != s_WatchMap.end()) {
+		APT_ASSERT(false);
+		return;
+	}
+
+	CreateDirectoryA(_dir, NULL); // create if it doesn't already exist
+
+	Watch* watch = s_WatchPool.alloc();
+	watch->m_hDir = CreateFileA(
+		_dir,                                                    // path
+		FILE_LIST_DIRECTORY,                                     // desired access
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,  // share mode
+		NULL,                                                    // security attribs
+		OPEN_EXISTING,                                           // create mode
+		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,       // file attribs
+		NULL                                                     // template handle
+		);
+	APT_PLATFORM_ASSERT(watch->m_hDir != INVALID_HANDLE_VALUE);
+
+	s_WatchMap[dirHash] = watch;
+	watch->m_buf = (BYTE*)APT_MALLOC_ALIGNED(watch->m_bufSize, sizeof(DWORD));
+	watch->m_filter = 0
+			| FILE_NOTIFY_CHANGE_CREATION
+			| FILE_NOTIFY_CHANGE_SIZE
+			| FILE_NOTIFY_CHANGE_ATTRIBUTES 
+			| FILE_NOTIFY_CHANGE_FILE_NAME 
+			| FILE_NOTIFY_CHANGE_DIR_NAME 
+			;
+	watch->m_dispatchCallback = _callback;
+	WatchUpdate(watch);
+}
+
+void FileSystem::EndNotifications(const char* _dir)
+{
+	StringHash dirHash(_dir);
+	if (s_WatchMap.find(dirHash) == s_WatchMap.end()) {
+		APT_ASSERT(false);
+		return;
+	}
+
+	Watch* watch = s_WatchMap[dirHash];
+	APT_PLATFORM_VERIFY(CancelIo(watch->m_hDir));
+	SleepEx(0, TRUE); // flush any pending calls to the completion routine
+	APT_PLATFORM_VERIFY(CloseHandle(watch->m_hDir));
+	APT_FREE_ALIGNED(watch->m_buf);
+	s_WatchPool.free(watch);
+}
+
+void FileSystem::DispatchNotifications(const char* _dir)
+{
+ // clear 'prevAction' - identical consecutive actions *between* calls to DispatchNotifications are allowed
+	if (_dir) {
+		auto it = s_WatchMap.find(StringHash(_dir));
+		if (it == s_WatchMap.end()) {
+			APT_ASSERT(false);
+			return;
+		}
+		it->second->m_prevAction.second = FileAction_Count;
+
+	} else {
+		for (auto& it : s_WatchMap) {
+			it.second->m_prevAction.second = FileAction_Count;
+		}
+	}
+
+ // let the kernel call the completion routine and fill the dispatch queues
+	SleepEx(0, TRUE);
+
+ // dispatch
+	if (_dir) {
+		auto it = s_WatchMap.find(StringHash(_dir));
+		Watch& watch = *it->second;
+		for (auto& file : watch.m_dispatchQueue) {
+			watch.m_dispatchCallback(file.first.c_str(), file.second);
+		}
+		watch.m_dispatchQueue.clear();
+
+	} else {
+		for (auto& it : s_WatchMap) {
+			Watch& watch = *it.second;
+			for (auto& file : watch.m_dispatchQueue) {
+				watch.m_dispatchCallback(file.first.c_str(), file.second);
+			}
+			watch.m_dispatchQueue.clear();
+		}
+	}
 }
 
 // PROTECTED

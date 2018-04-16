@@ -1,6 +1,7 @@
 #include <apt/Ini.h>
 
 #include <apt/log.h>
+#include <apt/memory.h>
 #include <apt/File.h>
 #include <apt/String.h>
 #include <apt/TextParser.h>
@@ -90,7 +91,7 @@ Ini::~Ini()
 			continue;
 		}
 		for (int i = key.m_valueOffset; i < key.m_valueOffset + key.m_valueCount; ++i) {
-			delete[] m_values[i].m_string;
+			APT_FREE(m_values[i].m_string);
 		}
 	}
 }
@@ -140,7 +141,7 @@ void Ini::pushValueArray(const char* _name, const char* _value[], int _count)
 	m_keys.push_back(key);
 	for (int i = 0; i < _count; ++i) {
 		m_values.push_back(Value());
-		m_values.back().m_string = new char[strlen(_value[i]) + 1];
+		m_values.back().m_string = (char*)APT_MALLOC(sizeof(char*) * (strlen(_value[i]) + 1));
 		strcpy(m_values.back().m_string, _value[i]);
 	}
 	++m_sections.back().m_propertyCount;
@@ -203,7 +204,7 @@ bool Ini::parse(const char* _str)
 				Value v;
 				sint n = tp - beg;
 				tp.advance(); // skip '"'
-				v.m_string = new char[n + 1];
+				v.m_string = (char*)APT_MALLOC(sizeof(char) * (n + 1));;
 				strncpy(v.m_string, beg, n);
 				v.m_string[n] = '\0';
 				m_values.push_back(v);

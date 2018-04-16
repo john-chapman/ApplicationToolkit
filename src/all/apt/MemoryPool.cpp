@@ -38,9 +38,9 @@ MemoryPool::~MemoryPool()
 {
 	APT_ASSERT(m_usedCount == 0); // not all objects were freed
 	for (uint i = 0; i < m_blockCount; ++i) {
-		apt::free_aligned(m_blocks[i]);
+		APT_FREE_ALIGNED(m_blocks[i]);
 	}
-	delete[] m_blocks;
+	APT_FREE_ALIGNED(m_blocks);
 }
 
 void* MemoryPool::alloc()
@@ -68,22 +68,11 @@ void MemoryPool::free(void* _object)
 
 void MemoryPool::allocBlock()
 {
-	// allocate a new block list
-	void** tmp = new(std::nothrow) void*[m_blockCount + 1];
-	if (m_blocks) {
-		std::copy(m_blocks, m_blocks + m_blockCount, tmp);
-		delete[] m_blocks;
-	}
-	m_blocks = tmp;
-	
-	// allocate new block at list end
-	m_blocks[m_blockCount] = apt::malloc_aligned(m_objectSize * m_blockSize, m_objectAlignment);
+	m_blocks = (void**)APT_REALLOC_ALIGNED(m_blocks, sizeof(void*) * (m_blockCount + 1), alignof(void*));
+	m_blocks[m_blockCount] = APT_MALLOC_ALIGNED(m_objectSize * m_blockSize, m_objectAlignment);
 
-	// init free ptrs; if m_nextFree initially points to locX, after initializing
-	// the new block (starting new0) is initialized as follows:
-	//
-	// m_nextFree -> new0 -> new1 -> new2 -> new3 -> locX
-	//
+ // init free ptrs; if m_nextFree initially points to locX, after initializing the new block (starting new0) is initialized as follows:
+ //  m_nextFree -> new0 -> new1 -> new2 -> new3 -> locX
 	uint p = (uint)m_blocks[m_blockCount];
 	for (uint i = 0, n = m_blockSize - 1; i < n; ++i) {
 		*((uint*)p) = p + m_objectSize;

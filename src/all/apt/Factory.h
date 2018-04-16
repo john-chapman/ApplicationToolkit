@@ -1,6 +1,7 @@
 #pragma once
 
 #include <apt/apt.h>
+#include <apt/memory.h>
 #include <apt/StringHash.h>
 
 #include <EASTL/vector_map.h>
@@ -101,8 +102,8 @@ public:
 	template <typename tSubType>
 	struct ClassRefDefault: public ClassRef
 	{
-		static tType* Create()                                               { return new tSubType; }
-		static void Destroy(tType*& _inst_)                                  { delete _inst_; _inst_ = nullptr; }
+		static tType* Create()                                               { return APT_NEW(tSubType); }
+		static void Destroy(tType*& _inst_)                                  { APT_DELETE(_inst_); _inst_ = nullptr; }
 		ClassRefDefault(const char* _name): ClassRef(_name, Create, Destroy) {}
 	};
 

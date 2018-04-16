@@ -1,13 +1,13 @@
 #include <apt/File.h>
 
 #include <apt/log.h>
+#include <apt/memory.h>
 #include <apt/platform.h>
 #include <apt/win.h>
 #include <apt/FileSystem.h>
 #include <apt/String.h>
 #include <apt/TextParser.h>
 
-#include <cstdlib> // malloc, free
 #include <utility> // swap
 
 using namespace apt;
@@ -52,22 +52,22 @@ bool File::Read(File& file_, const char* _path)
 		NULL
 		);
 	if (h == INVALID_HANDLE_VALUE) {
-		err = GetPlatformErrorString(GetLastError());
+		err = (const char*)GetPlatformErrorString(GetLastError());
 		goto File_Read_end;
 	}
 
 	LARGE_INTEGER li;
 	if (!GetFileSizeEx(h, &li)) {
-		err = GetPlatformErrorString(GetLastError());
+		err = (const char*)GetPlatformErrorString(GetLastError());
 		goto File_Read_end;
 	}
 	DWORD dataSize = (DWORD)li.QuadPart; // ReadFile can only read DWORD bytes
 
-	data = (char*)malloc(dataSize + 2); // +2 for null terminator
+	data = (char*)APT_MALLOC(dataSize + 2); // +2 for null terminator
 	APT_ASSERT(data);
 	DWORD bytesRead;
 	if (!ReadFile(h, data, dataSize, &bytesRead, 0)) {
-		err = GetPlatformErrorString(GetLastError());
+		err = (const char*)GetPlatformErrorString(GetLastError());
 		goto File_Read_end;
 	}
 	data[dataSize] = data[dataSize + 1] = 0;
@@ -79,7 +79,7 @@ bool File::Read(File& file_, const char* _path)
 		APT_PLATFORM_VERIFY(CloseHandle((HANDLE)file_.m_impl));
 	}
 	if (file_.m_data) {
-		free(file_.m_data);
+		APT_FREE(file_.m_data);
 	}
 	
 	file_.m_data = data;
@@ -89,7 +89,7 @@ bool File::Read(File& file_, const char* _path)
 File_Read_end:
 	if (!ret) {
 		if (data) {
-			free(data);
+			APT_FREE(data);
 		}
 		APT_LOG_ERR("Error reading '%s':\n\t%s", _path, err);
 		APT_ASSERT(false);
@@ -129,14 +129,14 @@ bool File::Write(const File& _file, const char* _path)
 				return false;
 			}
 		} else {
-			errstr = GetPlatformErrorString(err);
+			errstr = (const char*)GetPlatformErrorString(err);
 			goto File_Write_end;
 		}
 	}
 
 	DWORD bytesWritten;
 	if (!WriteFile(h, _file.getData(), (DWORD)_file.getDataSize(), &bytesWritten, NULL)) {
-		errstr = GetPlatformErrorString(GetLastError());
+		errstr = (const char*)GetPlatformErrorString(GetLastError());
 		goto File_Write_end;
 	}
 	APT_ASSERT(bytesWritten == _file.getDataSize());

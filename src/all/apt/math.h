@@ -175,6 +175,16 @@ namespace apt {
 	inline tType Saturate(const tType& _x)                                      { return Clamp(_x, tType(0), tType(1)); }
 	#define APT_SATURATE(_x) apt::Saturate(_x)
 
+	// Return whether _x is a power of 2.
+	template <typename tType>
+	inline bool IsPow2(const tType& _x)                                         { return (_x & (_x - 1)) == 0; }
+	#define APT_IS_POW2(_x) apt::IsPow2(_x)
+
+	// Return _x % _y where _y is a power of 2.
+	template <typename tType>
+	inline tType ModPow2(const tType& _x, const tType& _y)                      { return _x & (_y - 1); }
+	#define APT_MOD_POW2(_x, _y) apt::ModPow2(_x, _y)
+
 	namespace internal {
 		template <typename tType>
 		inline tType Fract(const tType& _x, FloatT)                             { return _x - std::floor(_x); }

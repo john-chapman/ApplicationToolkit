@@ -1,6 +1,6 @@
 #pragma once
 
-#define APT_VERSION "0.12"
+#define APT_VERSION "0.14"
 
 #include <apt/config.h>
 

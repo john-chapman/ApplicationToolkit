@@ -6,17 +6,18 @@
 
 #pragma comment(lib, "version")
 
-const char * apt::GetPlatformErrorString(uint64 _err)
+const char* apt::GetPlatformErrorString(uint64 _err)
 {
 	static thread_local String<1024> ret;
+	ret.setf("(%llu) ", _err);
 	APT_VERIFY(
 		FormatMessage(
 			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
 			NULL, 
 			(DWORD)_err,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPTSTR)ret, 
-			(DWORD)ret.getCapacity(), 
+			(LPTSTR)(ret.begin() + ret.getLength()),
+			(DWORD)(ret.getCapacity() - ret.getLength()),
 			NULL
 		) != 0
 	);

@@ -77,6 +77,8 @@ public:
 	explicit operator const char*() const           { return m_buf; }
 	explicit operator char*()                       { return m_buf; }
 	const char* c_str() const                       { return m_buf; }
+	const char* begin() const                       { return m_buf; }
+	const char* end() const                         { return begin() + m_length; }
 	
 	friend void swap(StringBase& _a_, StringBase& _b_);
 

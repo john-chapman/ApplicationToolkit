@@ -147,7 +147,9 @@ PathStr FileSystem::GetPath(const char* _path)
 		}
 		++_path;
 	}
-	return PathStr(beg, end - beg);
+	PathStr ret;
+	ret.set(beg, end - beg);
+	return ret;
 }
 
 PathStr FileSystem::GetFileName(const char* _path)
@@ -163,7 +165,9 @@ PathStr FileSystem::GetFileName(const char* _path)
 	while (*end && *end != '.') {
 		++end;
 	}
-	return PathStr(beg, end - beg);
+	PathStr ret;
+	ret.set(beg, end - beg);
+	return ret;
 }
 
 const char* FileSystem::FindExtension(const char* _path)

@@ -4,6 +4,8 @@
 #include <apt/memory.h>
 #include <apt/String.h>
 
+#include <intrin.h> // __cpuid
+
 #pragma comment(lib, "version")
 
 const char* apt::GetPlatformErrorString(uint64 _err)

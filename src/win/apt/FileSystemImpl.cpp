@@ -545,17 +545,18 @@ void FileSystem::BeginNotifications(const char* _dir, FileActionCallback* _callb
 void FileSystem::EndNotifications(const char* _dir)
 {
 	StringHash dirHash(_dir);
-	if (s_WatchMap.find(dirHash) == s_WatchMap.end()) {
+	auto it = s_WatchMap.find(dirHash);
+	if (it == s_WatchMap.end()) {
 		APT_ASSERT(false);
 		return;
 	}
-
-	Watch* watch = s_WatchMap[dirHash];
+	auto watch = it->second;
 	APT_PLATFORM_VERIFY(CancelIo(watch->m_hDir));
 	SleepEx(0, TRUE); // flush any pending calls to the completion routine
 	APT_PLATFORM_VERIFY(CloseHandle(watch->m_hDir));
 	APT_FREE_ALIGNED(watch->m_buf);
 	s_WatchPool.free(watch);
+	s_WatchMap.erase(it);
 }
 
 void FileSystem::DispatchNotifications(const char* _dir)

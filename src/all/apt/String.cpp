@@ -169,7 +169,9 @@ uint StringBase::replace(const char* _find, const char* _replace)
 	char* end = nullptr;
 	uint ret = 0;
 	while (end = strstr(beg, _find)) {
-		tmp.append(beg, end - beg);
+		if (end - beg > 0) {
+			tmp.append(beg, end - beg);
+		}
 		tmp.append(_replace);
 		beg = end + findlen;
 		++ret;
@@ -177,6 +179,7 @@ uint StringBase::replace(const char* _find, const char* _replace)
 			break;
 		}
 	}
+	tmp.append(beg);
 	if (ret) {
 		swap(*this, tmp);
 	}

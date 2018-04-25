@@ -753,7 +753,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 				switch (_img.m_layout) {
 					case Image::Layout_R:    dxt10h->dxgiFormat = DXGI_FORMAT_R16_UINT; break;
 					case Image::Layout_RG:   dxt10h->dxgiFormat = DXGI_FORMAT_R16G16_UINT; break;
-					//case Image::Layout_RGB:  dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16_UINT; break;
+					case Image::Layout_RGB:  APT_ASSERT(false);//dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16_UINT; break;
 					case Image::Layout_RGBA: 
 					default:                 dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16A16_UINT; break;
 				};
@@ -762,7 +762,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 				switch (_img.m_layout) {
 					case Image::Layout_R:    dxt10h->dxgiFormat = DXGI_FORMAT_R16_UNORM; break;
 					case Image::Layout_RG:   dxt10h->dxgiFormat = DXGI_FORMAT_R16G16_UNORM; break;
-					//case Image::Layout_RGB:  dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16_UNORM; break;
+					case Image::Layout_RGB:  APT_ASSERT(false);//dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16_UNORM; break;
 					case Image::Layout_RGBA: 
 					default:                 dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16A16_UNORM; break;
 				};
@@ -771,7 +771,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 				switch (_img.m_layout) {
 					case Image::Layout_R:    dxt10h->dxgiFormat = DXGI_FORMAT_R16_SINT; break;
 					case Image::Layout_RG:   dxt10h->dxgiFormat = DXGI_FORMAT_R16G16_SINT; break;
-					//case Image::Layout_RGB:  dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16_SINT; break;
+					case Image::Layout_RGB:  APT_ASSERT(false);//dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16_SINT; break;
 					case Image::Layout_RGBA: 
 					default:                 dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16A16_SINT; break;
 				};
@@ -780,7 +780,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 				switch (_img.m_layout) {
 					case Image::Layout_R:    dxt10h->dxgiFormat = DXGI_FORMAT_R16_SNORM; break;
 					case Image::Layout_RG:   dxt10h->dxgiFormat = DXGI_FORMAT_R16G16_SNORM; break;
-					//case Image::Layout_RGB:  dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16_SNORM; break;
+					case Image::Layout_RGB:  APT_ASSERT(false);//dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16_SNORM; break;
 					case Image::Layout_RGBA: 
 					default:                 dxt10h->dxgiFormat = DXGI_FORMAT_R16G16B16A16_SNORM; break;
 				};
@@ -789,7 +789,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 				switch (_img.m_layout) {
 					case Image::Layout_R:    dxt10h->dxgiFormat = DXGI_FORMAT_R8_UINT; break;
 					case Image::Layout_RG:   dxt10h->dxgiFormat = DXGI_FORMAT_R8G8_UINT; break;
-					//case Image::Layout_RGB:  dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8_UINT; break;
+					case Image::Layout_RGB:  APT_ASSERT(false);//dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8_UINT; break;
 					case Image::Layout_RGBA: 
 					default:                 dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8A8_UINT; break;
 				};
@@ -798,7 +798,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 				switch (_img.m_layout) {
 					case Image::Layout_R:    dxt10h->dxgiFormat = DXGI_FORMAT_R8_UNORM; break;
 					case Image::Layout_RG:   dxt10h->dxgiFormat = DXGI_FORMAT_R8G8_UNORM; break;
-					//case Image::Layout_RGB:  dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8_UNORM; break;
+					case Image::Layout_RGB:  APT_ASSERT(false);//dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8_UNORM; break;
 					case Image::Layout_RGBA: 
 					default:                 dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM; break;
 				};
@@ -807,7 +807,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 				switch (_img.m_layout) {
 					case Image::Layout_R:    dxt10h->dxgiFormat = DXGI_FORMAT_R8_SINT; break;
 					case Image::Layout_RG:   dxt10h->dxgiFormat = DXGI_FORMAT_R8G8_SINT; break;
-					//case Image::Layout_RGB: dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8_SINT; break;
+					case Image::Layout_RGB:  APT_ASSERT(false);//dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8_SINT; break;
 					case Image::Layout_RGBA: 
 					default:                 dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8A8_SINT; break;
 				};
@@ -816,7 +816,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 				switch (_img.m_layout) {
 					case Image::Layout_R:    dxt10h->dxgiFormat = DXGI_FORMAT_R8_SNORM; break;
 					case Image::Layout_RG:   dxt10h->dxgiFormat = DXGI_FORMAT_R8G8_SNORM; break;
-					//case Image::Layout_RGB: dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8_SNORM; break;
+					case Image::Layout_RGB:  APT_ASSERT(false);//dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8_SNORM; break;
 					case Image::Layout_RGBA: 
 					default:                 dxt10h->dxgiFormat = DXGI_FORMAT_R8G8B8A8_SNORM; break;
 				};

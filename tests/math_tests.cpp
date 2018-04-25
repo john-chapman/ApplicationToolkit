@@ -26,7 +26,7 @@ struct AlignCheck: public tType
 		const int kArraySize = 16;
 
 	 // stack alignment
-		AlignCheck;
+		AlignCheck c;
 
 	 // heap alignment
 		AlignCheck* p = new AlignCheck[kArraySize];

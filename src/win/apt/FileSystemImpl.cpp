@@ -468,6 +468,7 @@ namespace {
 
 		 // check to see if the action was duplicated - this happens often for FILE_ACTION_MODIFIED
 			bool duplicate = false;
+			std::replace(fileName, fileName + count, '\\', '/');
 			auto& prev = watch->m_prevAction;
 			if (prev.second == action) { // action matches
 				if (prev.first.getLength() == count) { // path length matches
@@ -478,7 +479,6 @@ namespace {
 			}
 			if (!duplicate) {
 				watch->m_prevAction = eastl::make_pair(PathStr(fileName), action);
-				watch->m_prevAction.first.replace('\\', '/');
 				watch->m_dispatchQueue.push_back(watch->m_prevAction);
 			}
 			

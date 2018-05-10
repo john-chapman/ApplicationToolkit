@@ -321,8 +321,6 @@ StringBase::StringBase(StringBase&& _rhs_)
 		strncpy(m_buf, _rhs_.m_buf, _rhs_.m_length + 1);
 	else
 		m_buf = _rhs_.m_buf;
-	m_capacity = _rhs_.m_capacity;
-	m_length = _rhs_.m_length;
 	_rhs_.m_buf = nullptr;
 	_rhs_.m_capacity = 0;
 	_rhs_.m_length = 0;
@@ -330,14 +328,13 @@ StringBase::StringBase(StringBase&& _rhs_)
 StringBase& StringBase::operator=(StringBase&& _rhs_)
 {
 	if (&_rhs_ != this) {
-		if (!isLocal())
-			APT_FREE(m_buf);
-		m_buf = getLocalBuf();
-
-		if (_rhs_.isLocal())
+		if (_rhs_.isLocal()) // If rhs is local, we always can copy inside this.m_buf
 			strncpy(m_buf, _rhs_.getLocalBuf(), _rhs_.m_length + 1);
-		else
+		else { // If rhs is NOT local, we will get back _rhs_.m_buf
+			if (!isLocal())
+				APT_FREE(m_buf);
 			m_buf = _rhs_.m_buf;
+		}
 
 		m_length = _rhs_.m_length;
 		m_capacity = _rhs_.m_capacity;

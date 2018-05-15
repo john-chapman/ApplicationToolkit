@@ -329,7 +329,11 @@ StringBase& StringBase::operator=(StringBase&& _rhs_)
 {
 	if (&_rhs_ != this) {
 		if (_rhs_.isLocal()) // If rhs is local, we always can copy inside this.m_buf
+		{
+			if (m_buf == nullptr)
+				m_buf = getLocalBuf();
 			strncpy(m_buf, _rhs_.getLocalBuf(), _rhs_.m_length + 1);
+		}
 		else { // If rhs is NOT local, we will get back _rhs_.m_buf
 			if (!isLocal())
 				APT_FREE(m_buf);

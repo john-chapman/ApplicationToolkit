@@ -96,3 +96,63 @@ TEST_CASE("findFirst, findLast", "[String]")
 	REQUIRE(*str.findLast("f") == 'f');
 	REQUIRE(str.findLast("x") == nullptr);
 }
+
+TEST_CASE("Move_ctor", "[String]")
+{
+	static apt::String<64> const local = "/dsgfkldfsgkdfjs/sdfkjhsdf";
+
+	static apt::String<64> const dyn = "/dfsdfdfg/ghty/u/efxdcvngfj/iyuitrer/dfdfvbcnezrt/rytruyjhnbv/vhgjfhgf/dhffdjkgdhsfs";
+
+	SECTION("Create from local")
+	{
+		apt::String<64> localCpy(local);
+		apt::String<64> create_from_local(std::move(localCpy));
+		REQUIRE(create_from_local == local);
+	}
+
+	SECTION("Create from dyn")
+	{
+		apt::String<64> dynCpy(dyn);
+		apt::String<64> movector(std::move(dynCpy));
+		REQUIRE(movector == dyn);
+	}
+}
+
+TEST_CASE("Move_copy", "[String]")
+{
+	static apt::String<64> const local = "/dsgfkldfsgkdfjs/sdfkjhsdf";
+
+	static apt::String<64> const dyn = "/dfsdfdfg/ghty/u/efxdcvngfj/iyuitrer/dfdfvbcnezrt/rytruyjhnbv/vhgjfhgf/dhffdjkgdhsfs";
+
+	SECTION("copy local to local")
+	{
+		apt::String<64> localCpy(local);
+		apt::String<64> move_loc_to_loc = "ghfdfkglhndsgf";
+		move_loc_to_loc = std::move(localCpy);
+		REQUIRE(move_loc_to_loc == local);
+	}
+
+	SECTION("copy dyn to local")
+	{
+		apt::String<64> dynCpy(dyn);
+		apt::String<64> move_dyn_to_loc = "pidfnjsdfbzer";
+		move_dyn_to_loc = std::move(dynCpy);
+		REQUIRE(move_dyn_to_loc == dyn);
+	}
+
+	SECTION("copy local to dyn")
+	{
+		apt::String<64> localCpy(local);
+		apt::String<64> move_loc_to_dyn = "ghfdfkglhndsgf/dfhftgjfgj/dfsgdrfghdtyds/bvcbhcvndfdfyg/fdhtyredsgdhffgj/DFGTFYTSgfdgdfh/";
+		move_loc_to_dyn = std::move(localCpy);
+		REQUIRE(move_loc_to_dyn == local);
+	}
+
+	SECTION("copy dyn to dyn")
+	{
+		apt::String<64> dynCpy(dyn);
+		apt::String<64> move_dyn_to_dyn = "ghfdfkglhndsgf/dfhftgjfgj/dfsgdrfghdtyds/bvcbhcvndfdfyg/fdhtyredsgdhffgj/DFGTFYTSgfdgdfh/";
+		move_dyn_to_dyn = std::move(dynCpy);
+		REQUIRE(move_dyn_to_dyn == dyn);
+	}
+}

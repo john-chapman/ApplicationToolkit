@@ -11,7 +11,7 @@ namespace apt {
 // Base for string class with an optional local buffer. If/when the local 
 // buffer overflows it is replaced with a heap-allocated buffer. Once the 
 // buffer is heap-allocated it never returns to using the local buffer.
-// All `const char*` interfaces expect null-terminated strings.
+// All const char* interfaces expect null-terminated strings.
 ////////////////////////////////////////////////////////////////////////////////
 class StringBase
 {
@@ -36,12 +36,11 @@ public:
 	uint appendf(const char* _fmt, ...);
 	uint appendfv(const char* _fmt, va_list _args);
 
-	// Find the first (or last) occurence of any character in _list (null terminated). 
-	// If no match is found return null.
+	// Find the first (or last) occurence of any character in _list (null terminated). If no match is found return 0.
 	const char* findFirst(const char* _list) const;
 	const char* findLast(const char* _list) const;
 
-	// Find the first occurence of the substring _str, return null if not found.
+	// Find the first occurence of the substring _str. If not found return 0.
 	const char* find(const char* _str) const;
 
 	// Replace all instances of _find with _replace. Return the number of instances replaced.
@@ -87,8 +86,8 @@ protected:
 	StringBase();
 	// String has a local buffer of _localBufferSize chars.
 	StringBase(uint _localBufferSize);
-	// Move ctor. If _rhs is local it *must* have the same capacity as this (because the local buffer 
-	// size isn't stored). This is enforced by the deriving String class move ctors.
+	// Move ctor. If _rhs_ is local it *must* have the same capacity as this (because the local buffer 
+	// capacity isn't stored). This is enforced by the deriving String class move ctors.
 	StringBase(StringBase&& _rhs_);
 	// Move assignment. As move ctor.
 	StringBase& operator=(StringBase&& _rhs_);

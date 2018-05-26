@@ -317,35 +317,46 @@ StringBase::StringBase(StringBase&& _rhs_)
 	, m_capacity(_rhs_.m_capacity)
 	, m_length(_rhs_.m_length)
 {
-	if (_rhs_.isLocal())
+	if (_rhs_.isLocal()) {
+	 // _rhs_ is local, copy contents (m_buf is guranteed to be large enough)
 		strncpy(m_buf, _rhs_.m_buf, _rhs_.m_length + 1);
-	else
+	} else {
+	 // _rhs_ is not local, take ownership of it's heap-allocated buffer
 		m_buf = _rhs_.m_buf;
-	_rhs_.m_buf = nullptr;
+	}
+
+ // set _rhs_ to an invalid state; we can't use it's local buffer again because we cannot know the capacity
+	_rhs_.m_buf      = nullptr;
 	_rhs_.m_capacity = 0;
-	_rhs_.m_length = 0;
+	_rhs_.m_length   = 0;
 }
 StringBase& StringBase::operator=(StringBase&& _rhs_)
 {
-	if (&_rhs_ != this) {
-		if (_rhs_.isLocal()) // If rhs is local, we always can copy inside this.m_buf
-		{
-			if (m_buf == nullptr)
-				m_buf = getLocalBuf();
-			strncpy(m_buf, _rhs_.getLocalBuf(), _rhs_.m_length + 1);
-		}
-		else { // If rhs is NOT local, we will get back _rhs_.m_buf
-			if (!isLocal())
-				APT_FREE(m_buf);
-			m_buf = _rhs_.m_buf;
-		}
-
-		m_length = _rhs_.m_length;
-		m_capacity = _rhs_.m_capacity;
-		_rhs_.m_length = 0;
-		_rhs_.m_capacity = 0;
-		_rhs_.m_buf = nullptr;
+	if (this == &_rhs_) {
+		return *this;
 	}
+
+	if (_rhs_.isLocal()) {
+	 // _rhs_ is local, copy contents (m_buf is guranteed to be large enough)
+		if (!m_buf) {
+			m_buf = getLocalBuf();
+		}
+		strncpy(m_buf, _rhs_.getLocalBuf(), _rhs_.m_length + 1);
+	} else {	 
+	 // _rhs_ is not local, take ownership of it's heap-allocated buffer
+		if (!isLocal()) {
+			APT_FREE(m_buf);
+		}
+		m_buf = _rhs_.m_buf;
+	}
+	m_length   = _rhs_.m_length;
+	m_capacity = _rhs_.m_capacity;
+
+ // set _rhs_ to an invalid state; we can't use it's local buffer again because we cannot know the capacity
+	_rhs_.m_buf      = nullptr;
+	_rhs_.m_length   = 0;
+	_rhs_.m_capacity = 0;
+
 	return *this;
 }
 
@@ -375,7 +386,7 @@ void StringBase::realloc(uint _capacity)
 		m_capacity = _capacity;
 	
 	} else {
-		m_buf = (char*)::realloc(m_buf, _capacity * sizeof(char));
+		m_buf = (char*)APT_REALLOC(m_buf, _capacity * sizeof(char));
 		m_capacity = _capacity;
 	}
 }

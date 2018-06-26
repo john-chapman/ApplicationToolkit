@@ -408,9 +408,13 @@ int FileSystem::ListDirs(PathStr retList_[], int _maxResults, const char* _path,
 namespace {
 /* Notes:
 	- Changes within symbolic link subdirs don't generate events.
-	- Deleting a subdir doesn't generate events for its subtree.
-	- Duplicate 'modified' actions are received consecutively but may be split over 2 calls to DispatchNotifications(),
+	- Deleting or moving a dir doesn't generate events for its subtree. Copying does.
+	- Duplicate 'modified' actions are received consecutively* but may be split over 2 calls to DispatchNotifications(),
 	  hence store the last received action inside the watch struct (the queue gets cleared, so can't use queue.back()).
+		* This isn't certain!
+	- Other processes may modify files in arbitrary, unpredictable ways e.g. writing to a new file, deleting the old one
+	  and renaming the new one. You may therefore get a FileAction_Created event where you were expecting a FileAction_Modified.
+	  See the comments on this page: https://qualapps.blogspot.com/2010/05/understanding-readdirectorychangesw_19.html
 */
 	struct Watch
 	{
@@ -438,7 +442,7 @@ namespace {
 		}
 		APT_ASSERT(_err == ERROR_SUCCESS);
 		APT_ASSERT(_bytes != 0); // overflow? notifications lost in this case?
-
+//APT_LOG_DBG("---");
 		Watch* watch = (Watch*)_overlapped; // m_overlapped is the first member, so this works
 
 		TCHAR fileName[MAX_PATH];
@@ -451,18 +455,22 @@ namespace {
 			fileName[count] = '\0';
 
 			FileSystem::FileAction action = FileSystem::FileAction_Count;
+//char* actionStr = "UNKNOWN";
 			switch (info->Action) {
 				case FILE_ACTION_ADDED: 
 				case FILE_ACTION_RENAMED_NEW_NAME:
-					action = FileSystem::FileAction_Created; 
+					action = FileSystem::FileAction_Created;
+//actionStr = "FILE_ACTION_ADDED";
 					break;
 				case FILE_ACTION_REMOVED:
 				case FILE_ACTION_RENAMED_OLD_NAME:
 					action = FileSystem::FileAction_Deleted; 
+//actionStr = "FILE_ACTION_REMOVED";
 					break;
 				case FILE_ACTION_MODIFIED:
 				default:
 					action = FileSystem::FileAction_Modified;
+//actionStr = "FILE_ACTION_MODIFIED";
 					break;
 			};
 
@@ -477,6 +485,7 @@ namespace {
 					}
 				}
 			}
+//APT_LOG_DBG("%s -- %s%s", internal::StripPath(fileName), actionStr, duplicate ? " (DUPLICATE)" : "");
 			if (!duplicate) {
 				watch->m_prevAction = eastl::make_pair(PathStr(fileName), action);
 				watch->m_dispatchQueue.push_back(watch->m_prevAction);

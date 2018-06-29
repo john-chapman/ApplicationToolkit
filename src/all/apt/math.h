@@ -25,21 +25,21 @@ namespace apt {
 	
 	namespace internal
 	{
-		template<> struct TypeTraits<vec2>      { typedef VecT   Family; enum { kCount = 2 };  };
-		template<> struct TypeTraits<vec3>      { typedef VecT   Family; enum { kCount = 3 };  };
-		template<> struct TypeTraits<vec4>      { typedef VecT   Family; enum { kCount = 4 };  };
-		template<> struct TypeTraits<uvec2>     { typedef VecT   Family; enum { kCount = 2 };  };
-		template<> struct TypeTraits<uvec3>     { typedef VecT   Family; enum { kCount = 3 };  };
-		template<> struct TypeTraits<uvec4>     { typedef VecT   Family; enum { kCount = 4 };  };
-		template<> struct TypeTraits<ivec2>     { typedef VecT   Family; enum { kCount = 2 };  };
-		template<> struct TypeTraits<ivec3>     { typedef VecT   Family; enum { kCount = 3 };  };
-		template<> struct TypeTraits<ivec4>     { typedef VecT   Family; enum { kCount = 4 };  };
-		template<> struct TypeTraits<bvec2>     { typedef VecT   Family; enum { kCount = 2 };  };
-		template<> struct TypeTraits<bvec3>     { typedef VecT   Family; enum { kCount = 3 };  };
-		template<> struct TypeTraits<bvec4>     { typedef VecT   Family; enum { kCount = 4 };  };
-		template<> struct TypeTraits<mat2>      { typedef MatT   Family; enum { kCount = 4 };  };
-		template<> struct TypeTraits<mat3>      { typedef MatT   Family; enum { kCount = 9 };  };
-		template<> struct TypeTraits<mat4>      { typedef MatT   Family; enum { kCount = 16 }; };
+		template<> struct TypeTraits<vec2>      { typedef VecT Family; typedef float32 BaseType; enum { kCount = 2  }; };
+		template<> struct TypeTraits<vec3>      { typedef VecT Family; typedef float32 BaseType; enum { kCount = 3  }; };
+		template<> struct TypeTraits<vec4>      { typedef VecT Family; typedef float32 BaseType; enum { kCount = 4  }; };
+		template<> struct TypeTraits<uvec2>     { typedef VecT Family; typedef uint32  BaseType; enum { kCount = 2  }; };
+		template<> struct TypeTraits<uvec3>     { typedef VecT Family; typedef uint32  BaseType; enum { kCount = 3  }; };
+		template<> struct TypeTraits<uvec4>     { typedef VecT Family; typedef uint32  BaseType; enum { kCount = 4  }; };
+		template<> struct TypeTraits<ivec2>     { typedef VecT Family; typedef sint32  BaseType; enum { kCount = 2  }; };
+		template<> struct TypeTraits<ivec3>     { typedef VecT Family; typedef sint32  BaseType; enum { kCount = 3  }; };
+		template<> struct TypeTraits<ivec4>     { typedef VecT Family; typedef sint32  BaseType; enum { kCount = 4  }; };
+		template<> struct TypeTraits<bvec2>     { typedef VecT Family; typedef bool    BaseType; enum { kCount = 2  }; };
+		template<> struct TypeTraits<bvec3>     { typedef VecT Family; typedef bool    BaseType; enum { kCount = 3  }; };
+		template<> struct TypeTraits<bvec4>     { typedef VecT Family; typedef bool    BaseType; enum { kCount = 4  }; };
+		template<> struct TypeTraits<mat2>      { typedef MatT Family; typedef float32 BaseType; enum { kCount = 4  }; };
+		template<> struct TypeTraits<mat3>      { typedef MatT Family; typedef float32 BaseType; enum { kCount = 9  }; };
+		template<> struct TypeTraits<mat4>      { typedef MatT Family; typedef float32 BaseType; enum { kCount = 16 }; };
 	}
 
 	constexpr float kPi      = 3.14159265359f;

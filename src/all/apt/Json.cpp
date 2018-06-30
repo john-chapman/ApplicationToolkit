@@ -198,18 +198,19 @@ struct Json::Impl
 		JSON_LOG_ERR_SIZE("getVector", topName(), (int)arr.Size(), APT_TRAITS_COUNT(T), return ret);
 		JSON_LOG_ERR_TYPE("getVector", topName(), GetValueType(arr[0].GetType()), ValueType_Number, return ret);
 
-		if (DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(APT_TRAITS_BASE_TYPE(T)))) {
+		typedef APT_TRAITS_BASE_TYPE(T) BaseType;
+		if (DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(BaseType))) {
 			for (int i = 0; i < APT_TRAITS_COUNT(T); ++i) {
-				ret[i] = arr[i].GetFloat();
+				ret[i] = (BaseType)arr[i].GetFloat();
 			}
 		} else {
-			if (DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(APT_TRAITS_BASE_TYPE(T)))) {
+			if (DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(BaseType))) {
 				for (int i = 0; i < APT_TRAITS_COUNT(T); ++i) {
-					ret[i] = arr[i].GetInt();
+					ret[i] = (BaseType)arr[i].GetInt();
 				}
 			} else {
 				for (int i = 0; i < APT_TRAITS_COUNT(T); ++i) {
-					ret[i] = arr[i].GetUint();
+					ret[i] = (BaseType)arr[i].GetUint();
 				}
 			}
 		}		
@@ -225,7 +226,7 @@ struct Json::Impl
 		JSON_LOG_ERR_TYPE("getMatrix", topName(), valType, ValueType_Array, return identity);
 		auto& arrVecs = val->GetArray();
 		JSON_LOG_ERR_SIZE("getMatrix", topName(), (int)arrVecs.Size(), kCount, return identity);
-		JSON_LOG_ERR_TYPE("getMatrix", topName(), GetValueType(arr[0]->GetType()), ValueType_Array, return identity);
+		JSON_LOG_ERR_TYPE("getMatrix", topName(), GetValueType(arrVecs[0].GetType()), ValueType_Array, return identity);
 
 		T ret;
 		for (int i = 0; i < kCount; ++i) {

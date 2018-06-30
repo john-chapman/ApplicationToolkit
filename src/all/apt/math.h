@@ -23,8 +23,7 @@ namespace apt {
 	typedef linalg::aliases::float4x4 mat4;
 	typedef linalg::aliases::float4   quat;
 	
-	namespace internal
-	{
+	namespace internal {
 		template<> struct TypeTraits<vec2>      { typedef VecT Family; typedef float32 BaseType; enum { kCount = 2  }; };
 		template<> struct TypeTraits<vec3>      { typedef VecT Family; typedef float32 BaseType; enum { kCount = 3  }; };
 		template<> struct TypeTraits<vec4>      { typedef VecT Family; typedef float32 BaseType; enum { kCount = 4  }; };

@@ -131,10 +131,9 @@ struct CompositeT {};
 
 template <typename tType>
 struct TypeTraits 
-{ 
-	typedef typename tType         Type;
-	typedef typename tType         BaseType;
-	typedef typename tType::Family Family; 
+{
+	typedef typename tType::BaseType  BaseType;
+	typedef typename tType::Family    Family; 
 	enum 
 	{ 
 		kCount = tType::kCount // number of elements for composite types, 1 for scalar types
@@ -159,10 +158,10 @@ struct TypeTraits
 	template<> struct TypeTraits<float16>    { typedef IntT   Family; typedef uint16  BaseType; enum { kCount = 1 };  }; // float16 is an int type without floating point operators
 	template<> struct TypeTraits<float32>    { typedef FloatT Family; typedef float32 BaseType; enum { kCount = 1 };  };
 	template<> struct TypeTraits<float64>    { typedef FloatT Family; typedef float64 BaseType; enum { kCount = 1 };  };
-#define APT_TRAITS_TYPE(_type)      (typename apt::internal::TypeTraits<_type>::Type)
-#define APT_TRAITS_BASE_TYPE(_type) (typename apt::internal::TypeTraits<_type>::BaseType)
-#define APT_TRAITS_FAMILY(_type)    (typename apt::internal::TypeTraits<_type>::Family())
-#define APT_TRAITS_COUNT(_type)     (apt::internal::TypeTraits<_type>::kCount)
+
+#define APT_TRAITS_BASE_TYPE(_type) typename apt::internal::TypeTraits<_type>::BaseType
+#define APT_TRAITS_FAMILY(_type)    typename apt::internal::TypeTraits<_type>::Family()
+#define APT_TRAITS_COUNT(_type)     apt::internal::TypeTraits<_type>::kCount
 
 // Instantiate _macro for type/datatype pairs
 #define APT_DataType_decl(_macro) \

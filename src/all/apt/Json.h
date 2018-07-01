@@ -144,13 +144,13 @@ public:
 
  // Modification
 
-	// Create and set a named value. If the object already exists this modifies the type and value of the existing object.
+    // Set the current value, or the _ith element of the current array if _i >= 0.
 	template <typename tType>
-	void       setValue(const char* _name, tType _value);
+	void       setValue(tType _value, int _i = -1);
 
-    // Set the _ith element of an array. 0 <= _i < getArrayLength().
+	// Set a named value. If the value already exists this modifies the type and value.
 	template <typename tType>
-	void       setValue(int _i, tType _value);
+	void       setValue(tType _value, const char* _name);
 
 	// Push _value into the current array.
 	template <typename tType>

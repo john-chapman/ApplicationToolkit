@@ -8,7 +8,7 @@ using namespace apt;
 template <typename tType>
 static void _ValueAccessTest(const char* _name, Json& _json_)
 {
-	_json_.setValue(_name, tType(1));
+	_json_.setValue(tType(1), _name);
 	REQUIRE(_json_.getValue<tType>(_name) == tType(1));
 }
 #define ValueAccessTest(t) _ValueAccessTest<t>(#t, json)

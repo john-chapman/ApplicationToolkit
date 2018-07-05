@@ -27,7 +27,7 @@
 	}
 #define JSON_LOG_ERR_ARRAY_SIZE(_call, _name, _index, _arraySize, _onFail) \
 	if (_index >= _arraySize) { \
-		APT_LOG_ERR("Json: (%s) %s array index out of bounds, %d/%d", _call, _name, _index, _arraySize - 1); \
+		APT_LOG_ERR("Json: (%s) %s index out of bounds, %d/%d", _call, _name, _index, _arraySize - 1); \
 		_onFail; \
 	}
 
@@ -68,18 +68,10 @@ static const char* GetValueTypeString(Json::ValueType _type)
 
 *******************************************************************************/
 
-/*	Consider the stack top as a read-head. Calling enter()/leave() pushes/pops
-	the stack top, calling next() or find() overwrites the stack top. This could work
-	but will break existing code:
-	   enterArray()
-	      while (next()) {
-	      }
-	   leaveArray();
-	After entering the array, the first call to next() is expected to move the stack top to
-	the 0th array element. This would mean that enterArray() needs to set the stack top to
-	some sort of invalid value (index -1).
-		HOWEVER this adds a lot of complexity to everything else. A better approach would
-		be to maintain a separate index.
+/*	Traversal of the dom:
+		- The top of the stack is the current object/array.
+		- Also store an index on the stack which points to the current position within
+		  the object for the next() operation to work.
 
 	\todo
 	- Only access rapidjson via the Impl class?
@@ -90,87 +82,74 @@ struct Json::Impl
 
 	struct Value
 	{
-		rapidjson::Value* m_value;
-		const char*       m_name;
-		int               m_index;
+		rapidjson::Value* m_value  = nullptr; // current container (array or object)
+		const char*       m_name   = "";      // name of the container 
+		int               m_index  = -1;      // index of the current element within the container
 	};
 	eastl::vector<Value> m_stack;
 
-	Impl()
+	rapidjson::Value* current()
 	{
-		m_stack.push_back({ nullptr, "", -1});
-	}
-
-	auto& top()
-	{
-		return m_stack.back();
-	}
-	auto& parent()
-	{
-		APT_STRICT_ASSERT(m_stack.size() > 1);
-		return *(m_stack.end() - 2);
-	}
-
-	auto& topIndex()
-	{
-		return top().m_index;
-	}
-	auto& topName()
-	{
-		return top().m_name;
-	}
-	auto& topValue()
-	{
-		return top().m_value;
-	}
-	auto topType()
-	{
-		if (top().m_value == 0) {
-			return GetValueType(parent().m_value->GetType());
-		} else {
-			return GetValueType(top().m_value->GetType());
+		auto& top = m_stack.back();
+		APT_ASSERT(top.m_index >= 0);
+		auto topType = GetValueType(top.m_value->GetType());
+		if (topType == ValueType_Array) {
+			JSON_LOG_ERR_ARRAY_SIZE("current()", top.m_name, top.m_index, top.m_value->GetArray().Size(), return nullptr);
+			return top.m_value->Begin() + top.m_index;
+		} else if (topType == ValueType_Object) {
+			JSON_LOG_ERR_ARRAY_SIZE("current()", top.m_name, top.m_index, top.m_value->GetObject().MemberCount(), return nullptr);
+			return &(top.m_value->MemberBegin() + top.m_index)->value;
 		}
-	}
-	auto& setTop(rapidjson::Value* _value, const char* _name = "", int _index = -1)
-	{
-		m_stack.back() = { _value, _name, _index };
-		return m_stack.back();
+
+		return nullptr;
 	}
 
-	void push()
+	const char* currentName()
 	{
-		m_stack.push_back({ nullptr, "", -1 });
+		auto& top = m_stack.back();
+		APT_ASSERT(top.m_index >= 0);
+		auto topType = GetValueType(top.m_value->GetType());
+		if (topType == ValueType_Object) {
+			JSON_LOG_ERR_ARRAY_SIZE("current()", top.m_name, top.m_index, top.m_value->GetObject().MemberCount(), return nullptr);
+			return (top.m_value->MemberBegin() + top.m_index)->name.GetString();
+		}
+		return "";
 	}
-	void pop()
+
+	void enter()
+	{
+		auto topType = GetValueType(m_stack.back().m_value->GetType());
+		APT_ASSERT(topType == ValueType_Object || topType == ValueType_Array);
+		m_stack.push_back({ current(), currentName(), -1 });
+	}
+
+	void leave()
 	{
 		m_stack.pop_back();
 	}
 	
-	bool find(const char* _name)
+	rapidjson::Value* find(const char* _name)
 	{
-		auto obj = parent().m_value;
+		auto obj = current();
 		if (!obj->IsObject()) {
-			return false;
+			return nullptr;
 		}
 		auto it = obj->FindMember(_name);
 		if (it != obj->MemberEnd()) {
-			m_stack.back() = { &it->value, it->name.GetString(), (int)(it - obj->MemberBegin()) };
-			return true;
+			m_stack.back().m_index = (int)(it - obj->MemberBegin());
+			return &it->value;
 		}
-		return false;
+		return nullptr;
 	}
 
-	auto get(Json::ValueType _expectedType, int _i = -1)
+	rapidjson::Value* get(Json::ValueType _expectedType, int _i = -1)
 	{
-		rapidjson::Value* ret = m_stack.back().m_value;
-		if (_i >= 0) {
-			if (GetValueType(ret->GetType()) == ValueType_Array) {
-				int n = (int)ret->GetArray().Size();
-				JSON_LOG_ERR_ARRAY_SIZE("get", topName(), _i, n, ;);
-				ret = &ret->GetArray()[_i];
-			}
+		rapidjson::Value* ret = current();
+		if (_i >= 0 && GetValueType(ret->GetType()) == ValueType_Array) {
+			int n = (int)ret->GetArray().Size();
+			JSON_LOG_ERR_ARRAY_SIZE("get", currentName(), _i, n, ;);
+			ret = &ret->GetArray()[_i];
 		}
-		JSON_LOG_ERR_TYPE("get", topName(), GetValueType(ret->GetType()), _expectedType, ;);
 		return ret;
 	}
 
@@ -269,28 +248,28 @@ struct Json::Impl
 
 	rapidjson::Value* findOrAdd(const char* _name)
 	{
-		auto& obj = parent();
-		JSON_LOG_ERR_TYPE("findOrAdd", obj.m_name, GetValueType(obj.m_value->GetType()), ValueType_Object, return nullptr);
-		if (find(_name)) {
-			return topValue();
-		} else {
-			obj.m_value->AddMember(
+		auto obj = current();
+		JSON_LOG_ERR_TYPE("findOrAdd", currentName(), GetValueType(obj->GetType()), ValueType_Object, return nullptr);
+		auto ret = find(_name);
+		if (!ret) {
+			obj->AddMember(
 				rapidjson::StringRef(_name),
 				rapidjson::Value().Move(), 
 				m_dom.GetAllocator()
 				);
-			auto ret = &(obj.m_value->MemberEnd() - 1)->value;
-			m_stack.back() = { ret, _name, (int)obj.m_value->MemberCount() - 1 };
-			return ret;
+			ret = &(obj->MemberEnd() - 1)->value;
+			m_stack.back().m_name  = (obj->MemberEnd() - 1)->name.GetString();
+			m_stack.back().m_index = (int)obj->MemberCount();
 		}
+		return ret;
 	}
 	rapidjson::Value* findOrAdd(int _i)
 	{
-		auto& arr = parent();
-		JSON_LOG_ERR_TYPE("findOrAdd", arr.m_name, GetValueType(arr.m_value->GetType()), ValueType_Array, return nullptr);
-		int n = (int)arr.m_value->GetArray().Size();
-		JSON_LOG_ERR_ARRAY_SIZE("findOrAdd", arr.m_name, _i, n, return nullptr);
-		return &arr.m_value->GetArray()[_i];
+		auto arr = current();
+		JSON_LOG_ERR_TYPE("findOrAdd", currentName(), GetValueType(arr->GetType()), ValueType_Array, return nullptr);
+		int n = (int)arr->GetArray().Size();
+		JSON_LOG_ERR_ARRAY_SIZE("findOrAdd", currentName(), _i, n, return nullptr);
+		return arr->Begin() + _i;
 	}
 	rapidjson::Value* findOrAdd(const char* _name, int _i)
 	{
@@ -299,16 +278,16 @@ struct Json::Impl
 		} else if (_i >= 0) {
 			return findOrAdd(_i);
 		} else {
-			return topValue();
+			return current();
 		}
 	}
 	rapidjson::Value* pushNew()
 	{
-		auto& arr = parent();
-		JSON_LOG_ERR_TYPE("pushNew", arr.m_name, GetValueType(arr.m_value->GetType()), ValueType_Array, return nullptr);
-		arr.m_value->PushBack(rapidjson::Value().Move(), m_dom.GetAllocator());
-		auto ret = arr.m_value->End() - 1;
-		m_stack.back() = { ret, arr.m_name, (int)arr.m_value->Size() - 1 };
+		auto arr = current();
+		JSON_LOG_ERR_TYPE("pushNew", currentName(), GetValueType(arr->GetType()), ValueType_Array, return nullptr);
+		arr->PushBack(rapidjson::Value().Move(), m_dom.GetAllocator());
+		auto ret = arr->End() - 1;
+		m_stack.back().m_index = (int)arr->GetArray().Size() - 1;
 		return ret;
 	}
 
@@ -406,9 +385,10 @@ struct Json::Impl
 		APT_STRICT_ASSERT(_type == ValueType_Object || _type == ValueType_Array);
 		auto rapidJsonType = _type == ValueType_Object ? rapidjson::kObjectType : rapidjson::kArrayType;
 
-		auto top = parent().m_value;
-		if (_name && find(_name)) {
-			APT_ASSERT(topType() == _type);
+		auto top = current();
+		if (_name) {
+			auto ret = find(_name);
+			APT_ASSERT(GetValueType(ret->GetType()) == _type);
 		} else {
 			rapidjson::Value* obj;
 			int i = -1;
@@ -439,8 +419,6 @@ struct Json::Impl
 			}
 			m_stack.push_back({ obj, _name ? _name : "", i });
 		}
-
-		push(); // enter the object/array
 	}
 
 };

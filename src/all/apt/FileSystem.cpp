@@ -148,7 +148,9 @@ PathStr FileSystem::GetPath(const char* _path)
 		++_path;
 	}
 	PathStr ret;
-	ret.set(beg, end - beg);
+	if (end != beg) { // empty path, in which case (end - beg) == 0 and StringBase::set will call strlen
+		ret.set(beg, end - beg);
+	}
 	return ret;
 }
 

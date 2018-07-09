@@ -15,17 +15,17 @@
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 
-#define JSON_LOG_ERR_TYPE(_call, _name, _type, _expected, _onFail) \
+#define JSON_ERR_TYPE(_call, _name, _type, _expected, _onFail) \
 	if (_type != _expected) { \
 		APT_LOG_ERR("Json: (%s) %s has type %s, expected %s", _call, _name, GetValueTypeString(_type), GetValueTypeString(_expected)); \
 		_onFail; \
 	}
-#define JSON_LOG_ERR_SIZE(_call, _name, _size, _expected, _onFail) \
+#define JSON_ERR_SIZE(_call, _name, _size, _expected, _onFail) \
 	if (_size != _expected) { \
 		APT_LOG_ERR("Json: (%s) %s has size %d, expected %d", _call, _name, _size, _expected); \
 		_onFail; \
 	}
-#define JSON_LOG_ERR_ARRAY_SIZE(_call, _name, _index, _arraySize, _onFail) \
+#define JSON_ERR_ARRAY_SIZE(_call, _name, _index, _arraySize, _onFail) \
 	if (_index >= _arraySize) { \
 		APT_LOG_ERR("Json: (%s) %s index out of bounds, %d/%d", _call, _name, _index, _arraySize - 1); \
 		_onFail; \
@@ -74,6 +74,12 @@ static const char* GetValueTypeString(Json::ValueType _type)
 		  the object for the next() operation to work.
 
 	\todo
+	- m_impl is hard to reason about, need to distil the ideas a bit:
+		- Stack is for container objects only, maintain a separate Value instance for the
+		  position *within* the current container. Need to support json whose root isn't an
+		  object?
+		- goto() moves within the current container - takes either a name or an index. ONLY
+		  after calling goto() can you call enter/leave, get/set etc.
 	- Only access rapidjson via the Impl class?
 */
 struct Json::Impl
@@ -96,28 +102,18 @@ struct Json::Impl
 		}
 		auto topType = GetValueType(top.m_value->GetType());
 		if (topType == ValueType_Array) {
-			JSON_LOG_ERR_ARRAY_SIZE("current()", top.m_name, top.m_index, (int)top.m_value->GetArray().Size(), return nullptr);
+			JSON_ERR_ARRAY_SIZE("current()", top.m_name, top.m_index, (int)top.m_value->GetArray().Size(), return nullptr);
 			return top.m_value->Begin() + top.m_index;
 		} else if (topType == ValueType_Object) {
-			JSON_LOG_ERR_ARRAY_SIZE("current()", top.m_name, top.m_index, (int)top.m_value->GetObject().MemberCount(), return nullptr);
+			JSON_ERR_ARRAY_SIZE("current()", top.m_name, top.m_index, (int)top.m_value->GetObject().MemberCount(), return nullptr);
 			return &(top.m_value->MemberBegin() + top.m_index)->value;
 		}
-
 		return nullptr;
 	}
 
 	const char* currentName()
 	{
-		auto& top = m_stack.back();
-		if (top.m_index < 0) {
-			return top.m_name;
-		}
-		auto topType = GetValueType(top.m_value->GetType());
-		if (topType == ValueType_Object) {
-			JSON_LOG_ERR_ARRAY_SIZE("current()", top.m_name, top.m_index, (int)top.m_value->GetObject().MemberCount(), return nullptr);
-			return (top.m_value->MemberBegin() + top.m_index)->name.GetString();
-		}
-		return "";
+		return m_stack.back().m_name;
 	}
 
 	ValueType currentType()
@@ -143,13 +139,14 @@ struct Json::Impl
 	
 	rapidjson::Value* find(const char* _name)
 	{
-		auto obj = m_stack.back().m_value;
-		if (!obj->IsObject()) {
+		auto top = m_stack.back().m_value;
+		if (!top->IsObject()) {
 			return nullptr;
 		}
-		auto it = obj->FindMember(_name);
-		if (it != obj->MemberEnd()) {
-			m_stack.back().m_index = (int)(it - obj->MemberBegin());
+		auto it = top->FindMember(_name);
+		if (it != top->MemberEnd()) {
+			m_stack.back().m_index = (int)(it - top->MemberBegin());
+			m_stack.back().m_name  = it->name.GetString();
 			return &it->value;
 		}
 		return nullptr;
@@ -160,7 +157,7 @@ struct Json::Impl
 		rapidjson::Value* ret = current();
 		if (_i >= 0 && GetValueType(ret->GetType()) == ValueType_Array) {
 			int n = (int)ret->GetArray().Size();
-			JSON_LOG_ERR_ARRAY_SIZE("get", currentName(), _i, n, ;);
+			JSON_ERR_ARRAY_SIZE("get", currentName(), _i, n, return ret);
 			ret = &ret->GetArray()[_i];
 		}
 		return ret;
@@ -217,8 +214,8 @@ struct Json::Impl
 		T ret = T(APT_TRAITS_BASE_TYPE(T)(0));
 		auto val = get(ValueType_Array, _i);
 		auto& arr = val->GetArray();
-		JSON_LOG_ERR_SIZE("getVector", currentName(), (int)arr.Size(), APT_TRAITS_COUNT(T), return ret);
-		JSON_LOG_ERR_TYPE("getVector", currentName(), GetValueType(arr[0].GetType()), ValueType_Number, return ret);
+		JSON_ERR_SIZE("getVector", currentName(), (int)arr.Size(), APT_TRAITS_COUNT(T), return ret);
+		JSON_ERR_TYPE("getVector", currentName(), GetValueType(arr[0].GetType()), ValueType_Number, return ret);
 
 		typedef APT_TRAITS_BASE_TYPE(T) BaseType;
 		if (DataTypeIsFloat(APT_DATA_TYPE_TO_ENUM(BaseType))) {
@@ -245,14 +242,14 @@ struct Json::Impl
 	 // matrices are arrays of vectors
 		auto val = get(ValueType_Array, _i);
 		auto& arrVecs = val->GetArray();
-		JSON_LOG_ERR_SIZE("getMatrix", currentName(), (int)arrVecs.Size(), kCount, return identity);
-		JSON_LOG_ERR_TYPE("getMatrix", currentName(), GetValueType(arrVecs[0].GetType()), ValueType_Array, return identity);
+		JSON_ERR_SIZE("getMatrix", currentName(), (int)arrVecs.Size(), kCount, return identity);
+		JSON_ERR_TYPE("getMatrix", currentName(), GetValueType(arrVecs[0].GetType()), ValueType_Array, return identity);
 
 		T ret;
 		for (int i = 0; i < kCount; ++i) {
 			for (int j = 0; j < kCount; ++j) { // only square matrices supported
 				auto& vec = arrVecs[i];
-				JSON_LOG_ERR_SIZE("getMatrix", currentName(), (int)vec.Size(), kCount, return identity);
+				JSON_ERR_SIZE("getMatrix", currentName(), (int)vec.Size(), kCount, return identity);
 				ret[i][j] = vec[j].GetFloat();
 			}
 		}		
@@ -261,28 +258,28 @@ struct Json::Impl
 
 	rapidjson::Value* findOrAdd(const char* _name)
 	{
-		auto obj = m_stack.back().m_value;
-		JSON_LOG_ERR_TYPE("findOrAdd", m_stack.back().m_name, GetValueType(obj->GetType()), ValueType_Object, return nullptr);
+		auto top = m_stack.back().m_value;
+		JSON_ERR_TYPE("findOrAdd", m_stack.back().m_name, GetValueType(top->GetType()), ValueType_Object, return nullptr);
 		auto ret = find(_name);
 		if (!ret) {
-			m_stack.back().m_index = (int)obj->MemberCount();
-			obj->AddMember(
+			m_stack.back().m_index = (int)top->MemberCount();
+			top->AddMember(
 				rapidjson::StringRef(_name),
 				rapidjson::Value().Move(), 
 				m_dom.GetAllocator()
 				);
-			ret = &(obj->MemberEnd() - 1)->value;
-			m_stack.back().m_name  = (obj->MemberEnd() - 1)->name.GetString();
+			ret = &(top->MemberEnd() - 1)->value;
+			m_stack.back().m_name  = (top->MemberEnd() - 1)->name.GetString();
 		}
 		return ret;
 	}
 	rapidjson::Value* findOrAdd(int _i)
 	{
-		auto arr = m_stack.back().m_value;
-		JSON_LOG_ERR_TYPE("findOrAdd", m_stack.back().m_name, GetValueType(arr->GetType()), ValueType_Array, return nullptr);
-		int n = (int)arr->GetArray().Size();
-		JSON_LOG_ERR_ARRAY_SIZE("findOrAdd", m_stack.back().m_name, _i, n, return nullptr);
-		return arr->Begin() + _i;
+		auto top = m_stack.back().m_value;
+		JSON_ERR_TYPE("findOrAdd", m_stack.back().m_name, GetValueType(top->GetType()), ValueType_Array, return nullptr);
+		int n = (int)top->GetArray().Size();
+		JSON_ERR_ARRAY_SIZE("findOrAdd", m_stack.back().m_name, _i, n, return nullptr);
+		return top->Begin() + _i;
 	}
 	rapidjson::Value* findOrAdd(const char* _name, int _i)
 	{
@@ -296,11 +293,11 @@ struct Json::Impl
 	}
 	rapidjson::Value* pushNew()
 	{
-		auto arr = current();
-		JSON_LOG_ERR_TYPE("pushNew", currentName(), GetValueType(arr->GetType()), ValueType_Array, return nullptr);
-		arr->PushBack(rapidjson::Value().Move(), m_dom.GetAllocator());
-		auto ret = arr->End() - 1;
-		m_stack.back().m_index = (int)arr->GetArray().Size() - 1;
+		auto top = m_stack.back().m_value;
+		JSON_ERR_TYPE("pushNew",  m_stack.back().m_name, GetValueType(top->GetType()), ValueType_Array, return nullptr);
+		top->PushBack(rapidjson::Value().Move(), m_dom.GetAllocator());
+		auto ret = top->End() - 1;
+		m_stack.back().m_index = (int)top->GetArray().Size() - 1;
 		return ret;
 	}
 
@@ -403,21 +400,22 @@ struct Json::Impl
 			auto ret = find(_name);
 			if (ret) {
 				APT_ASSERT(GetValueType(ret->GetType()) == _type);
+				m_stack.push_back({ ret, m_stack.back().m_name, -1 });
 				return;
 			}
 		} 
-		rapidjson::Value* obj;
+		rapidjson::Value* ret;
 		int i = -1;
 		if (top->GetType() == rapidjson::kArrayType) {
 			if (_name) {
 				APT_LOG("Json: calling begin() in an array, name '%s' will be ignored", _name);
 			}
-			i = (int)top->GetArray().Size();
+			i = (int)top->Size();
 			top->PushBack(
 				rapidjson::Value(rapidJsonType).Move(), 
 				m_dom.GetAllocator()
 				);
-			obj = top->End() - 1;
+			ret = top->End() - 1;
 
 		} else {
 			i = (int)top->MemberCount();
@@ -426,14 +424,15 @@ struct Json::Impl
 				rapidjson::Value(rapidJsonType).Move(), 
 				m_dom.GetAllocator()
 				);
-			obj = &(top->MemberEnd() - 1)->value;
+			ret = &(top->MemberEnd() - 1)->value;
 		}
-
+	
+		m_stack.back().m_index = i; // we're about to enter the new object, set the back index as required
 		if (m_stack.back().m_value == nullptr) {
 		 // stack top is invalid, this means we want to replace it below 
 			m_stack.pop_back();
 		}
-		m_stack.push_back({ obj, _name ? _name : "", i });
+		m_stack.push_back({ ret, _name ? _name : "", -1 });
 	}
 
 };
@@ -486,7 +485,6 @@ Json::Json(const char* _path, FileSystem::RootType _rootHint)
 	m_impl = APT_NEW(Impl);
 	m_impl->m_dom.SetObject();	
 	m_impl->m_stack.push_back({ &m_impl->m_dom, "", -1 });
-	enterObject();
 	if (_path) {
 		Json::Read(*this, _path, _rootHint);
 	}
@@ -525,7 +523,7 @@ bool Json::next()
 bool Json::enterObject()
 {
 	APT_ASSERT(!m_impl->m_stack.empty());
-	JSON_LOG_ERR_TYPE("enterObject", getName(), getType(), ValueType_Object, return false);
+	JSON_ERR_TYPE("enterObject", getName(), getType(), ValueType_Object, return false);
 	m_impl->enter();
 	return true;
 }
@@ -539,7 +537,7 @@ void Json::leaveObject()
 bool Json::enterArray()
 {
 	APT_ASSERT(!m_impl->m_stack.empty());
-	JSON_LOG_ERR_TYPE("enterArray", getName(), getType(), ValueType_Array, return false);
+	JSON_ERR_TYPE("enterArray", getName(), getType(), ValueType_Array, return false);
 	m_impl->enter();
 	return true;
 }
@@ -547,7 +545,6 @@ bool Json::enterArray()
 void Json::leaveArray()
 {
 	m_impl->leave();
-	APT_ASSERT(getType() == ValueType_Array);
 }
 
 Json::ValueType Json::getType() const
@@ -563,7 +560,7 @@ const char* Json::getName() const
 int Json::getArrayLength() const
 {
 	if (getType() == ValueType_Array) {
-		return (int)m_impl->m_stack.back().m_value->GetArray().Size();
+		return (int)m_impl->current()->GetArray().Size();
 	}
 	return -1;
 }
@@ -747,12 +744,7 @@ void SerializerJson::endObject()
 bool SerializerJson::beginArray(uint& _length_, const char* _name)
 {
 	if (m_mode == Mode_Read) {
-		if (m_json->getArrayLength() >= 0) { // inside array
-			if (!m_json->next()) {
-				return false;
-			}
-		} else {
-			APT_ASSERT(_name);
+		if (_name) {
 			if (!m_json->find(_name)) {
 				setError("SerializerJson::beginArray(); '%s' not found", _name);
 				return false;
@@ -768,8 +760,8 @@ bool SerializerJson::beginArray(uint& _length_, const char* _name)
 		}
 	} else {
 		m_json->beginArray(_name);
-		return true;
 	}
+	return true;
 }
 void SerializerJson::endArray()
 {

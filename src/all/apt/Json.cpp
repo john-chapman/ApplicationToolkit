@@ -398,40 +398,42 @@ struct Json::Impl
 		APT_STRICT_ASSERT(_type == ValueType_Object || _type == ValueType_Array);
 		auto rapidJsonType = _type == ValueType_Object ? rapidjson::kObjectType : rapidjson::kArrayType;
 
-		auto top = current();
+		auto top = m_stack.back().m_value;
 		if (_name) {
 			auto ret = find(_name);
-			APT_ASSERT(GetValueType(ret->GetType()) == _type);
+			if (ret) {
+				APT_ASSERT(GetValueType(ret->GetType()) == _type);
+				return;
+			}
+		} 
+		rapidjson::Value* obj;
+		int i = -1;
+		if (top->GetType() == rapidjson::kArrayType) {
+			if (_name) {
+				APT_LOG("Json: calling begin() in an array, name '%s' will be ignored", _name);
+			}
+			i = (int)top->GetArray().Size();
+			top->PushBack(
+				rapidjson::Value(rapidJsonType).Move(), 
+				m_dom.GetAllocator()
+				);
+			obj = top->End() - 1;
+
 		} else {
-			rapidjson::Value* obj;
-			int i = -1;
-			if (top->GetType() == rapidjson::kArrayType) {
-				if (_name) {
-					APT_LOG("Json: calling begin() in an array, name '%s' will be ignored", _name);
-				}
-				i = (int)top->GetArray().Size();
-				top->PushBack(
-					rapidjson::Value(rapidJsonType).Move(), 
-					m_dom.GetAllocator()
-					);
-				obj = top->End() - 1;
-
-			} else {
-				i = (int)top->MemberCount();
-				top->AddMember(
-					rapidjson::StringRef(_name),
-					rapidjson::Value(rapidJsonType).Move(), 
-					m_dom.GetAllocator()
-					);
-				obj = &(top->MemberEnd() - 1)->value;
-			}
-
-			if (m_stack.back().m_value == nullptr) {
-			 // stack top is invalid, this means we want to replace it below 
-				m_stack.pop_back();
-			}
-			m_stack.push_back({ obj, _name ? _name : "", i });
+			i = (int)top->MemberCount();
+			top->AddMember(
+				rapidjson::StringRef(_name),
+				rapidjson::Value(rapidJsonType).Move(), 
+				m_dom.GetAllocator()
+				);
+			obj = &(top->MemberEnd() - 1)->value;
 		}
+
+		if (m_stack.back().m_value == nullptr) {
+		 // stack top is invalid, this means we want to replace it below 
+			m_stack.pop_back();
+		}
+		m_stack.push_back({ obj, _name ? _name : "", i });
 	}
 
 };

@@ -123,10 +123,12 @@ TEST_CASE("Binary", "[SerializerJson]")
 	js.binary(data, dataSize, "BinaryTest");
 
 	data = nullptr;
+	dataSize = 0;
 	js.setMode(SerializerJson::Mode_Read);
 	js.binary(data, dataSize, "BinaryTest");
 	
 	REQUIRE(dataSize == kSrcDataSize);
+	REQUIRE(data != nullptr);
 	REQUIRE(memcmp(data, kSrcData, dataSize) == 0);
 }
 

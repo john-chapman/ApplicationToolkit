@@ -69,23 +69,15 @@ static const char* GetValueTypeString(Json::ValueType _type)
 *******************************************************************************/
 
 /*	Traversal of the dom:
-		- The top of the stack is the current object/array.
-		- Also store an index on the stack which points to the current position within
-		  the object for the next() operation to work.
-
-	\todo
-	- m_impl is hard to reason about, need to distil the ideas a bit:
 		- Stack is for container objects only, maintain a separate Value instance for the
 		  position *within* the current container. Need to support json whose root isn't an
 		  object?
 		- find() moves within the current container - takes either a name or an index. ONLY
 		  after calling find() can you call enter/leave, get/set etc.
-	- Big problem with objects and arrays: because we don't implicitly go to the first element
-	  in the array/object, calling beginObject() or beginArray() from SerializerJson doesn't work
-	  because there's no implicit call to 'next' (as with Value). 
+
+	\todo		
 	- "call stack" for errors
-	- Matrices should be row major!
-	- Only access rapidjson via the Impl class?
+	- Matrices should be row major
 */
 struct Json::Impl
 {
@@ -518,6 +510,11 @@ void Json::leaveArray()
 	APT_ASSERT(getType() == ValueType_Array);
 }
 
+void Json::reset()
+{
+	m_impl->reset();
+}
+
 Json::ValueType Json::getType() const
 {
 	return m_impl->m_currentValue.getType();
@@ -526,6 +523,11 @@ Json::ValueType Json::getType() const
 const char* Json::getName() const
 {
 	return m_impl->m_currentValue.m_name;
+}
+
+int Json::getIndex() const
+{
+	return m_impl->m_currentValue.m_index;
 }
 
 int Json::getArrayLength() const
@@ -691,6 +693,36 @@ void Json::beginArray(const char* _name)
 	m_impl->enter();
 }
 
+static bool VisitRecursive(Json* _json_, Json::OnVisit* _onVisit, int _depth = 0)
+{
+	bool ret = true;
+
+	while (ret && _json_->next()) {
+		auto type  = _json_->getType();
+		auto name  = _json_->getName();
+		auto index = _json_->getIndex();
+		ret = _onVisit(_json_, type, name, index, _depth);
+		if (ret) {
+			if (type == Json::ValueType_Array) {
+				_json_->enterArray();
+				ret = VisitRecursive(_json_, _onVisit, _depth + 1);
+				_json_->leaveArray();
+			} else if (type == Json::ValueType_Object) {
+				_json_->enterObject();
+				ret = VisitRecursive(_json_, _onVisit, _depth + 1);
+				_json_->leaveObject();
+			}
+		}
+	}
+
+	return ret;
+}
+void Json::visitAll(OnVisit* _onVisit)
+{
+	APT_STRICT_ASSERT(_onVisit);
+	VisitRecursive(this, _onVisit);
+}
+
 /*******************************************************************************
 
                               SerializerJson
@@ -707,29 +739,35 @@ SerializerJson::SerializerJson(Json& _json_, Mode _mode)
 
 bool SerializerJson::beginObject(const char* _name)
 {
-	if (getMode() == Mode_Read) {
-		if (m_json->getArrayLength() >= 0) { // inside array
-			if (!m_json->next()) {
+	Json* json = getJson();
+	if (!_name && json->getArrayLength() < 0) {
+		setError("Error serializing object: name must be specified if not in an array");
+		return false;
+	}
+
+	if (getMode() == SerializerJson::Mode_Read) {
+		if (_name) {
+			if (!json->find(_name)) {
+				setError("Error serializing object: '%s' not found", _name);
 				return false;
 			}
 		} else {
-			APT_ASSERT(_name);
-			if (!m_json->find(_name)) {
-				setError("SerializerJson::beginObject(); '%s' not found", _name);
+			if (!json->next()) {
 				return false;
 			}
 		}
-		if (m_json->getType() == Json::ValueType_Object) {
-			m_json->enterObject();
-			return true;
-		} else {
-			setError("SerializerJson::beginObject(); '%s' not an object", _name ? _name : "");
+		if (m_json->getType() != Json::ValueType_Object) {
+			setError("Error serializing object: '%s' not an object", m_json->getName());
 			return false;
 		}
+
+		m_json->enterObject();
+
 	} else {
 		m_json->beginObject(_name);
-		return true;
 	}
+	
+	return true;
 }
 void SerializerJson::endObject()
 {
@@ -742,24 +780,35 @@ void SerializerJson::endObject()
 
 bool SerializerJson::beginArray(uint& _length_, const char* _name)
 {
-	if (m_mode == Mode_Read) {
+	Json* json = getJson();
+	if (!_name && json->getArrayLength() < 0) {
+		setError("Error serializing array: name must be specified if not in an array");
+		return false;
+	}
+
+	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
-			if (!m_json->find(_name)) {
-				setError("SerializerJson::beginArray(); '%s' not found", _name);
+			if (!json->find(_name)) {
+				setError("Error serializing array: '%s' not found", _name);
+				return false;
+			}
+		} else {
+			if (!json->next()) {
 				return false;
 			}
 		}
-		if (m_json->getType() == Json::ValueType_Array) {
-			m_json->enterArray();
-			_length_ = (uint)m_json->getArrayLength();
-			return true;
-		} else {
-			setError("SerializerJson::beginArray(); '%s' not an array", _name ? _name : "");
+		if (m_json->getType() != Json::ValueType_Array) {
+			setError("Error serializing array: '%s' not an array", m_json->getName());
 			return false;
 		}
+
+		m_json->enterArray();
+		_length_ = (uint)m_json->getArrayLength();
+
 	} else {
 		m_json->beginArray(_name);
 	}
+
 	return true;
 }
 void SerializerJson::endArray()
@@ -775,14 +824,15 @@ template <typename tType>
 static bool ValueImpl(SerializerJson& _serializer_, tType& _value_, const char* _name)
 {
 	Json* json = _serializer_.getJson();
-	if (!_name && json->getArrayLength() == -1) {
-		_serializer_.setError("Error serializing %s; name must be specified if not in an array", Serializer::ValueTypeToStr<tType>());
+	if (!_name && json->getArrayLength() < 0) {
+		_serializer_.setError("Error serializing %s: name must be specified if not in an array", Serializer::ValueTypeToStr<tType>());
 		return false;
 	}
+
 	if (_serializer_.getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
 			if (!json->find(_name)) {
-				_serializer_.setError("Error serializing %s; '%s' not found", Serializer::ValueTypeToStr<tType>(), _name);
+				_serializer_.setError("Error serializing %s: '%s' not found", Serializer::ValueTypeToStr<tType>(), _name);
 				return false;
 			}
 		} else {
@@ -843,7 +893,7 @@ bool SerializerJson::value(StringBase& _value_, const char* _name)
 
 	} else {
 		if (_name) {
-			m_json->setValue<const char*>(_name, (const char*)_value_);
+			m_json->setValue<const char*>((const char*)_value_, _name);
 		} else {
 			m_json->pushValue<const char*>((const char*)_value_);
 		}
@@ -983,7 +1033,9 @@ bool SerializerJson::binary(void*& _data_, uint& _sizeBytes_, const char* _name,
 
 	} else {
 		String<0> str;
-		value((StringBase&)str, _name);
+		if (!value((StringBase&)str, _name)) {
+			return false;
+		}
 		bool compressed = str[0] == '1' ? true : false;
 		uint binSizeBytes = Base64DecSizeBytes((char*)str + 1, str.getLength() - 1);
 		char* bin = (char*)APT_MALLOC(binSizeBytes);
@@ -992,7 +1044,7 @@ bool SerializerJson::binary(void*& _data_, uint& _sizeBytes_, const char* _name,
 		char* ret = bin;
 		uint retSizeBytes = binSizeBytes;
 		if (compressed) {
-			ret = nullptr; // Decompress to allocates the final buffer
+			ret = nullptr; // decompress to allocates the final buffer
 			Decompress(bin, binSizeBytes, (void*&)ret, retSizeBytes);
 		}
 		if (_data_) {

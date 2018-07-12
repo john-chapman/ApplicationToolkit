@@ -104,31 +104,37 @@ public:
 
  // Traversal
 
-	// Find a named value in the current object. Return true if the value is found, in which case the value may be accessed.
+	// Go to a named value in the current object, return false if not found.
 	bool        find(const char* _name);
 	
-	// Get the next value in the current object/array. Return true if not the end of the object/array, in which case the value may be accessed.
+	// Go to the next value in the current object/array, return true if not the end of the object/array.
 	bool        next();
 
-	// Enter the current object (call immediately after find() or next()). Return false if the current value is not an object.
+	// Enter the current object (call immediately after find() or next()), return false if the current value is not an object.
 	bool        enterObject();
 	// Leave the current object.
 	void        leaveObject();
 
-	// Enter the array (call immediately after find() or next()). Return false if the current value is not an array.
+	// Enter the current array (call immediately after find() or next()), return false if the current value is not an array.
 	bool        enterArray();
 	// Leave the current array.
 	void        leaveArray();
+
+	// Reset the traversal state machine.
+	void        reset();
 
  // Introspection
 
 	// Get the type of the current value.
 	ValueType   getType() const;
 
-	// Get the name of the current value. Return 0 if the current value is an array member.
+	// Get the name of the current value, return "" if the current value is an array member.
 	const char* getName() const;
+
+	// Get the index of the current value.
+	int         getIndex() const;
 	
-	// Return number of elements in the current array (or -1 if not in an array).
+	// Get the number of elements in the current array, return -1 if not in an array.
 	int         getArrayLength() const;
 
 	// Get the current value. tType must match the type of the current value (i.e. getValue<int>() must be called only if the value type is ValueType_Number).
@@ -168,6 +174,10 @@ public:
 	// Leave the current array.
 	void       endArray() { leaveArray(); }
 
+ // Debug
+
+	typedef bool (OnVisit)(Json* _this_, ValueType _vaueType, const char* _valueName, int _valueIndex, int _depth);
+	void        visitAll(OnVisit* _onVisit);
 	
 private:
 	struct Impl;
@@ -185,29 +195,31 @@ public:
 
 	Json* getJson() { return m_json; }
 
-	bool beginObject(const char* _name = nullptr) override;
-	void endObject() override;
+	bool  beginObject(const char* _name = nullptr) override;
+	void  endObject() override;
 
-	bool beginArray(uint& _length_, const char* _name = nullptr) override;
-	void endArray() override;
+	bool  beginArray(uint& _length_, const char* _name = nullptr) override;
+	void  endArray() override;
 
-	bool value(bool&       _value_, const char* _name = nullptr) override;
-	bool value(sint8&      _value_, const char* _name = nullptr) override;
-	bool value(uint8&      _value_, const char* _name = nullptr) override;
-	bool value(sint16&     _value_, const char* _name = nullptr) override;
-	bool value(uint16&     _value_, const char* _name = nullptr) override;
-	bool value(sint32&     _value_, const char* _name = nullptr) override;
-	bool value(uint32&     _value_, const char* _name = nullptr) override;
-	bool value(sint64&     _value_, const char* _name = nullptr) override;
-	bool value(uint64&     _value_, const char* _name = nullptr) override;
-	bool value(float32&    _value_, const char* _name = nullptr) override;
-	bool value(float64&    _value_, const char* _name = nullptr) override;
-	bool value(StringBase& _value_, const char* _name = nullptr) override;
+	bool  value(bool&       _value_, const char* _name = nullptr) override;
+	bool  value(sint8&      _value_, const char* _name = nullptr) override;
+	bool  value(uint8&      _value_, const char* _name = nullptr) override;
+	bool  value(sint16&     _value_, const char* _name = nullptr) override;
+	bool  value(uint16&     _value_, const char* _name = nullptr) override;
+	bool  value(sint32&     _value_, const char* _name = nullptr) override;
+	bool  value(uint32&     _value_, const char* _name = nullptr) override;
+	bool  value(sint64&     _value_, const char* _name = nullptr) override;
+	bool  value(uint64&     _value_, const char* _name = nullptr) override;
+	bool  value(float32&    _value_, const char* _name = nullptr) override;
+	bool  value(float64&    _value_, const char* _name = nullptr) override;
+	bool  value(StringBase& _value_, const char* _name = nullptr) override;
 	
-	bool binary(void*& _data_, uint& _sizeBytes_, const char* _name = nullptr, CompressionFlags _compressionFlags = CompressionFlags_None) override;
+	bool  binary(void*& _data_, uint& _sizeBytes_, const char* _name = nullptr, CompressionFlags _compressionFlags = CompressionFlags_None) override;
 
 private:
 	Json* m_json;
+
+	void onModeChange(Mode _mode) { m_json->reset(); }
 
 }; // class SerializerJson
 

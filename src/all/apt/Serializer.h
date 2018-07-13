@@ -22,7 +22,7 @@ public:
 	};
 
 	Mode         getMode() const                       { return m_mode;  }
-	void         setMode(Mode _mode)                   { m_mode = _mode; }
+	void         setMode(Mode _mode)                   { onModeChange(_mode); m_mode = _mode; }
 	const char*  getError() const                      { return m_errStr.isEmpty() ? nullptr : (const char*)m_errStr; }
 	void         setError(const char* _msg, ...);
 
@@ -91,6 +91,8 @@ protected:
 	virtual ~Serializer()
 	{
 	}
+
+	virtual void onModeChange(Mode _mode) {};
 
 private:
 	String<64> m_errStr;

@@ -8,7 +8,7 @@ using namespace apt;
 template <typename tType>
 static void _ValueAccessTest(const char* _name, Json& _json_)
 {
-	_json_.setValue(_name, tType(1));
+	_json_.setValue(tType(1), _name);
 	REQUIRE(_json_.getValue<tType>(_name) == tType(1));
 }
 #define ValueAccessTest(t) _ValueAccessTest<t>(#t, json)
@@ -123,10 +123,12 @@ TEST_CASE("Binary", "[SerializerJson]")
 	js.binary(data, dataSize, "BinaryTest");
 
 	data = nullptr;
+	dataSize = 0;
 	js.setMode(SerializerJson::Mode_Read);
 	js.binary(data, dataSize, "BinaryTest");
 	
 	REQUIRE(dataSize == kSrcDataSize);
+	REQUIRE(data != nullptr);
 	REQUIRE(memcmp(data, kSrcData, dataSize) == 0);
 }
 

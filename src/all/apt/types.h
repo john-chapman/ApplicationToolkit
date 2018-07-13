@@ -131,36 +131,37 @@ struct CompositeT {};
 
 template <typename tType>
 struct TypeTraits 
-{ 
-	typedef typename tType         Type;
-	typedef typename tType::Family Family; 
+{
+	typedef typename tType::BaseType  BaseType;
+	typedef typename tType::Family    Family; 
 	enum 
 	{ 
 		kCount = tType::kCount // number of elements for composite types, 1 for scalar types
 	}; 
 };
-	template<> struct TypeTraits<sint8>      { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<uint8>      { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<sint16>     { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<uint16>     { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<sint32>     { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<uint32>     { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<sint64>     { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<uint64>     { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<sint8N>     { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<uint8N>     { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<sint16N>    { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<uint16N>    { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<sint32N>    { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<uint32N>    { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<sint64N>    { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<uint64N>    { typedef IntT   Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<float16>    { typedef IntT   Family; enum { kCount = 1 };  }; // float16 is an int type without floating point operators
-	template<> struct TypeTraits<float32>    { typedef FloatT Family; enum { kCount = 1 };  };
-	template<> struct TypeTraits<float64>    { typedef FloatT Family; enum { kCount = 1 };  };
-#define APT_TRAITS_TYPE(_type)   (typename apt::internal::TypeTraits<_type>::Type)
-#define APT_TRAITS_FAMILY(_type) (typename apt::internal::TypeTraits<_type>::Family())
-#define APT_TRAITS_COUNT(_type)  (apt::internal::TypeTraits<_type>::kCount)
+	template<> struct TypeTraits<sint8>      { typedef IntT   Family; typedef sint8   BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<uint8>      { typedef IntT   Family; typedef uint8   BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<sint16>     { typedef IntT   Family; typedef sint16  BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<uint16>     { typedef IntT   Family; typedef uint16  BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<sint32>     { typedef IntT   Family; typedef sint32  BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<uint32>     { typedef IntT   Family; typedef uint32  BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<sint64>     { typedef IntT   Family; typedef sint64  BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<uint64>     { typedef IntT   Family; typedef uint64  BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<sint8N>     { typedef IntT   Family; typedef sint8N  BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<uint8N>     { typedef IntT   Family; typedef uint8N  BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<sint16N>    { typedef IntT   Family; typedef sint16N BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<uint16N>    { typedef IntT   Family; typedef uint16N BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<sint32N>    { typedef IntT   Family; typedef sint32N BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<uint32N>    { typedef IntT   Family; typedef uint32N BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<sint64N>    { typedef IntT   Family; typedef sint64N BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<uint64N>    { typedef IntT   Family; typedef uint64N BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<float16>    { typedef IntT   Family; typedef uint16  BaseType; enum { kCount = 1 };  }; // float16 is an int type without floating point operators
+	template<> struct TypeTraits<float32>    { typedef FloatT Family; typedef float32 BaseType; enum { kCount = 1 };  };
+	template<> struct TypeTraits<float64>    { typedef FloatT Family; typedef float64 BaseType; enum { kCount = 1 };  };
+
+#define APT_TRAITS_BASE_TYPE(_type) typename apt::internal::TypeTraits<_type>::BaseType
+#define APT_TRAITS_FAMILY(_type)    typename apt::internal::TypeTraits<_type>::Family()
+#define APT_TRAITS_COUNT(_type)     apt::internal::TypeTraits<_type>::kCount
 
 // Instantiate _macro for type/datatype pairs
 #define APT_DataType_decl(_macro) \

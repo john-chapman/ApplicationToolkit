@@ -23,8 +23,10 @@ Embedded dependencies:
 - [Miniz](https://github.com/richgel999/miniz)
 - [RapidJSON](http://rapidjson.org/)
 - [stb](https://github.com/nothings/stb)
+- [tinyexr](https://github.com/syoyo/tinyexr)
 
 ## Change Log ##
+- `2018-07-12 (v0.15):` Rewrite of the `Json` implementation.
 - `2018-04-17 (v0.14):` `File::Read` sleep/retry on sharing violation (Windows).
 - `2018-04-01 (v0.13):` Memory alloc/free API via `APT_` macros.
 - `2018-03-31 (v0.12):` FileSystem notifications API. Path manipulation API changes, `FileSystem::PathStr` -> `apt::PathStr`.

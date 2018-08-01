@@ -71,13 +71,16 @@ struct aligned: private internal::aligned_base<kAlignment>
 // allocating static blocks of uninitialized memory for use with placement
 // new.
 ////////////////////////////////////////////////////////////////////////////////
-template <typename tType, size_t kCount>
+template <typename tType, size_t kCount = 1>
 class storage: private aligned< storage<tType, kCount>, alignof(tType) >
 {
 	char m_buf[sizeof(tType) * kCount];
 public:
 	storage(): aligned< storage<tType, kCount>, alignof(tType) >() {}
-	operator tType*() { return (tType*)m_buf; }
+	operator tType*()                                              { return (tType*)m_buf; }
+	operator const tType*() const                                  { return (tType*)m_buf; }
+	tType* operator->()                                            { return (tType*)m_buf; }
+	const tType* operator->() const                                { return (tType*)m_buf; }
 };
 
 } // namespace apt

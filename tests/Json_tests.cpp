@@ -17,6 +17,8 @@ template <typename tType>
 static void _ArrayAccessTest(const char* _name, Json& _json_)
 {
 	static const float kArrayValues[] = { 3, 5, 7, 1, 9 };
+	int n = APT_ARRAY_COUNT(kArrayValues);
+	
 	_json_.beginArray(_name);
 		for (auto v : kArrayValues) {
 			_json_.pushValue(tType(v));
@@ -25,11 +27,10 @@ static void _ArrayAccessTest(const char* _name, Json& _json_)
 
 	_json_.beginArray(_name);
 	{
-		int n = APT_ARRAY_COUNT(kArrayValues);
 		REQUIRE(_json_.getArrayLength() == n);
 		for (int i = 0; i < n; ++i) {
 			auto v = _json_.getValue<tType>(i);
-			REQUIRE(_json_.getValue<tType>(i) == tType(kArrayValues[i]));
+			REQUIRE(v == tType(kArrayValues[i]));
 		}
 	}
 	_json_.endArray();

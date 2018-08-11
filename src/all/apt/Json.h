@@ -143,9 +143,9 @@ public:
 	template <typename tType>
 	tType       getValue(int _i = -1) const;
 
-	// Get a named value. Equivalent to find(_name) followed by getValue(_i).
+	// Get a named value. Equivalent to find(_name) followed by getValue(-1).
 	template <typename tType>
-	tType       getValue(const char* _name, int _i = -1) { APT_VERIFY(find(_name)); return getValue<tType>(_i); }
+	tType       getValue(const char* _name) { APT_VERIFY(find(_name)); return getValue<tType>(-1); }
 		
 
  // Modification

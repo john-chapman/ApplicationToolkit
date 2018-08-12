@@ -64,7 +64,9 @@ public:
 	void setCapacity(uint _capacity);
 
 	bool  operator==(const char* _rhs) const;
+	bool  operator!=(const char* _rhs) const        { return !(*this == _rhs); }
 	bool  operator==(const StringBase& _rhs) const  { return this->operator==((const char*)_rhs); }
+	bool  operator!=(const StringBase& _rhs) const  { return !(*this == _rhs); }
 	bool  operator<(const char* _rhs) const;
 	bool  operator<(const StringBase& _rhs) const   { return this->operator<((const char*)_rhs); }
 	bool  operator>(const char* _rhs) const;

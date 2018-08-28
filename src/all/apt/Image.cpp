@@ -503,9 +503,8 @@ bool Image::IsDataTypeBpc(DataType _type, int _bpc)
 #include <stb_image_write.h>
 static void StbiWriteFile(void* file_, void* _data, int _size)
 {
- // \todo need a better approach here, as many calls to appendData is slow (it just calls realloc() on
- //  the internal buffer). Maybe use a smart reallocation scheme or allocate an initial scratch buffer
- //  with an estimated file size to reduce the number of reallocations.
+ // \todo need a better approach here, as many calls to appendData is slow (it just calls realloc() on the internal buffer). Maybe use a smart 
+ // reallocation scheme or allocate an initial scratch buffer with an estimated file size to reduce the number of reallocations.
 	if (_size == 0) {
 		return;
 	}
@@ -514,6 +513,7 @@ static void StbiWriteFile(void* file_, void* _data, int _size)
 	f->appendData((const char*)_data, _size);
 }
 
+//#include <miniz.h> // \todo use miniz instead of the zlib version compiled into lodepng
 #include <lodepng.h>
 void* lodepng_malloc(size_t size)                   { return APT_MALLOC(size); }
 void* lodepng_realloc(void* ptr, size_t new_size)   { return APT_REALLOC(ptr, new_size); }
@@ -561,12 +561,12 @@ bool Image::ReadDefault(Image& img_, const char* _data, uint _dataSize)
 }
 bool Image::ReadPng(Image& img_, const char* _data, uint _dataSize)
 {
-	LodePNGDecoderSettings settings;
-    lodepng_decoder_settings_init(&settings);
-	settings.color_convert = 0;
+	LodePNGDecoderSettings dec;
+    lodepng_decoder_settings_init(&dec);
+	dec.color_convert = 0;
     LodePNGState state;
     lodepng_state_init(&state);
-    state.decoder = settings;
+    state.decoder = dec;
 	DataType dataType;	
 	bool ret = true;
 	unsigned x, y, cmp;
@@ -644,10 +644,9 @@ bool Image::WritePng(File& file_, const Image& _img)
 		                        ret = false;
 	};
 
- // don't use the default encoder state, which ignores colorType in some cases
 	LodePNGEncoderSettings enc;
 	lodepng_encoder_settings_init(&enc);
-	enc.auto_convert = false;
+	enc.auto_convert = 0;
 	LodePNGState state;
 	lodepng_state_init(&state);
 	state.info_raw.colortype = colorType;

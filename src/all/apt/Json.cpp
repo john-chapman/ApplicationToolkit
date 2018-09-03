@@ -111,7 +111,11 @@ struct Json::Impl
 	void reset()
 	{
 		m_containerStack.clear();
-		m_containerStack.push_back({ &m_dom, "", -1 });
+		Value v;
+			v.m_value = &m_dom;
+			v.m_name  = "";
+			v.m_index = -1;
+		m_containerStack.push_back(v);
 		m_currentValue = Value();
 	}
 

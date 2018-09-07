@@ -1,18 +1,18 @@
 Common application tools:
 
-- Platform/compiler/architecture defines and related macros.
+- Platform, compiler and architecture defines + related macros.
 - Assert macros (+ callback for app-specific behavior).
 - Logging macros (+ callback for app-specific behavior).
 - Math types/functions.
 - Time functions.
 - Hash functions (FNV1a).
-- Compression functions.
+- Compression functions (zlib)
 - File and file system tools.
 - Common file format load/parse (image files, JSON, INI).
 - Misc useful base/template classes for common idioms (factory, static initializer, etc.).
 
 ## Usage ##
-The project is intended to be compiled as a static lib. A [premake](https://premake.github.io/) script is provided in `build/` (requires premake5). See [build/ApplicationTools_premake.lua](https://github.com/john-chapman/ApplicationTools/blob/master/build/ApplicationTools_premake.lua) for details.
+The project is intended to be compiled as a static lib. A [premake](https://premake.github.io/) script is provided in `build/` (requires premake5). See [build/ApplicationTools_premake.lua](build/ApplicationTools_premake.lua) for details.
 
 ## Dependencies ##
 Embedded dependencies:

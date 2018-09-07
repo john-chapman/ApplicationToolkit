@@ -5,7 +5,7 @@
 
 		dofile("extern/ApplicationTools/build/ApplicationTools_premake.lua")
 
-	The call ApplicationTools_ProjectExternal() inside your workspace declaration:
+	Then call ApplicationTools_ProjectExternal() inside your workspace declaration:
 
 		workspace "MyWorkspace"
 			ApplicationTools_ProjectExternal("extern/ApplicationTools")
@@ -31,10 +31,9 @@
 				"build/lib",               -- build output location
 				{                          -- config map
 					APT_LOG_CALLBAG_ONLY = 1,
-				}
-				)
+				})
 
-	See config.h for the list of valid config defines.
+	See config.h for more info about configuring the library.
 	
 	Finally, for each project which needs to link ApplicationTools:
 
@@ -58,6 +57,14 @@ local function ApplicationTools_SetPaths(_root)
 	ALL_EXTERN_DIR  = _root .. ALL_EXTERN_DIR
 	WIN_SRC_DIR     = _root .. WIN_SRC_DIR
 	WIN_EXTERN_DIR  = _root .. WIN_EXTERN_DIR
+end
+
+
+local function ApplicationTools_ProjectCommon()
+	kind       "StaticLib"
+	language   "C++"
+	cppdialect "C++11"
+	uuid       "6ADD11F4-56D6-3046-7F08-16CB6B601052"
 end
 
 local function ApplicationTools_Globals()
@@ -97,11 +104,8 @@ function ApplicationTools_Project(_root, _targetDir, _config)
 	ApplicationTools_SetPaths(_root)
 
 	project "ApplicationTools"
-		kind "StaticLib"
-		language "C++"
-		cppdialect "C++11"
 		targetdir(_targetDir)
-		uuid(APT_UUID)
+		ApplicationTools_ProjectCommon()
 
 		vpaths({
 			["*"]        = ALL_SRC_DIR .. "apt/**",
@@ -151,9 +155,7 @@ function ApplicationTools_ProjectExternal(_root)
 
 	externalproject "ApplicationTools"
 		location(_root .. "/build/" .. _ACTION)
-		uuid(APT_UUID)
-		kind "StaticLib"
-		language "C++"
+		ApplicationTools_ProjectCommon()
 
 	ApplicationTools_Globals(_root)
 end

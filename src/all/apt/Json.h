@@ -94,12 +94,12 @@ public:
 	typedef int ValueType;
 
 	static bool Read(Json& json_, const File& _file);
-	static bool Read(Json& json_, const char* _path, FileSystem::RootType _rootHint = FileSystem::RootType_Default);
+	static bool Read(Json& json_, const char* _path, int _root = FileSystem::GetDefaultRoot());
 	static bool Write(const Json& _json, File& file_);
-	static bool Write(const Json& _json, const char* _path, FileSystem::RootType _rootHint = FileSystem::RootType_Default);
+	static bool Write(const Json& _json, const char* _path, int _root = FileSystem::GetDefaultRoot());
 		
 	// Read from _path if specified.
-	Json(const char* _path = nullptr, FileSystem::RootType _rootHint = FileSystem::RootType_Default);
+	Json(const char* _path = nullptr, int _root = FileSystem::GetDefaultRoot());
 	~Json();
 
  // Traversal

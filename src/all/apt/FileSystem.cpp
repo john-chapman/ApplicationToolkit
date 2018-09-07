@@ -10,20 +10,22 @@ using namespace apt;
 
 // PUBLIC
 
-const char* FileSystem::GetRoot(RootType _type)
+int FileSystem::AddRoot(const char* _path)
 {
-	return (const char*)s_roots[_type];
+	auto it = eastl::find(s_roots.begin(), s_roots.end(), _path);
+	if (it != s_roots.end()) {
+		return (int)(it - s_roots.begin());
+	}
+	
+	int ret = (int)s_roots.size();
+	s_roots.push_back(_path);
+	return ret;
 }
 
-void FileSystem::SetRoot(RootType _type, const char* _path)
-{
-	s_roots[_type].set(_path);
-}
-
-bool FileSystem::Read(File& file_, const char* _path, RootType _rootHint)
+bool FileSystem::Read(File& file_, const char* _path, int _root)
 {
 	PathStr fullPath;
-	if (!FindExisting(fullPath, _path ? _path : file_.getPath(), _rootHint)) {
+	if (!FindExisting(fullPath, _path ? _path : file_.getPath(), _root)) {
 		APT_LOG_ERR("Error loading '%s':\n\tFile not found", _path);
 		//APT_ASSERT(false);
 		return false;
@@ -31,25 +33,25 @@ bool FileSystem::Read(File& file_, const char* _path, RootType _rootHint)
 	return File::Read(file_, (const char*)fullPath);
 }
 
-bool FileSystem::ReadIfExists(File& file_, const char* _path, RootType _rootHint)
+bool FileSystem::ReadIfExists(File& file_, const char* _path, int _root)
 {
 	PathStr fullPath;
-	if (!FindExisting(fullPath, _path ? _path : file_.getPath(), _rootHint)) {
+	if (!FindExisting(fullPath, _path ? _path : file_.getPath(), _root)) {
 		return false;
 	}
 	return File::Read(file_, (const char*)fullPath);
 }
 
-bool FileSystem::Write(const File& _file, const char* _path, RootType _root)
+bool FileSystem::Write(const File& _file, const char* _path, int _root)
 {
 	PathStr fullPath = MakePath(_path ? _path : _file.getPath(), _root);
 	return File::Write(_file, (const char*)fullPath);
 }
 
-bool FileSystem::Exists(const char* _path, RootType _rootHint)
+bool FileSystem::Exists(const char* _path, int _root)
 {
 	PathStr buf;
-	return FindExisting(buf, _path, _rootHint);
+	return FindExisting(buf, _path, _root);
 }
 
 bool FileSystem::Matches(const char* _pattern, const char* _str)
@@ -111,15 +113,16 @@ bool FileSystem::MatchesMulti(std::initializer_list<const char*> _patternList, c
 	return false;
 }
 
-PathStr FileSystem::MakePath(const char* _path, RootType _root)
+PathStr FileSystem::MakePath(const char* _path, int _root)
 {
-	APT_ASSERT(_root < RootType_Count);
-	bool useRoot = !s_roots[_root].isEmpty() && !IsAbsolute(_path);
+	APT_ASSERT(_root < (int)s_roots.size());
+	const auto& root = s_roots[_root];
+	bool useRoot = !root.isEmpty() && !IsAbsolute(_path);
 	if (useRoot) {
 	 // check if the root already exists in path as a directory
-		const char* r = strstr((const char*)s_roots[_root], _path);
-		if (!r || *(r + s_roots[_root].getLength()) != s_separator) {
-			return PathStr("%s%c%s", (const char*)s_roots[_root], s_separator, _path);
+		const char* r = strstr((const char*)root, _path);
+		if (!r || *(r + root.getLength()) != s_separator) {
+			return PathStr("%s%c%s", (const char*)root, s_separator, _path);
 		}
 	}
 	return PathStr(_path);
@@ -204,12 +207,13 @@ const char* FileSystem::FindFileNameAndExtension(const char* _path)
 
 // PRIVATE
 
-PathStr FileSystem::s_roots[RootType_Count];
+int FileSystem::s_defaultRoot;
+eastl::vector<PathStr> FileSystem::s_roots;
 
-bool FileSystem::FindExisting(PathStr& ret_, const char* _path, RootType _rootHint)
+bool FileSystem::FindExisting(PathStr& ret_, const char* _path, int _root)
 {
-	for (int r = (int)_rootHint; r != -1; --r) {
-		ret_ = MakePath(_path, (RootType)r);
+	for (int i = _root; i > -1; --i) {
+		ret_ = MakePath(_path, i);
 		if (File::Exists((const char*)ret_)) {
 			return true;
 		}

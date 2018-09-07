@@ -120,7 +120,7 @@ bool FileSystem::Delete(const char* _path)
 	return true;
 }
 
-DateTime FileSystem::GetTimeCreated(const char* _path, RootType _rootHint)
+DateTime FileSystem::GetTimeCreated(const char* _path, int _rootHint)
 {
 	PathStr fullPath;
 	if (!FindExisting(fullPath, _path, _rootHint)) {
@@ -131,7 +131,7 @@ DateTime FileSystem::GetTimeCreated(const char* _path, RootType _rootHint)
 	return created;
 }
 
-DateTime FileSystem::GetTimeModified(const char* _path, RootType _rootHint)
+DateTime FileSystem::GetTimeModified(const char* _path, int _rootHint)
 {
 	PathStr fullPath;
 	if (!FindExisting(fullPath, _path, _rootHint)) {
@@ -160,7 +160,7 @@ bool FileSystem::CreateDir(const char* _path)
 	return true;
 }
 
-PathStr FileSystem::MakeRelative(const char* _path, RootType _root)
+PathStr FileSystem::MakeRelative(const char* _path, int _root)
 {
 	TCHAR root[MAX_PATH] = {};
 	if (IsAbsolute((const char*)s_roots[_root])) {
@@ -195,15 +195,15 @@ PathStr FileSystem::StripRoot(const char* _path)
 	TCHAR path[MAX_PATH] = {};
 	APT_PLATFORM_VERIFY(GetFullPathName(_path, MAX_PATH, path, NULL));
 
-	for (int r = 0; r < RootType_Count; ++r) {
-		if (s_roots[r].isEmpty()) {
+	for (auto& root : s_roots) {
+		if (root.isEmpty()) {
 			continue;
 		}
 		TCHAR root[MAX_PATH];
-		if (IsAbsolute((const char*)s_roots[r])) {
-			APT_PLATFORM_VERIFY(GetFullPathName((const char*)s_roots[r], MAX_PATH, root, NULL));
+		if (IsAbsolute((const char*)root)) {
+			APT_PLATFORM_VERIFY(GetFullPathName((const char*)root, MAX_PATH, root, NULL));
 		} else {
-			GetAppPath(root, (const char*)s_roots[r]);
+			GetAppPath(root, (const char*)root);
 		}
 		const char* rootBeg = strstr(path, root);
 		if (rootBeg != nullptr) {
@@ -232,7 +232,7 @@ bool FileSystem::PlatformSelect(PathStr& ret_, std::initializer_list<const char*
 	ofn.lStructSize     = sizeof(ofn);
 	ofn.lpstrFilter     = (LPSTR)filters;
 	ofn.nFilterIndex    = s_filterIndex;
-	ofn.lpstrInitialDir = (LPSTR)s_roots[RootType_Application];
+	ofn.lpstrInitialDir = (LPSTR)s_roots[s_defaultRoot];
 	ofn.lpstrFile       = s_output;
 	ofn.nMaxFile        = kMaxOutputLength;
 	ofn.lpstrTitle      = "File";
@@ -266,7 +266,7 @@ int FileSystem::PlatformSelectMulti(PathStr retList_[], int _maxResults, std::in
 	ofn.lStructSize     = sizeof(ofn);
 	ofn.lpstrFilter     = (LPSTR)filters;
 	ofn.nFilterIndex    = s_filterIndex;
-	ofn.lpstrInitialDir = (LPSTR)s_roots[RootType_Application];
+	ofn.lpstrInitialDir = (LPSTR)s_roots[s_defaultRoot];
 	ofn.lpstrFile       = s_output;
 	ofn.nMaxFile        = kMaxOutputLength;	
 	ofn.lpstrTitle      = "File";

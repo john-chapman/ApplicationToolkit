@@ -111,11 +111,7 @@ struct Json::Impl
 	void reset()
 	{
 		m_containerStack.clear();
-		Value v;
-			v.m_value = &m_dom;
-			v.m_name  = "";
-			v.m_index = -1;
-		m_containerStack.push_back(v);
+		m_containerStack.push_back({ &m_dom, "", -1 });
 		m_currentValue = Value();
 	}
 
@@ -409,11 +405,11 @@ bool Json::Read(Json& json_, const File& _file)
 	return true;
 }
 
-bool Json::Read(Json& json_, const char* _path, FileSystem::RootType _rootHint)
+bool Json::Read(Json& json_, const char* _path, int _root)
 {
 	APT_AUTOTIMER("Json::Read(%s)", _path);
 	File f;
-	if (!FileSystem::ReadIfExists(f, _path, _rootHint)) {
+	if (!FileSystem::ReadIfExists(f, _path, _root)) {
 		return false;
 	}
 	return Read(json_, f);
@@ -430,24 +426,24 @@ bool Json::Write(const Json& _json, File& file_)
 	return true;
 }
 
-bool Json::Write(const Json& _json, const char* _path, FileSystem::RootType _rootHint)
+bool Json::Write(const Json& _json, const char* _path, int _root)
 {
 	APT_AUTOTIMER("Json::Write(%s)", _path);
 	File f;
 	if (Write(_json, f)) {
-		return FileSystem::Write(f, _path, _rootHint);
+		return FileSystem::Write(f, _path, _root);
 	}
 	return false;
 }
 
-Json::Json(const char* _path, FileSystem::RootType _rootHint)
+Json::Json(const char* _path, int _root)
 	: m_impl(nullptr)
 {
 	m_impl = APT_NEW(Impl);
 	m_impl->m_dom.SetObject();	
 	m_impl->reset();
 	if (_path) {
-		Json::Read(*this, _path, _rootHint);
+		Json::Read(*this, _path, _root);
 	}
 }
 

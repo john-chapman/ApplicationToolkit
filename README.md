@@ -26,6 +26,7 @@ Embedded dependencies:
 - [tinyexr](https://github.com/syoyo/tinyexr)
 
 ## Change Log ##
+- `2018-09-07 (v0.16):` `FileSystem` supports arbitrary search paths (roots), removed `RootType` enum.
 - `2018-07-12 (v0.15):` Rewrite of the `Json` implementation.
 - `2018-04-17 (v0.14):` `File::Read` sleep/retry on sharing violation (Windows).
 - `2018-04-01 (v0.13):` Memory alloc/free API via `APT_` macros.

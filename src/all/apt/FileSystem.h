@@ -5,58 +5,54 @@
 #include <apt/String.h>
 #include <apt/Time.h>
 
+#include <EASTL/vector.h>
 #include <initializer_list>
 
 namespace apt {
 
 ////////////////////////////////////////////////////////////////////////////////
 // FileSystem
-// Manage file access. 
-// A fixed number of directory 'roots' may be set, which are searched in reverse 
-// order when resolving a relative path (e.g. RootType_Application is checked 
-// before RootType_Common).
+// File system operations, file access management, path manipulation helpers.
+//
+// Multiple search paths ('roots') may be set. These are searched in reverse 
+// order when reading a file. The order is determined by the sequence of calls
+// to AddRoot().
+//
+// \todo https://github.com/john-chapman/ApplicationTools/issues/21
 ////////////////////////////////////////////////////////////////////////////////
 class FileSystem
 {
 public:
-	enum RootType_
-	{
-		RootType_Root,         // Default is the working directory of the executable.
-		RootType_Common,       // Shared path for common files.
-		RootType_Application,  // Application-specific files.
+	// Add a root path. Return index in the root table.
+	static int         AddRoot(const char* _path);
 
-		RootType_Count,
-		RootType_Default = RootType_Application
-	};
-	typedef int RootType;
-
-	// Get/set a path for the specified root type.
-	static const char* GetRoot(RootType _type);
-	static void        SetRoot(RootType _type, const char* _path);
+	// Get/set the default root path. 
+	static void        SetDefaultRoot(int _root)   { APT_ASSERT(_root < (int)s_roots.size()); s_defaultRoot = _root; }
+	static int         GetDefaultRoot()            { return s_defaultRoot; }
 
  // File operations
 
-	// Read a file into memory. Each root is searched, beginning at _rootHint. If _path is nullptr, file_.getPath() is used.
+	// Read a file into memory. Each root is searched in reverse order, beginning at _root. If _path is 0, file_.getPath() is used.
 	// Return false if an error occurred, in which case file_ remains unchanged. On success, any resources already associated 
-	// with file_ are released. _rootHint is ignored if _path is absolute.
-	static bool        Read(File& file_, const char* _path = nullptr, RootType _rootHint = RootType_Default);
+	// with file_ are released. _root is ignored if _path is absolute.
+	static bool        Read(File& file_, const char* _path = nullptr, int _root = GetDefaultRoot());
 
 	// As Read() but first checks if the file exists. Return false if the file does not exist or if an error occurred.
-	static bool        ReadIfExists(File& file_, const char* _path = nullptr, RootType _rootHint = RootType_Default);
+	static bool        ReadIfExists(File& file_, const char* _path = nullptr, int _root = GetDefaultRoot());
 
 	// Write _file's data to _path. If _path is 0, _file.getPath() is used. Return false if an error occurred, in which case 
 	// any existing file at _path may or may not have been overwritten. _root is ignored if _path is absolute.
-	static bool        Write(const File& _file, const char* _path = nullptr, RootType _root = RootType_Default);
+	static bool        Write(const File& _file, const char* _path = nullptr, int _root = GetDefaultRoot());
 
-	// Return true if _path exists. Each root is searched, beginning at _rootHint.
-	static bool        Exists(const char* _path, RootType _rootHint = RootType_Default);
+	// Return true if _path exists. Each root is searched, beginning at _root.
+	static bool        Exists(const char* _path, int _root = GetDefaultRoot());
 
 	// Delete a file.
 	static bool        Delete(const char* _path);
 
-	// Get the creation/last modified time for a file. The path is constructed as per Read(). 
-	static DateTime    GetTimeCreated(const char* _path, RootType _rootHint = RootType_Default);
-	static DateTime    GetTimeModified(const char* _path, RootType _rootHint = RootType_Default);
+	// Get the creation/last modified time for a file. _path is treated as per Read(). 
+	static DateTime    GetTimeCreated(const char* _path, int _root = GetDefaultRoot());
+	static DateTime    GetTimeModified(const char* _path, int _root = GetDefaultRoot());
 
 	// Create the directory specified by _path, plus all parent directories if they do not exist. Return false if an error occurred.
 	// If _path contains only directory names, it must end in a path separator (e.g. "dir0/dir1/").
@@ -64,8 +60,8 @@ public:
 
  // Path manipulation
 
-	// Concatenate _path + s_separator + s_root[_root]. _root is ignored if _path is absolute.
-	static PathStr     MakePath(const char* _path, RootType _root);
+	// s_roots[_root] + s_separator + _path. _root is ignored if _path is absolute.
+	static PathStr     MakePath(const char* _path, int _root = GetDefaultRoot());
 
 	// Match _str against _pattern with wildcard characters: '?' matches a single character, '*' matches zero or more characters.
 	static bool        Matches(const char* _pattern, const char* _str);
@@ -73,7 +69,7 @@ public:
 	static bool        MatchesMulti(std::initializer_list<const char*> _patternList, const char* _str);
 
 	// Make _path relative to _root.
-	static PathStr     MakeRelative(const char* _path, RootType _root = RootType_Root);
+	static PathStr     MakeRelative(const char* _path, int _root);
 	// Return true if _path is absolute.
 	static bool        IsAbsolute(const char* _path);
 
@@ -130,11 +126,12 @@ public:
 	static void        DispatchNotifications(const char* _dir = nullptr);
 
 private:
-	static PathStr    s_roots[RootType_Count];
-	static const char s_separator; // per-platform default separator
+	static int                    s_defaultRoot;
+	static eastl::vector<PathStr> s_roots;
+	static const char             s_separator;
 	
-	// Get a path to an existing file based on _path and _rootHint. Return false if no existing file was found.
-	static bool FindExisting(PathStr& ret_, const char* _path, RootType _rootHint);
+	// Get a path to an existing file based on _path and _root. Return false if no existing file was found.
+	static bool FindExisting(PathStr& ret_, const char* _path, int _root);
 
 };
 

@@ -1,6 +1,7 @@
 #include <apt/FileSystem.h>
 
 #include <apt/log.h>
+#include <apt/memory.h>
 #include <apt/File.h>
 #include <apt/String.h>
 
@@ -8,17 +9,19 @@
 
 using namespace apt;
 
+APT_DEFINE_STATIC_INIT(FileSystem, FileSystem::Init, FileSystem::Shutdown);
+
 // PUBLIC
 
 int FileSystem::AddRoot(const char* _path)
 {
-	auto it = eastl::find(s_roots.begin(), s_roots.end(), _path);
-	if (it != s_roots.end()) {
-		return (int)(it - s_roots.begin());
+	auto it = eastl::find(s_roots->begin(), s_roots->end(), _path);
+	if (it != s_roots->end()) {
+		return (int)(it - s_roots->begin());
 	}
 	
-	int ret = (int)s_roots.size();
-	s_roots.push_back(_path);
+	int ret = (int)s_roots->size();
+	s_roots->push_back(_path);
 	return ret;
 }
 
@@ -115,14 +118,14 @@ bool FileSystem::MatchesMulti(std::initializer_list<const char*> _patternList, c
 
 PathStr FileSystem::MakePath(const char* _path, int _root)
 {
-	APT_ASSERT(_root < (int)s_roots.size());
-	const auto& root = s_roots[_root];
+	APT_ASSERT(_root < (int)s_roots->size());
+	const auto& root = (*s_roots)[_root];
 	bool useRoot = !root.isEmpty() && !IsAbsolute(_path);
 	if (useRoot) {
 	 // check if the root already exists in path as a directory
 		const char* r = strstr((const char*)root, _path);
-		if (!r || *(r + root.getLength()) != s_separator) {
-			return PathStr("%s%c%s", (const char*)root, s_separator, _path);
+		if (!r || *(r + root.getLength()) != kPathSeparator) {
+			return PathStr("%s%c%s", (const char*)root, kPathSeparator, _path);
 		}
 	}
 	return PathStr(_path);
@@ -208,7 +211,17 @@ const char* FileSystem::FindFileNameAndExtension(const char* _path)
 // PRIVATE
 
 int FileSystem::s_defaultRoot;
-eastl::vector<PathStr> FileSystem::s_roots;
+apt::storage<eastl::vector<PathStr> > FileSystem::s_roots;
+
+
+void FileSystem::Init()
+{
+	*s_roots = eastl::vector<PathStr>();
+}
+
+void FileSystem::Shutdown()
+{
+}
 
 bool FileSystem::FindExisting(PathStr& ret_, const char* _path, int _root)
 {

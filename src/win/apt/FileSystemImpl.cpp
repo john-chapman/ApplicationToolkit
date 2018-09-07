@@ -163,10 +163,10 @@ bool FileSystem::CreateDir(const char* _path)
 PathStr FileSystem::MakeRelative(const char* _path, int _root)
 {
 	TCHAR root[MAX_PATH] = {};
-	if (IsAbsolute((const char*)s_roots[_root])) {
-		APT_PLATFORM_VERIFY(GetFullPathName((const char*)s_roots[_root], MAX_PATH, root, NULL));
+	if (IsAbsolute((const char*)(*s_roots)[_root])) {
+		APT_PLATFORM_VERIFY(GetFullPathName((const char*)(*s_roots)[_root], MAX_PATH, root, NULL));
 	} else {
-		GetAppPath(root, (const char*)s_roots[_root]);
+		GetAppPath(root, (const char*)(*s_roots)[_root]);
 	}
 
  // construct the full path
@@ -181,7 +181,7 @@ PathStr FileSystem::MakeRelative(const char* _path, int _root)
 		tmp += 2;
 	}	
 	PathStr ret(tmp);
-	ret.replace('\\', s_separator);
+	ret.replace('\\', kPathSeparator);
 	return ret;
 }
 
@@ -195,7 +195,7 @@ PathStr FileSystem::StripRoot(const char* _path)
 	TCHAR path[MAX_PATH] = {};
 	APT_PLATFORM_VERIFY(GetFullPathName(_path, MAX_PATH, path, NULL));
 
-	for (auto& root : s_roots) {
+	for (auto& root : (*s_roots)) {
 		if (root.isEmpty()) {
 			continue;
 		}
@@ -208,7 +208,7 @@ PathStr FileSystem::StripRoot(const char* _path)
 		const char* rootBeg = strstr(path, root);
 		if (rootBeg != nullptr) {
 			PathStr ret(path + strlen(root) + 1);
-			ret.replace('\\', s_separator);
+			ret.replace('\\', kPathSeparator);
 			return ret;
 		}
 	}
@@ -232,7 +232,7 @@ bool FileSystem::PlatformSelect(PathStr& ret_, std::initializer_list<const char*
 	ofn.lStructSize     = sizeof(ofn);
 	ofn.lpstrFilter     = (LPSTR)filters;
 	ofn.nFilterIndex    = s_filterIndex;
-	ofn.lpstrInitialDir = (LPSTR)s_roots[s_defaultRoot];
+	ofn.lpstrInitialDir = (LPSTR)(*s_roots)[s_defaultRoot];
 	ofn.lpstrFile       = s_output;
 	ofn.nMaxFile        = kMaxOutputLength;
 	ofn.lpstrTitle      = "File";
@@ -266,7 +266,7 @@ int FileSystem::PlatformSelectMulti(PathStr retList_[], int _maxResults, std::in
 	ofn.lStructSize     = sizeof(ofn);
 	ofn.lpstrFilter     = (LPSTR)filters;
 	ofn.nFilterIndex    = s_filterIndex;
-	ofn.lpstrInitialDir = (LPSTR)s_roots[s_defaultRoot];
+	ofn.lpstrInitialDir = (LPSTR)(*s_roots)[s_defaultRoot];
 	ofn.lpstrFile       = s_output;
 	ofn.nMaxFile        = kMaxOutputLength;	
 	ofn.lpstrTitle      = "File";
@@ -607,7 +607,3 @@ void FileSystem::DispatchNotifications(const char* _dir)
 		}
 	}
 }
-
-// PROTECTED
-
-const char FileSystem::s_separator = '/';

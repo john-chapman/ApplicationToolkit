@@ -1,8 +1,6 @@
 #include <apt/File.h>
 
-#include <cstdlib> // malloc, free
-#include <cstring> // memcpy
-#include <utility> // swap
+#include <apt/memory.h>
 
 using namespace apt;
 
@@ -18,7 +16,7 @@ void File::setData(const char* _data, uint64 _size)
 	}
 
 	if (!m_data && _size > 0) {
-		m_data = (char*)malloc(_size);
+		m_data = (char*)APT_MALLOC(_size);
 		APT_ASSERT(m_data);
 	}
 	if (_data) {
@@ -49,7 +47,7 @@ void File::ctorCommon()
 void File::dtorCommon()
 {
 	if (m_data) {
-		free(m_data);
+		APT_FREE(m_data);
 		m_data = nullptr;
 	}
 }

@@ -35,7 +35,6 @@ static DateTime ToDateTime(SYSTEMTIME _st)
 
 *******************************************************************************/
 
-APT_DEFINE_STATIC_INIT(Time);
 static storage<sint64, 1>    s_sysFreq;
 static storage<Timestamp, 1> s_appInit;
 

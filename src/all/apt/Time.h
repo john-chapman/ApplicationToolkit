@@ -27,10 +27,13 @@ public:
 	// 
 	static void      Sleep(sint64 _ms);
 
+private:
+
+	APT_DECLARE_STATIC_INIT_FRIEND(Time);
 	static void Init();
 	static void Shutdown();
 };
-APT_DECLARE_STATIC_INIT(Time, Time::Init, Time::Shutdown);
+APT_DECLARE_STATIC_INIT(Time);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Timestamp

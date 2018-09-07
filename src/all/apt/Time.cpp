@@ -7,6 +7,8 @@
 
 using namespace apt;
 
+APT_DEFINE_STATIC_INIT(Time, Time::Init, Time::Shutdown);
+
 /*******************************************************************************
 
                                   Timestamp

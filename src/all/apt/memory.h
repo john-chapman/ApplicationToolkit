@@ -77,10 +77,12 @@ class storage: private aligned< storage<tType, kCount>, alignof(tType) >
 	char m_buf[sizeof(tType) * kCount];
 public:
 	storage(): aligned< storage<tType, kCount>, alignof(tType) >() {}
-	operator tType*()                                              { return (tType*)m_buf; }
+
+	operator       tType*()                                        { return (tType*)m_buf; }
 	operator const tType*() const                                  { return (tType*)m_buf; }
-	tType* operator->()                                            { return (tType*)m_buf; }
-	const tType* operator->() const                                { return (tType*)m_buf; }
+
+	tType*         operator->()                                    { return (tType*)m_buf; }
+	const tType*   operator->() const                              { return (tType*)m_buf; }
 };
 
 } // namespace apt

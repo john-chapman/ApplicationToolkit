@@ -1,6 +1,8 @@
 #pragma once
 
 #include <apt/apt.h>
+#include <apt/memory.h>
+#include <apt/static_initializer.h>
 #include <apt/File.h>
 #include <apt/String.h>
 #include <apt/Time.h>
@@ -26,8 +28,11 @@ public:
 	// Add a root path. Return index in the root table.
 	static int         AddRoot(const char* _path);
 
+	// _root was previously returned by AddRoot().
+	static const char* GetRoot(int _root)          { return (const char*)(*s_roots)[_root]; }
+
 	// Get/set the default root path. 
-	static void        SetDefaultRoot(int _root)   { APT_ASSERT(_root < (int)s_roots.size()); s_defaultRoot = _root; }
+	static void        SetDefaultRoot(int _root)   { APT_ASSERT(_root < (int)s_roots->size()); s_defaultRoot = _root; }
 	static int         GetDefaultRoot()            { return s_defaultRoot; }
 
  // File operations
@@ -60,7 +65,7 @@ public:
 
  // Path manipulation
 
-	// s_roots[_root] + s_separator + _path. _root is ignored if _path is absolute.
+	// s_roots[_root] + kPathSeparator + _path. _root is ignored if _path is absolute.
 	static PathStr     MakePath(const char* _path, int _root = GetDefaultRoot());
 
 	// Match _str against _pattern with wildcard characters: '?' matches a single character, '*' matches zero or more characters.
@@ -69,7 +74,7 @@ public:
 	static bool        MatchesMulti(std::initializer_list<const char*> _patternList, const char* _str);
 
 	// Make _path relative to _root.
-	static PathStr     MakeRelative(const char* _path, int _root);
+	static PathStr     MakeRelative(const char* _path, int _root = GetDefaultRoot());
 	// Return true if _path is absolute.
 	static bool        IsAbsolute(const char* _path);
 
@@ -126,13 +131,24 @@ public:
 	static void        DispatchNotifications(const char* _dir = nullptr);
 
 private:
-	static int                    s_defaultRoot;
-	static eastl::vector<PathStr> s_roots;
-	static const char             s_separator;
+	static int s_defaultRoot;
+	static storage<eastl::vector<PathStr> > s_roots;
+	static constexpr char kPathSeparator =
+		#if APT_PLATFORM_WIN
+			'/'
+		#else
+			'\'
+		#endif
+		;
 	
+	APT_DECLARE_STATIC_INIT_FRIEND(FileSystem);
+	static void Init();
+	static void Shutdown();
+
 	// Get a path to an existing file based on _path and _root. Return false if no existing file was found.
 	static bool FindExisting(PathStr& ret_, const char* _path, int _root);
 
 };
+APT_DECLARE_STATIC_INIT(FileSystem);
 
 } // namespace apt

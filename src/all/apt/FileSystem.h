@@ -133,13 +133,7 @@ public:
 private:
 	static int s_defaultRoot;
 	static storage<eastl::vector<PathStr> > s_roots;
-	static constexpr char kPathSeparator =
-		#if APT_PLATFORM_WIN
-			'/'
-		#else
-			'\'
-		#endif
-		;
+	static constexpr char kPathSeparator = '/';
 	
 	APT_DECLARE_STATIC_INIT_FRIEND(FileSystem);
 	static void Init();

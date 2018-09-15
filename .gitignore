@@ -8,12 +8,19 @@ docs/*
 !docs/*.doxy
 
 # Visual Studio
-build/vs*/*
-build/vs*/*.user
+build/vs*/**
 !build/vs*/*.sln
 !build/vs*/*.vcxproj
 !build/vs*/*.filters
 !build/vs*/*.props
+
+# VS Code
+.vscode/**
+
+# gmake
+build/gmake/**
+!build/gmake/*.make
+!build/gmake/Makefile
 
 # Misc
 *.tmp

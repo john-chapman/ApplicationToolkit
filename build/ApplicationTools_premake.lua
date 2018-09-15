@@ -43,13 +43,15 @@
 	This option provides the most flexibility, but don't forget to rebuild your project files after updating.
 --]]
 
-local APT_UUID        = "6ADD11F4-56D6-3046-7F08-16CB6B601052"
+local APT_UUID          = "6ADD11F4-56D6-3046-7F08-16CB6B601052"
 
-local SRC_DIR         = "/src/"
-local ALL_SRC_DIR     = SRC_DIR .. "all/"
-local ALL_EXTERN_DIR  = ALL_SRC_DIR .. "extern/"
-local WIN_SRC_DIR     = SRC_DIR .. "win/"
-local WIN_EXTERN_DIR  = WIN_SRC_DIR .. "extern/"
+local SRC_DIR           = "/src/"
+local ALL_SRC_DIR       = SRC_DIR       .. "all/"
+local ALL_EXTERN_DIR    = ALL_SRC_DIR   .. "extern/"
+local WIN_SRC_DIR       = SRC_DIR       .. "win/"
+local WIN_EXTERN_DIR    = WIN_SRC_DIR   .. "extern/"
+local LINUX_SRC_DIR     = SRC_DIR       .. "linux/"
+local LINUX_EXTERN_DIR  = LINUX_SRC_DIR .. "extern/"
 
 local function ApplicationTools_SetPaths(_root)
 	SRC_DIR         = _root .. SRC_DIR
@@ -63,7 +65,7 @@ end
 local function ApplicationTools_ProjectCommon()
 	kind       "StaticLib"
 	language   "C++"
-	cppdialect "C++11"
+	cppdialect "C++14"
 	uuid       "6ADD11F4-56D6-3046-7F08-16CB6B601052"
 end
 
@@ -94,6 +96,12 @@ local function ApplicationTools_Globals()
 			WIN_EXTERN_DIR,
 			})
 	filter {}
+	filter { "platforms:Linux" }
+		includedirs({
+			LINUX_SRC_DIR,
+			LINUX_EXTERN_DIR,
+			})
+	filter {}
 end
 
 function ApplicationTools_Project(_root, _targetDir, _config)
@@ -108,9 +116,10 @@ function ApplicationTools_Project(_root, _targetDir, _config)
 		ApplicationTools_ProjectCommon()
 
 		vpaths({
-			["*"]        = ALL_SRC_DIR .. "apt/**",
+			["*"]        = ALL_SRC_DIR    .. "apt/**",
 			["extern/*"] = ALL_EXTERN_DIR .. "**",
-			["win"]      = WIN_SRC_DIR .. "apt/**",
+			["win"]      = WIN_SRC_DIR    .. "apt/**",
+			["linux"]    = LINUX_SRC_DIR  .. "apt/**",
 			})
 
 		files({
@@ -136,6 +145,16 @@ function ApplicationTools_Project(_root, _targetDir, _config)
 				WIN_SRC_DIR    .. "**.cpp",
 				WIN_EXTERN_DIR .. "**.c",
 				WIN_EXTERN_DIR .. "**.cpp",
+				})
+		filter {}
+		filter { "platforms:Linux" }
+			files({
+				LINUX_SRC_DIR    .. "**.h",
+				LINUX_SRC_DIR    .. "**.hpp",
+				LINUX_SRC_DIR    .. "**.c",
+				LINUX_SRC_DIR    .. "**.cpp",
+				LINUX_EXTERN_DIR .. "**.c",
+				LINUX_EXTERN_DIR .. "**.cpp",
 				})
 		filter {}
 
@@ -165,4 +184,5 @@ function ApplicationTools_Link()
 
 	filter { "platforms:Win*" }
 		links { "shlwapi" }
+	filter {}
 end

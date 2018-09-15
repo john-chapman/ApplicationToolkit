@@ -55,11 +55,11 @@ namespace internal {
 template<typename tType> tType RandGet(uint32 _raw);
 template<typename tType> tType RandGet(uint32 _raw, const tType _min, const tType _max);
 
-template<> bool RandGet<bool>(uint32 _raw)
+template<> inline bool RandGet<bool>(uint32 _raw)
 {
 	return (_raw >> 31) != 0;
 }
-template<> float32 RandGet<float32>(uint32 _raw)
+template<> inline float32 RandGet<float32>(uint32 _raw)
 {
 	internal::iee754_f32 x;
 	x.u = _raw;
@@ -68,26 +68,26 @@ template<> float32 RandGet<float32>(uint32 _raw)
 	return x.f - 1.0f;
 }
  
-template<> sint32 RandGet(uint32 _raw, const sint32 _min, const sint32 _max)
+template<> inline sint32 RandGet(uint32 _raw, const sint32 _min, const sint32 _max)
 {
 	uint64 i = (uint64)_raw * (_max - _min + 1);
 	uint32 j = (uint32)(i >> 32);
 	return (sint32)j + _min;
 }
-template<> float32 RandGet(uint32 _raw, const float32 _min, const float32 _max)
+template<> inline float32 RandGet(uint32 _raw, const float32 _min, const float32 _max)
 {
 	float32 f = RandGet<float32>(_raw);
 	return _min + f * (_max - _min);
 }
  
-template<> vec2 RandGet(uint32 _raw, const vec2 _min, const vec2 _max)
+template<> inline vec2 RandGet(uint32 _raw, const vec2 _min, const vec2 _max)
 {
 	return vec2(
 		RandGet(_raw, _min.x, _max.x),
 		RandGet(_raw, _min.y, _max.y)
 		);
 }
-template<> vec3 RandGet(uint32 _raw, const vec3 _min, const vec3 _max)
+template<> inline vec3 RandGet(uint32 _raw, const vec3 _min, const vec3 _max)
 {
 	return vec3(
 		RandGet(_raw, _min.x, _max.x),
@@ -95,7 +95,7 @@ template<> vec3 RandGet(uint32 _raw, const vec3 _min, const vec3 _max)
 		RandGet(_raw, _min.z, _max.z)
 		);
 }
-template<> vec4 RandGet(uint32 _raw, const vec4 _min, const vec4 _max)
+template<> inline vec4 RandGet(uint32 _raw, const vec4 _min, const vec4 _max)
 {
 	return vec4(
 		RandGet(_raw, _min.x, _max.x),
@@ -109,15 +109,15 @@ template<> vec4 RandGet(uint32 _raw, const vec4 _min, const vec4 _max)
 
 
 template <typename PRNG>
-template <typename tType> tType Rand<PRNG>::get() 
+template <typename tType> inline tType Rand<PRNG>::get() 
 {
-	return internal::RandGet<tType>(); 
+	return internal::RandGet<tType>(raw()); 
 }
 
 template <typename PRNG>
-template <typename tType> tType Rand<PRNG>::get(const tType _min, const tType _max) 
+template <typename tType> inline tType Rand<PRNG>::get(const tType _min, const tType _max) 
 {
-	return internal::RandGet<tType>(_min, _max);
+	return internal::RandGet<tType>(raw(), _min, _max);
 }
 
 } // namespace apt

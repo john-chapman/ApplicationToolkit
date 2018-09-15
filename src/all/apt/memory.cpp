@@ -38,7 +38,7 @@ void apt::internal::free(void* _ptr)
 
 void* apt::internal::malloc_aligned(size_t _size, size_t _align) 
 {
-#ifdef APT_COMPILER_MSVC
+#if 1//#ifdef APT_COMPILER_MSVC
 	return _aligned_malloc(_size, _align);
 #else
 	aligned_alloc(_align, _size);
@@ -47,11 +47,11 @@ void* apt::internal::malloc_aligned(size_t _size, size_t _align)
 
 void* apt::internal::realloc_aligned(void* _ptr, size_t _size, size_t _align)
 {
-#ifdef APT_COMPILER_MSVC
+#if 1//#ifdef APT_COMPILER_MSVC
 	return _aligned_realloc(_ptr, _size, _align);
 #else
-	if (_p) {
-		return realloc(_p, _size);
+	if (_ptr) {
+		return realloc(_ptr, _size);
 	} else {
 		return malloc_aligned(_size, _align);
 	}
@@ -60,7 +60,7 @@ void* apt::internal::realloc_aligned(void* _ptr, size_t _size, size_t _align)
 
 void apt::internal::free_aligned(void* _ptr) 
 {
-#ifdef APT_COMPILER_MSVC
+#if 1//#ifdef APT_COMPILER_MSVC
 	_aligned_free(_ptr);
 #else
 	free(_ptr);
@@ -86,10 +86,11 @@ void* operator new[](size_t size, const char* /*name*/, int /*flags*/, unsigned 
 
 void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* /*name*/, int flags, unsigned /*debugFlags*/, const char* /*file*/, int /*line*/) THROW_SPEC_1(std::bad_alloc)
 {
-#ifdef APT_COMPILER_MSVC
+#if 1//#ifdef APT_COMPILER_MSVC
 	return _aligned_offset_malloc(size, alignment, alignmentOffset);
 #else
  // \todo no standard 'offset' version, implement via aligned_alloc
 	APT_ASSERT(false);
+	return nullptr;
 #endif
 }

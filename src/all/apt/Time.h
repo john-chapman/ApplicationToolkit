@@ -1,7 +1,7 @@
 #pragma once
 
 #include <apt/apt.h>
-#include <apt/static_initializer.h>
+#include <apt/StaticInitializer.h>
 
 namespace apt {
 

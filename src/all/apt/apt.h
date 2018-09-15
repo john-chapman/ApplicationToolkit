@@ -1,6 +1,6 @@
 #pragma once
 
-#define APT_VERSION "0.17"
+#define APT_VERSION "0.18"
 
 #include <apt/config.h>
 
@@ -113,7 +113,6 @@ template <typename tType> class Factory;
 class File;
 class FileSystem;
 class Image;
-class Ini;
 class Json;
 class MemoryPool;
 template <typename tType> class PersistentVector;

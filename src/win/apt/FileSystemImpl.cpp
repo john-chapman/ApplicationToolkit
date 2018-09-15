@@ -199,15 +199,15 @@ PathStr FileSystem::StripRoot(const char* _path)
 		if (root.isEmpty()) {
 			continue;
 		}
-		TCHAR root[MAX_PATH];
+		TCHAR pathRoot[MAX_PATH];
 		if (IsAbsolute((const char*)root)) {
-			APT_PLATFORM_VERIFY(GetFullPathName((const char*)root, MAX_PATH, root, NULL));
+			APT_PLATFORM_VERIFY(GetFullPathName((const char*)root, MAX_PATH, pathRoot, NULL));
 		} else {
-			GetAppPath(root, (const char*)root);
+			GetAppPath(pathRoot, (const char*)root);
 		}
-		const char* rootBeg = strstr(path, root);
+		const char* rootBeg = strstr(path, pathRoot);
 		if (rootBeg != nullptr) {
-			PathStr ret(path + strlen(root) + 1);
+			PathStr ret(path + strlen(pathRoot) + 1);
 			ret.replace('\\', kPathSeparator);
 			return ret;
 		}

@@ -257,7 +257,7 @@ struct Json::Impl
 	 // vectors are arrays of numbers
 		T ret = T(APT_TRAITS_BASE_TYPE(T)(0));
 		auto val = findGet(_name, _i, ValueType_Array);
-		auto& arr = val->GetArray();
+		auto arr = val->GetArray();
 		JSON_ERR_SIZE("getVector", m_currentValue.m_name, (int)arr.Size(), APT_TRAITS_COUNT(T), return ret);
 		JSON_ERR_TYPE("getVector", m_currentValue.m_name, GetValueType(arr[0].GetType()), ValueType_Number, return ret);
 
@@ -285,7 +285,7 @@ struct Json::Impl
 	{
 	 // matrices are arrays of vectors
 		auto val = findGet(_name, _i, ValueType_Array);
-		auto& rows = val->GetArray();
+		auto rows = val->GetArray();
 		JSON_ERR_SIZE("getMatrix", m_currentValue.m_name, (int)rows.Size(), kCount, return identity);
 		JSON_ERR_TYPE("getMatrix", m_currentValue.m_name, GetValueType(rows[0].GetType()), ValueType_Array, return identity);
 

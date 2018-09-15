@@ -38,10 +38,12 @@ bool File::Read(File& file_, const char* _path)
 	}
 	APT_ASSERT(_path);
 
-	bool  ret      = false;
-	char* data     = nullptr;
-	DWORD err      = 0;
-	int   tryCount = 3; // avoid sharing violations, especially when loading a file after a file change notification
+	bool  ret       = false;
+	char* data      = nullptr;
+	DWORD err       = 0;
+	int   tryCount  = 3; // avoid sharing violations, especially when loading a file after a file change notification
+	DWORD dataSize  = 0;
+	DWORD bytesRead = 0;
 
  	HANDLE h = INVALID_HANDLE_VALUE;
 	do {
@@ -71,11 +73,10 @@ bool File::Read(File& file_, const char* _path)
 		err = GetLastError();
 		goto File_Read_end;
 	}
-	DWORD dataSize = (DWORD)li.QuadPart; // ReadFile can only read DWORD bytes
+	dataSize = (DWORD)li.QuadPart; // ReadFile can only read DWORD bytes
 
 	data = (char*)APT_MALLOC(dataSize + 2); // +2 for null terminator
 	APT_ASSERT(data);
-	DWORD bytesRead;
 	if (!ReadFile(h, data, dataSize, &bytesRead, 0)) {
 		err = GetLastError();
 		goto File_Read_end;

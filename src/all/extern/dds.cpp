@@ -681,6 +681,10 @@ bool Image::ReadDds(Image& img_, const char* _data, uint _dataSize)
 bool Image::WriteDds(File& file_, const Image& _img)
 {
 	bool ret = false;
+	char* dst = nullptr;
+	char* src = nullptr;
+	DDS_HEADER* ddsh = nullptr;
+	DDS_HEADER_DXT10* dxt10h = nullptr;
 
  // allocate scratch buffer
 	size_t count = _img.isCubemap() ? _img.m_arrayCount * 6 : _img.m_arrayCount;
@@ -695,7 +699,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 
  // write headers
 	*((DWORD*)buf)      = DDS_MAGIC;
-	DDS_HEADER *ddsh    = (DDS_HEADER*)(buf + sizeof(DWORD));
+	ddsh                = (DDS_HEADER*)(buf + sizeof(DWORD));
 	ddsh->dwSize        = 124; APT_ASSERT(ddsh->dwSize == sizeof(DDS_HEADER));
 	ddsh->dwFlags       = DDS_HEADER_FLAGS_TEXTURE | (_img.m_mipmapCount > 1 ? DDS_HEADER_FLAGS_MIPMAP : 0) | (_img.m_depth > 1 ? DDS_HEADER_FLAGS_VOLUME : 0);
 	ddsh->dwWidth       = (DWORD)_img.m_width;
@@ -706,7 +710,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 	ddsh->dwCaps        = DDS_SURFACE_FLAGS_TEXTURE | (_img.m_mipmapCount > 1 ? DDS_SURFACE_FLAGS_MIPMAP : 0);
 	ddsh->dwCaps2       = (_img.isCubemap() ? (DDS_SURFACE_FLAGS_CUBEMAP | DDS_CUBEMAP_ALLFACES) : 0) | (_img.m_depth > 1 ? DDS_FLAGS_VOLUME : 0);
 
-	DDS_HEADER_DXT10 *dxt10h = (DDS_HEADER_DXT10*)(buf + sizeof(DWORD) + sizeof(DDS_HEADER));
+	dxt10h = (DDS_HEADER_DXT10*)(buf + sizeof(DWORD) + sizeof(DDS_HEADER));
 	if (_img.isCompressed()) {
 		switch (_img.m_compression) {
 			case Image::Compression_BC1:     dxt10h->dxgiFormat = DXGI_FORMAT_BC1_TYPELESS; break;
@@ -841,11 +845,11 @@ bool Image::WriteDds(File& file_, const Image& _img)
 	dxt10h->miscFlags2 = 0;
 	
  // write data
-	char* dst = buf + sizeof(DWORD) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
+	dst = buf + sizeof(DWORD) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
 	if (_img.m_depth > 1 && _img.m_mipmapCount > 1) {
 	 // 3d textures are stored mip-wise (all slices for mip0 followed by all slices for mip1, etc).
 		for (unsigned i = 0; i < _img.m_mipmapCount; ++i) {
-			char* src = _img.m_data;
+			src = _img.m_data;
 			src += i > 0 ? _img.m_mipSizes[i - 1] : 0;
 			for (unsigned j = 0; j < _img.m_depth; ++j) {
 				memcpy(dst, src, _img.m_mipSizes[i]);

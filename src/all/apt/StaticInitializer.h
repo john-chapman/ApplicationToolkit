@@ -3,7 +3,7 @@
 namespace apt {
 
 ////////////////////////////////////////////////////////////////////////////////
-// static_initializer
+// StaticInitializer
 // Implementation of the Nifty/Schwarz counter idiom (see
 //   https://john-chapman.github.io/2016/09/01/static-initialization.html). 
 // Usage:
@@ -11,7 +11,7 @@ namespace apt {
 // // in the .h
 //    class Foo
 //    {
-//       APT_DECALRE_STATIC_INIT_FRIEND(Foo); // give static_initializer access to private functions
+//       APT_DECALRE_STATIC_INIT_FRIEND(Foo); // give StaticInitializer access to private functions
 //       void Init();
 //       void Shutdown();
 //    };
@@ -24,7 +24,7 @@ namespace apt {
 // and shutdown methods aren't private members.
 //
 // Init() should not construct any non-trivial static objects as the order of 
-// initialization relative to static_initializer cannot be guaranteed. This 
+// initialization relative to StaticInitializer cannot be guaranteed. This 
 // means that static objects initialized during Init() may subsequently be 
 // default-initialized, overwriting the value set by Init(). To get around this, 
 // use heap allocation or the storage class (memory.h):
@@ -38,16 +38,16 @@ namespace apt {
 //      // ..
 ////////////////////////////////////////////////////////////////////////////////
 template <typename tType>
-class static_initializer
+class StaticInitializer
 {
 public:
-	static_initializer()
+	StaticInitializer()
 	{ 
 		if_unlikely (++s_initCounter == 1) {
 			Init();
 		} 
 	}
-	~static_initializer()
+	~StaticInitializer()
 	{
 		if_unlikely (--s_initCounter == 0) { 
 			Shutdown();
@@ -59,11 +59,13 @@ private:
 	static void Init();
 	static void Shutdown();
 };
-#define APT_DECLARE_STATIC_INIT_FRIEND(_type) friend class apt::static_initializer<_type>
-#define APT_DECLARE_STATIC_INIT(_type) static apt::static_initializer<_type> _type ## _static_initializer
+#define APT_DECLARE_STATIC_INIT_FRIEND(_type) \
+	friend class apt::StaticInitializer<_type>
+#define APT_DECLARE_STATIC_INIT(_type) \
+	static apt::StaticInitializer<_type> _type ## _StaticInitializer
 #define APT_DEFINE_STATIC_INIT(_type, _onInit, _onShutdown) \
-	int  apt::static_initializer<_type>::s_initCounter; \
-	void apt::static_initializer<_type>::Init() { _onInit(); } \
-	void apt::static_initializer<_type>::Shutdown() { _onShutdown(); }
+	template <> int  apt::StaticInitializer<_type>::s_initCounter; \
+	template <> void apt::StaticInitializer<_type>::Init()     { _onInit(); } \
+	template <> void apt::StaticInitializer<_type>::Shutdown() { _onShutdown(); }
 
 } // namespace apt

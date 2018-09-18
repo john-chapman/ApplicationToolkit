@@ -219,7 +219,7 @@ public:
 private:
 	Json* m_json;
 
-	void onModeChange(Mode _mode) { m_json->reset(); }
+	void onModeChange(Mode _mode) override { m_json->reset(); }
 
 }; // class SerializerJson
 

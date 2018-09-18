@@ -34,11 +34,7 @@ public:
 	virtual void endArray() = 0;
 
 	// Variant for fixed-sized arrays or cases where _length_ isn't required.
-	bool         beginArray(const char* _name = nullptr)
-	{ 
-		uint n = 0;
-		return beginArray(n, _name);
-	}
+	bool         beginArray(const char* _name = nullptr) { uint n = 0; return beginArray(n, _name); }
 
 	virtual bool value(bool&       _value_, const char* _name = nullptr) = 0;
 	virtual bool value(sint8&      _value_, const char* _name = nullptr) = 0;

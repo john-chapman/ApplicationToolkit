@@ -80,7 +80,9 @@ template <typename T>
 static bool SerializeImpl(Serializer& _serializer_, T& _value_, const char* _name)
 {
 	if (!_serializer_.value(_value_, _name)) {
-		APT_LOG_ERR(_serializer_.getError());
+		if (_serializer_.getError()) {
+			APT_LOG_ERR(_serializer_.getError());
+		}
 		return false;
 	}
 	return true;

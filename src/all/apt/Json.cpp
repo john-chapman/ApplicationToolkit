@@ -158,6 +158,10 @@ struct Json::Impl
 		APT_ASSERT(containerType == ValueType_Object || containerType == ValueType_Array);
 		m_containerStack.push_back(m_currentValue);
 		m_currentValue = Value();
+
+	 // In some cases we enter an object/array *before* we can get the name, for example when using `while (beginObject)` from the serializer class.
+	 // To work around this we copy the container name into the dummy current value.
+		m_currentValue.m_name = m_containerStack.back().m_name;
 	}
 
 	void leave()
@@ -739,20 +743,14 @@ SerializerJson::SerializerJson(Json& _json_, Mode _mode)
 
 bool SerializerJson::beginObject(const char* _name)
 {
-	Json* json = getJson();
-	if (!_name && json->getArrayLength() < 0) {
-		setError("Error serializing object: name must be specified if not in an array");
-		return false;
-	}
-
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
-			if (!json->find(_name)) {
+			if (!m_json->find(_name)) {
 				setError("Error serializing object: '%s' not found", _name);
 				return false;
 			}
 		} else {
-			if (!json->next()) {
+			if (!m_json->next()) {
 				return false;
 			}
 		}
@@ -780,20 +778,14 @@ void SerializerJson::endObject()
 
 bool SerializerJson::beginArray(uint& _length_, const char* _name)
 {
-	Json* json = getJson();
-	if (!_name && json->getArrayLength() < 0) {
-		setError("Error serializing array: name must be specified if not in an array");
-		return false;
-	}
-
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
-			if (!json->find(_name)) {
+			if (!m_json->find(_name)) {
 				setError("Error serializing array: '%s' not found", _name);
 				return false;
 			}
 		} else {
-			if (!json->next()) {
+			if (!m_json->next()) {
 				return false;
 			}
 		}
@@ -818,6 +810,16 @@ void SerializerJson::endArray()
 	} else {
 		m_json->endArray();
 	}
+}
+
+const char* SerializerJson::getName() const
+{
+	return m_json->getName();
+}
+
+uint32 SerializerJson::getIndex() const
+{
+	return (uint32)m_json->getIndex();
 }
 
 template <typename tType>

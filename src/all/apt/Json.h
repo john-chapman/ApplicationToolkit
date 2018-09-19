@@ -193,28 +193,31 @@ class SerializerJson: public Serializer
 public:
 	SerializerJson(Json& _json_, Mode _mode);
 
-	Json* getJson() { return m_json; }
+	Json*       getJson() { return m_json; }
 
-	bool  beginObject(const char* _name = nullptr) override;
-	void  endObject() override;
+	bool        beginObject(const char* _name = nullptr) override;
+	void        endObject() override;
 
-	bool  beginArray(uint& _length_, const char* _name = nullptr) override;
-	void  endArray() override;
+	bool        beginArray(uint& _length_, const char* _name = nullptr) override;
+	void        endArray() override;
 
-	bool  value(bool&       _value_, const char* _name = nullptr) override;
-	bool  value(sint8&      _value_, const char* _name = nullptr) override;
-	bool  value(uint8&      _value_, const char* _name = nullptr) override;
-	bool  value(sint16&     _value_, const char* _name = nullptr) override;
-	bool  value(uint16&     _value_, const char* _name = nullptr) override;
-	bool  value(sint32&     _value_, const char* _name = nullptr) override;
-	bool  value(uint32&     _value_, const char* _name = nullptr) override;
-	bool  value(sint64&     _value_, const char* _name = nullptr) override;
-	bool  value(uint64&     _value_, const char* _name = nullptr) override;
-	bool  value(float32&    _value_, const char* _name = nullptr) override;
-	bool  value(float64&    _value_, const char* _name = nullptr) override;
-	bool  value(StringBase& _value_, const char* _name = nullptr) override;
+	const char* getName() const override;
+	uint32      getIndex() const override;
+
+	bool        value(bool&       _value_, const char* _name = nullptr) override;
+	bool        value(sint8&      _value_, const char* _name = nullptr) override;
+	bool        value(uint8&      _value_, const char* _name = nullptr) override;
+	bool        value(sint16&     _value_, const char* _name = nullptr) override;
+	bool        value(uint16&     _value_, const char* _name = nullptr) override;
+	bool        value(sint32&     _value_, const char* _name = nullptr) override;
+	bool        value(uint32&     _value_, const char* _name = nullptr) override;
+	bool        value(sint64&     _value_, const char* _name = nullptr) override;
+	bool        value(uint64&     _value_, const char* _name = nullptr) override;
+	bool        value(float32&    _value_, const char* _name = nullptr) override;
+	bool        value(float64&    _value_, const char* _name = nullptr) override;
+	bool        value(StringBase& _value_, const char* _name = nullptr) override;
 	
-	bool  binary(void*& _data_, uint& _sizeBytes_, const char* _name = nullptr, CompressionFlags _compressionFlags = CompressionFlags_None) override;
+	bool        binary(void*& _data_, uint& _sizeBytes_, const char* _name = nullptr, CompressionFlags _compressionFlags = CompressionFlags_None) override;
 
 private:
 	Json* m_json;

@@ -826,10 +826,10 @@ template <typename tType>
 static bool ValueImpl(SerializerJson& _serializer_, tType& _value_, const char* _name)
 {
 	Json* json = _serializer_.getJson();
-	if (!_name && json->getArrayLength() < 0) {
-		_serializer_.setError("Error serializing %s: name must be specified if not in an array", Serializer::ValueTypeToStr<tType>());
-		return false;
-	}
+	//if (!_name && json->getArrayLength() < 0) {
+	//	_serializer_.setError("Error serializing %s: name must be specified if not in an array", Serializer::ValueTypeToStr<tType>());
+	//	return false;
+	//}
 
 	if (_serializer_.getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
@@ -869,10 +869,10 @@ bool SerializerJson::value(float64& _value_, const char* _name) { return ValueIm
 
 bool SerializerJson::value(StringBase& _value_, const char* _name) 
 { 
-	if (!_name && m_json->getArrayLength() == -1) {
-		setError("Error serializing StringBase; name must be specified if not in an array");
-		return false;
-	}
+	//if (!_name && m_json->getArrayLength() == -1) {
+	//	setError("Error serializing StringBase; name must be specified if not in an array");
+	//	return false;
+	//}
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
 			if (!m_json->find(_name)) {

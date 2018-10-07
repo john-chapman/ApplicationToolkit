@@ -81,6 +81,9 @@ class DateTime
 	friend class Time;
 public:
 	DateTime(sint64 _raw = 0ll): m_raw(_raw) {}
+	
+	// Init from a string. _format has the same meaning as asString(), the default is ISO 8601.
+	DateTime(const char* _str, const char* _format = nullptr);
 
 	// Raw time value in system-dependent units.
 	uint64 getRaw() const { return m_raw; }

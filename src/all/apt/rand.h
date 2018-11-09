@@ -44,7 +44,7 @@ public:
 	template <typename tType>
 	tType  get();
 	template <typename tType>
-	tType  get(const tType _min, const tType _max);
+	tType  get(tType _min, tType _max);
 
 private:
 	PRNG m_prng;
@@ -52,14 +52,14 @@ private:
 
 namespace internal {
 
-template<typename tType> tType RandGet(uint32 _raw);
-template<typename tType> tType RandGet(uint32 _raw, const tType _min, const tType _max);
+template <typename tType> tType RandGetScalar(uint32 _raw);
+template <typename tType> tType RandGetScalar(uint32 _raw, tType _min, tType _max);
 
-template<> inline bool RandGet<bool>(uint32 _raw)
+template<> inline bool RandGetScalar<bool>(uint32 _raw)
 {
 	return (_raw >> 31) != 0;
 }
-template<> inline float32 RandGet<float32>(uint32 _raw)
+template<> inline float32 RandGetScalar<float32>(uint32 _raw)
 {
 	internal::iee754_f32 x;
 	x.u = _raw;
@@ -67,57 +67,66 @@ template<> inline float32 RandGet<float32>(uint32 _raw)
 	x.u |= 0x3f800000u;
 	return x.f - 1.0f;
 }
- 
-template<> inline sint32 RandGet(uint32 _raw, const sint32 _min, const sint32 _max)
+template<> inline sint32 RandGetScalar(uint32 _raw, sint32 _min, sint32 _max)
 {
 	uint64 i = (uint64)_raw * (_max - _min + 1);
 	uint32 j = (uint32)(i >> 32);
 	return (sint32)j + _min;
 }
-template<> inline float32 RandGet(uint32 _raw, const float32 _min, const float32 _max)
+template<> inline float32 RandGetScalar(uint32 _raw, float32 _min, float32 _max)
 {
-	float32 f = RandGet<float32>(_raw);
+	float32 f = RandGetScalar<float32>(_raw);
 	return _min + f * (_max - _min);
 }
- 
-template<> inline vec2 RandGet(uint32 _raw, const vec2 _min, const vec2 _max)
+
+
+template<typename PRNG, typename tType> 
+inline tType RandGet(Rand<PRNG>* _rand_, ScalarT)
 {
-	return vec2(
-		RandGet(_raw, _min.x, _max.x),
-		RandGet(_raw, _min.y, _max.y)
-		);
+	return RandGetScalar<tType>(_rand_->raw());
 }
-template<> inline vec3 RandGet(uint32 _raw, const vec3 _min, const vec3 _max)
+
+template<typename PRNG, typename tType> 
+inline tType RandGet(Rand<PRNG>* _rand_, CompositeT)
 {
-	return vec3(
-		RandGet(_raw, _min.x, _max.x),
-		RandGet(_raw, _min.y, _max.y),
-		RandGet(_raw, _min.z, _max.z)
-		);
+	tType ret;
+	for (int i = 0; i < APT_TRAITS_COUNT(tType); ++i) {
+		ret[i] = RandGetScalar<APT_TRAITS_BASE_TYPE(tType)>(_rand_->raw());
+	}
+	return ret;
 }
-template<> inline vec4 RandGet(uint32 _raw, const vec4 _min, const vec4 _max)
+
+template<typename PRNG, typename tType>
+inline tType RandGet(Rand<PRNG>* _rand_, tType _min, tType _max, ScalarT)
 {
-	return vec4(
-		RandGet(_raw, _min.x, _max.x),
-		RandGet(_raw, _min.y, _max.y),
-		RandGet(_raw, _min.z, _max.z),
-		RandGet(_raw, _min.w, _max.w)
-		);
+	return RandGetScalar(_rand_->raw(), _min, _max);
+}
+
+template<typename PRNG, typename tType>
+inline tType RandGet(Rand<PRNG>* _rand_, tType _min, tType _max, CompositeT)
+{
+	tType ret;
+	for (int i = 0; i < APT_TRAITS_COUNT(tType); ++i) {
+		ret[i] = RandGetScalar<APT_TRAITS_BASE_TYPE(tType)>(_rand_->raw(), _min[i], _max[i]);
+	}
+	return ret;
 }
 
 } // namespace internal
 
 
 template <typename PRNG>
-template <typename tType> inline tType Rand<PRNG>::get() 
+template <typename tType> 
+inline tType Rand<PRNG>::get() 
 {
-	return internal::RandGet<tType>(raw()); 
+	return internal::RandGet<PRNG, tType>(this, APT_TRAITS_FAMILY(tType)); 
 }
 
 template <typename PRNG>
-template <typename tType> inline tType Rand<PRNG>::get(const tType _min, const tType _max) 
+template <typename tType> 
+inline tType Rand<PRNG>::get(tType _min, tType _max) 
 {
-	return internal::RandGet<tType>(raw(), _min, _max);
+	return internal::RandGet<PRNG, tType>(this, _min, _max, APT_TRAITS_FAMILY(tType));
 }
 
 } // namespace apt

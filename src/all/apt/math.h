@@ -171,7 +171,7 @@ namespace apt {
 
 	// Return _x clamped in [0,1] (elementwise for vector/matrix types).
 	template <typename tType>
-	inline tType Saturate(const tType& _x)                                      { return Clamp(_x, tType(0), tType(1)); }
+	inline tType Saturate(const tType& _x)                                      { return Clamp(_x, tType(APT_TRAITS_BASE_TYPE(tType)(0)), tType(APT_TRAITS_BASE_TYPE(tType)(1))); }
 	#define APT_SATURATE(_x) apt::Saturate(_x)
 
 	// Return whether _x is a power of 2.

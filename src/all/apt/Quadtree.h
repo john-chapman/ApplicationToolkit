@@ -15,8 +15,8 @@ namespace apt {
 // Generic linear quadtree.
 //
 // tIndex is the type used for indexing nodes and determines the absolute max
-// level of subdivision possible. This should be a uint* type e.g. uint16, 
-// uint32.
+// level of subdivision possible. This should be a uint* type (uint8, uint16, 
+// uint32, uint64).
 //
 // tNode is the node type. Typically this will be a pointer or index into a
 // separate node data pool. Use the _init arg of the ctor to init the quadtree
@@ -32,12 +32,9 @@ namespace apt {
 // Use linearize()/delinearize() functions to convert to/from a linear layout
 // e.g. for conversion to a texture.
 //
-// \todo Make static functions private.
+// \todo Make static functions private?
 // \todo Better implementation of FindNeighbor()?
 // \todo Implement linearize/delinearize.
-// \todo Split index management into a separate class, specialize for uint16,
-//   uint32, uint64 (can optimize Index <-> Cartesian conversions).
-// \todo Assert index max is large enough for the number of nodes.
 ///////////////////////////////////////////////////////////////////////////////
 template <typename tIndex, typename tNode>
 class Quadtree
@@ -49,24 +46,23 @@ public:
 	typedef tIndex Index;
 	typedef tNode  Node;
 	typedef eastl::function<bool(Index _nodeIndex, int _nodeLevel)> OnVisit;
-
 	static constexpr Index Index_Invalid  = ~Index(0);
 
 	// Absolute max number of levels given number of index bits = bits/2.
 	static constexpr int    GetAbsoluteMaxLevelCount()                                        { return (int)(sizeof(Index) * CHAR_BIT) / 2; }
 
-	// Node count at _levelIndex = 4^_levelIndex.
-	static constexpr Index  GetNodeCount(int _levelIndex)                                     { return 1 << (2 * _levelIndex); }
+	// Node count at _level = 4^_level.
+	static constexpr Index  GetNodeCount(int _level)                                          { return 1 << (2 * _level); }
 
-	// Width (in nodes) at _levelIndex = sqrt(GetNodeCount(_levelIndex).
-	static constexpr Index  GetWidth(int _levelIndex)                                         { return 1 << _levelIndex; }
+	// Width (in nodes) at _level = sqrt(GetNodeCount(_level)).
+	static constexpr Index  GetWidth(int _level)                                              { return 1 << _level; }
 
 	// Total node count = 4*(leafCount - 1)/3+1.
 	static constexpr Index  GetTotalNodeCount(int _levelCount)                                { return 4 * (GetNodeCount(_levelCount - 1) - 1) / 3 + 1; }
 
-	// Index of first node of _levelIndex.
-	static constexpr Index  GetLevelStartIndex(int _levelIndex)                               { return (_levelIndex == 0) ? 0 : GetTotalNodeCount(_levelIndex); } 
-	
+	// Index of first node at _level.
+	static constexpr Index  GetLevelStartIndex(int _level)                                    { return (_level == 0) ? 0 : GetTotalNodeCount(_level); } 
+
 	// Index of the first child.
 	static           Index  GetFirstChildIndex(Index _parentIndex, int _parentLevel);
 
@@ -91,6 +87,9 @@ public:
 
 	// Depth-first traversal of the quadtree starting at _root, call _onVisit for each node. Traversal proceeds to a node's children only if _onVisit returns true.
 	void        traverse(OnVisit _onVisit, Index _rootIndex = 0);
+
+	// Find a valid neighbor at _offsetX, _offsetY from the given node.
+	Index       findValidNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, Node _invalidNode = Node());
 
 	// Width of a node in leaf nodes at _levelIndex (e.g. quadtree width at level 0, 1 at max level).
 	Index       getNodeWidth(int _levelIndex) const                                          { return GetWidth(APT_MAX(m_levelCount - _levelIndex - 1, 0)); }
@@ -124,9 +123,8 @@ public:
 #define APT_QUADTREE_TEMPLATE_DECL template <typename tIndex, typename tNode>
 #define APT_QUADTREE_CLASS_DECL    Quadtree<tIndex, tNode>
 
-
 APT_QUADTREE_TEMPLATE_DECL 
-inline typename APT_QUADTREE_CLASS_DECL::Index APT_QUADTREE_CLASS_DECL::GetFirstChildIndex(Index _parentIndex, int _parentLevel)
+inline tIndex APT_QUADTREE_CLASS_DECL::GetFirstChildIndex(Index _parentIndex, int _parentLevel)
 {
 	auto   parentOffset = GetLevelStartIndex(_parentLevel);
 	auto   childOffset  = GetLevelStartIndex(_parentLevel + 1);
@@ -134,7 +132,7 @@ inline typename APT_QUADTREE_CLASS_DECL::Index APT_QUADTREE_CLASS_DECL::GetFirst
 }
 
 APT_QUADTREE_TEMPLATE_DECL 
-inline typename APT_QUADTREE_CLASS_DECL::Index APT_QUADTREE_CLASS_DECL::GetParentIndex(Index _childIndex, int _childLevel)
+inline tIndex APT_QUADTREE_CLASS_DECL::GetParentIndex(Index _childIndex, int _childLevel)
 {
 	auto   childOffset  = GetLevelStartIndex(_childLevel);
 	auto   parentOffset = GetLevelStartIndex(APT_MAX(_childLevel - 1, 0));
@@ -142,7 +140,7 @@ inline typename APT_QUADTREE_CLASS_DECL::Index APT_QUADTREE_CLASS_DECL::GetParen
 }
 
 APT_QUADTREE_TEMPLATE_DECL 
-inline typename APT_QUADTREE_CLASS_DECL::Index APT_QUADTREE_CLASS_DECL::FindNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY)
+inline tIndex APT_QUADTREE_CLASS_DECL::FindNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY)
 {
 	if (_nodeIndex == Index_Invalid) {
 		return Index_Invalid;
@@ -162,7 +160,6 @@ inline int APT_QUADTREE_CLASS_DECL::FindLevel(Index _nodeIndex)
 	return -1;
 }
 
-
 APT_QUADTREE_TEMPLATE_DECL 
 inline uvec2 APT_QUADTREE_CLASS_DECL::ToCartesian(Index _nodeIndex, int _nodeLevel)
 {
@@ -180,7 +177,7 @@ inline uvec2 APT_QUADTREE_CLASS_DECL::ToCartesian(Index _nodeIndex, int _nodeLev
 }
 
 APT_QUADTREE_TEMPLATE_DECL 
-inline typename APT_QUADTREE_CLASS_DECL::Index APT_QUADTREE_CLASS_DECL::ToIndex(Index _x, Index _y, int _nodeLevel)
+inline tIndex APT_QUADTREE_CLASS_DECL::ToIndex(Index _x, Index _y, int _nodeLevel)
 {
  // _x or _y are outside the quadtree
 	auto w = GetWidth(_nodeLevel);
@@ -202,6 +199,7 @@ inline APT_QUADTREE_CLASS_DECL::Quadtree(int _levelCount, Node _init)
 	: m_levelCount(_levelCount)
 {
 	APT_STATIC_ASSERT(!DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(Index))); // use an unsigned type
+	APT_ASSERT(_levelCount <= GetAbsoluteMaxLevelCount()); // not enough bits in tIndex
 
 	m_nodes = (Node*)APT_MALLOC_ALIGNED(sizeof(Node) * GetTotalNodeCount(_levelCount), alignof(Node));
 	for (Index i = 0, n = GetTotalNodeCount(_levelCount); i < n; ++i) {
@@ -213,6 +211,17 @@ APT_QUADTREE_TEMPLATE_DECL
 inline APT_QUADTREE_CLASS_DECL::~Quadtree()
 {
 	APT_FREE_ALIGNED(m_nodes);
+}
+
+
+APT_QUADTREE_TEMPLATE_DECL
+inline tIndex APT_QUADTREE_CLASS_DECL::findValidNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, Node _invalidNode)
+{
+	Index ret = FindNeighbor(_nodeIndex, _nodeLevel, _offsetX, _offsetY); // get neighbor index at the same level
+	while (ret != Index_Invalid && m_nodes[ret] == _invalidNode) { // search up the tree until a valid node is found
+		ret = getParentIndex(ret, _nodeLevel--);
+	}
+	return ret;
 }
 
 APT_QUADTREE_TEMPLATE_DECL 

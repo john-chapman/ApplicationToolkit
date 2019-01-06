@@ -678,7 +678,8 @@ bool Image::ReadExr(Image& img_, const char* _data, uint _dataSize)
 {
 	bool ret = true;
 	const char* err = nullptr;
-
+	float* data = (float*)img_.m_data;
+	
 	EXRVersion version = {};
 	EXRHeader header = {};
 	InitEXRHeader(&header);
@@ -727,7 +728,6 @@ bool Image::ReadExr(Image& img_, const char* _data, uint _dataSize)
 	img_.m_compression = Compression_None;
 	img_.alloc();
 
-	float* data = (float*)img_.m_data;
 	for (uint i = 0, n = img_.m_width * img_.m_height; i < n; ++i) {
 	 // \hack read the channels in reverse order (convert ABGR -> RGBA)
 	 // \todo inspect the channel names directly

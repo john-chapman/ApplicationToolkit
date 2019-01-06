@@ -2,10 +2,14 @@ dofile "ApplicationTools_premake.lua"
 
 workspace "ApplicationTools"
 	location(_ACTION)
-	platforms { "Win64" }
+	platforms { "Win64", "Linux" }
 	flags { "StaticRuntime" }
 	filter { "platforms:Win64" }
 		system "windows"
+		architecture "x86_64"
+	filter {}
+	filter { "platforms:Linux" }
+		system "linux"
 		architecture "x86_64"
 	filter {}
 
@@ -26,8 +30,7 @@ workspace "ApplicationTools"
 			"../lib", -- _targetDir
 			{
 				--APT_LOG_CALLBACK_ONLY = 1,
-			}
-			)
+			})
 	group ""
 	
 	project "ApplicationTools_Tests"

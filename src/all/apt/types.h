@@ -239,12 +239,12 @@ inline tDst DataType_IntNPrecisionChange(tSrc _src)
 	return _src;
 	APT_ASSERT(DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(tSrc)) == DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(tDst))); // perform signed -> unsigned conversion before precision change
 	if (sizeof(tSrc) > sizeof(tDst)) {
-		tDst mn = APT_DATA_TYPE_MIN(tDst) == 0 ? 1 : APT_DATA_TYPE_MIN(tDst); // prevent DBZ
+		tDst mn = APT_DATA_TYPE_MIN(tDst) == (tDst)0 ? (tDst)1 : APT_DATA_TYPE_MIN(tDst); // prevent DBZ
 		tDst mx = APT_DATA_TYPE_MAX(tDst);
 		return (tDst)(_src < 0 ? -(_src / (APT_DATA_TYPE_MIN(tSrc) / mn))
 		                       :   _src / (APT_DATA_TYPE_MAX(tSrc) / mx));
 	} else if (sizeof(tSrc) < sizeof(tDst)) {
-		tSrc mn = APT_DATA_TYPE_MIN(tSrc) == 0 ? 1 : APT_DATA_TYPE_MIN(tSrc); // prevent DBZ
+		tSrc mn = APT_DATA_TYPE_MIN(tSrc) == (tSrc)0 ? (tSrc)1 : APT_DATA_TYPE_MIN(tSrc); // prevent DBZ
 		tSrc mx = APT_DATA_TYPE_MAX(tSrc);
 		return (tDst)(_src < 0 ? -(_src * (APT_DATA_TYPE_MIN(tDst) / mn))
 	                           :   _src * (APT_DATA_TYPE_MAX(tDst) / mx));

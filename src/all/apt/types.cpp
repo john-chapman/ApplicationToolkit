@@ -1,5 +1,6 @@
 #include <apt/apt.h>
 
+#include <cstring>
 #include <limits>
 
 namespace apt { namespace internal {

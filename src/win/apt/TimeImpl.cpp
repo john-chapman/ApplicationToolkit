@@ -19,7 +19,7 @@ static SYSTEMTIME ToSystemTime(sint64 _raw)
 	return st;
 }
 
-static DateTime ToDateTime(SYSTEMTIME _st)
+static DateTime FromSystemTime(SYSTEMTIME _st)
 {
 	FILETIME ft;
 	SystemTimeToFileTime(&_st, &ft);
@@ -66,7 +66,7 @@ DateTime Time::ToLocal(DateTime _utc)
 	SYSTEMTIME utc = ToSystemTime(_utc.getRaw());
 	SYSTEMTIME ret;
 	SystemTimeToTzSpecificLocalTime(NULL, &utc, &ret);
-	return ToDateTime(ret);
+	return FromSystemTime(ret);
 }
 
 DateTime Time::ToUTC(DateTime _local)
@@ -74,7 +74,7 @@ DateTime Time::ToUTC(DateTime _local)
 	SYSTEMTIME local = ToSystemTime(_local.getRaw());
 	SYSTEMTIME ret;
 	TzSpecificLocalTimeToSystemTime(NULL, &local, &ret);
-	return ToDateTime(ret);
+	return FromSystemTime(ret);
 }
 
 Timestamp Time::GetApplicationElapsed()
@@ -133,6 +133,52 @@ sint32 DateTime::getHour() const         { return (sint32)ToSystemTime(m_raw).wH
 sint32 DateTime::getMinute() const       { return (sint32)ToSystemTime(m_raw).wMinute; }
 sint32 DateTime::getSecond() const       { return (sint32)ToSystemTime(m_raw).wSecond; }
 sint32 DateTime::getMillisecond() const  { return (sint32)ToSystemTime(m_raw).wMilliseconds; }
+
+apt::DateTime::DateTime(const char* _str, const char* _format)
+{
+	_format = _format ? _format : "%Y-%m-%dT%H:%M:%SZ"; // default ISO 8601
+
+	SYSTEMTIME st = {};
+	while (*_format) {
+		if (*_format == '%') {
+			char* str;
+			switch (*(++_format)) {
+				case 'Y':
+					st.wYear = (WORD)strtol(_str, &str, 0);
+					break;
+				case 'm':
+					st.wMonth = (WORD)strtol(_str, &str, 0);
+					break;
+				case 'd':
+					st.wDay = (WORD)strtol(_str, &str, 0);
+					break;
+				case 'H':
+					st.wHour = (WORD)strtol(_str, &str, 0);
+					break;
+				case 'M':
+					st.wMinute = (WORD)strtol(_str, &str, 0);
+					break;
+				case 'S':
+					st.wSecond = (WORD)strtol(_str, &str, 0);
+					break;
+				case 's':
+					st.wMilliseconds = (WORD)strtol(_str, &str, 0);
+					break;
+				default:
+					break;
+			};
+			++_format;
+			_str = str;
+
+		} else {
+			APT_ASSERT(*_str == *_format); // mismatch
+			++_format;
+			++_str;
+		}
+	}
+	*this = FromSystemTime(st);
+}
+
 
 const char* apt::DateTime::asString(const char* _format) const
 {

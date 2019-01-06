@@ -158,6 +158,10 @@ struct Json::Impl
 		APT_ASSERT(containerType == ValueType_Object || containerType == ValueType_Array);
 		m_containerStack.push_back(m_currentValue);
 		m_currentValue = Value();
+
+	 // In some cases we enter an object/array *before* we can get the name, for example when using `while (beginObject)` from the serializer class.
+	 // To work around this we copy the container name into the dummy current value.
+		m_currentValue.m_name = m_containerStack.back().m_name;
 	}
 
 	void leave()
@@ -257,7 +261,7 @@ struct Json::Impl
 	 // vectors are arrays of numbers
 		T ret = T(APT_TRAITS_BASE_TYPE(T)(0));
 		auto val = findGet(_name, _i, ValueType_Array);
-		auto& arr = val->GetArray();
+		auto arr = val->GetArray();
 		JSON_ERR_SIZE("getVector", m_currentValue.m_name, (int)arr.Size(), APT_TRAITS_COUNT(T), return ret);
 		JSON_ERR_TYPE("getVector", m_currentValue.m_name, GetValueType(arr[0].GetType()), ValueType_Number, return ret);
 
@@ -285,7 +289,7 @@ struct Json::Impl
 	{
 	 // matrices are arrays of vectors
 		auto val = findGet(_name, _i, ValueType_Array);
-		auto& rows = val->GetArray();
+		auto rows = val->GetArray();
 		JSON_ERR_SIZE("getMatrix", m_currentValue.m_name, (int)rows.Size(), kCount, return identity);
 		JSON_ERR_TYPE("getMatrix", m_currentValue.m_name, GetValueType(rows[0].GetType()), ValueType_Array, return identity);
 
@@ -739,20 +743,14 @@ SerializerJson::SerializerJson(Json& _json_, Mode _mode)
 
 bool SerializerJson::beginObject(const char* _name)
 {
-	Json* json = getJson();
-	if (!_name && json->getArrayLength() < 0) {
-		setError("Error serializing object: name must be specified if not in an array");
-		return false;
-	}
-
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
-			if (!json->find(_name)) {
+			if (!m_json->find(_name)) {
 				setError("Error serializing object: '%s' not found", _name);
 				return false;
 			}
 		} else {
-			if (!json->next()) {
+			if (!m_json->next()) {
 				return false;
 			}
 		}
@@ -780,20 +778,14 @@ void SerializerJson::endObject()
 
 bool SerializerJson::beginArray(uint& _length_, const char* _name)
 {
-	Json* json = getJson();
-	if (!_name && json->getArrayLength() < 0) {
-		setError("Error serializing array: name must be specified if not in an array");
-		return false;
-	}
-
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
-			if (!json->find(_name)) {
+			if (!m_json->find(_name)) {
 				setError("Error serializing array: '%s' not found", _name);
 				return false;
 			}
 		} else {
-			if (!json->next()) {
+			if (!m_json->next()) {
 				return false;
 			}
 		}
@@ -820,14 +812,24 @@ void SerializerJson::endArray()
 	}
 }
 
+const char* SerializerJson::getName() const
+{
+	return m_json->getName();
+}
+
+uint32 SerializerJson::getIndex() const
+{
+	return (uint32)m_json->getIndex();
+}
+
 template <typename tType>
 static bool ValueImpl(SerializerJson& _serializer_, tType& _value_, const char* _name)
 {
 	Json* json = _serializer_.getJson();
-	if (!_name && json->getArrayLength() < 0) {
-		_serializer_.setError("Error serializing %s: name must be specified if not in an array", Serializer::ValueTypeToStr<tType>());
-		return false;
-	}
+	//if (!_name && json->getArrayLength() < 0) {
+	//	_serializer_.setError("Error serializing %s: name must be specified if not in an array", Serializer::ValueTypeToStr<tType>());
+	//	return false;
+	//}
 
 	if (_serializer_.getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
@@ -867,10 +869,10 @@ bool SerializerJson::value(float64& _value_, const char* _name) { return ValueIm
 
 bool SerializerJson::value(StringBase& _value_, const char* _name) 
 { 
-	if (!_name && m_json->getArrayLength() == -1) {
-		setError("Error serializing StringBase; name must be specified if not in an array");
-		return false;
-	}
+	//if (!_name && m_json->getArrayLength() == -1) {
+	//	setError("Error serializing StringBase; name must be specified if not in an array");
+	//	return false;
+	//}
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
 			if (!m_json->find(_name)) {

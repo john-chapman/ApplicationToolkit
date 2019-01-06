@@ -8,7 +8,7 @@ Common application tools:
 - Hash functions (FNV1a).
 - Compression functions (zlib)
 - File and file system tools.
-- Common file format load/parse (image files, JSON, INI).
+- Common file format load/parse (image files, JSON).
 - Misc useful base/template classes for common idioms (factory, static initializer, etc.).
 
 ## Usage ##
@@ -26,6 +26,7 @@ Embedded dependencies:
 - [tinyexr](https://github.com/syoyo/tinyexr)
 
 ## Change Log ##
+- `2018-09-15 (v0.18):` Compile fixes for GNU. Removed `Ini`. Renamed `static_initializer` -> `StaticInitializer`.
 - `2018-09-07 (v0.17):` Improved `static_initializer` to allow use of private static functions for init/shutdown. 
 - `2018-09-07 (v0.16):` `FileSystem` supports arbitrary search paths (roots), removed `RootType` enum.
 - `2018-07-12 (v0.15):` Rewrite of the `Json` implementation.

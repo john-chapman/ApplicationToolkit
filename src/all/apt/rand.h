@@ -42,58 +42,10 @@ public:
 	uint32 raw()                            { return m_prng.raw(); }
 
 	template <typename tType>
-	tType get();
-		template <> bool get() 
-		{ 
-			return (raw() >> 31) != 0;
-		}
-		template <> float32 get()
-		{
-			internal::iee754_f32 x;
-			x.u = raw();
-			x.u &= 0x007fffffu;
-			x.u |= 0x3f800000u;
-			return x.f - 1.0f;
-		}
-
+	tType  get();
 	template <typename tType>
-	tType get(const tType& _min, const tType& _max);
-		template <> sint32 get(const sint32& _min, const sint32& _max)
-		{
-			uint64 i = (uint64)raw() * (_max - _min + 1);
-			uint32 j = (uint32)(i >> 32);
-			return (sint32)j + _min;
-		}
-		template <> float32 get(const float32& _min, const float32& _max)
-		{
-			float32 f = get<float32>();
-			return _min + f * (_max - _min);
-		}
+	tType  get(tType _min, tType _max);
 
-		template <> vec2 get(const vec2& _min, const vec2& _max)
-		{
-			return vec2(
-				get(_min.x, _max.x),
-				get(_min.y, _max.y)
-				);
-		}
-		template <> vec3 get(const vec3& _min, const vec3& _max)
-		{
-			return vec3(
-				get(_min.x, _max.x),
-				get(_min.y, _max.y),
-				get(_min.z, _max.z)
-				);
-		}
-		template <> vec4 get(const vec4& _min, const vec4& _max)
-		{
-			return vec4(
-				get(_min.x, _max.x),
-				get(_min.y, _max.y),
-				get(_min.z, _max.z),
-				get(_min.w, _max.w)
-				);
-		}
 private:
 	PRNG m_prng;
 };
@@ -120,5 +72,83 @@ inline vec2 Hammersley2d(uint32 _i, float _rn)
 	return vec2(float(_i) * _rn, RadicalInverse(_i));
 }
 
+namespace internal {
+
+template <typename tType> tType RandGetScalar(uint32 _raw);
+template <typename tType> tType RandGetScalar(uint32 _raw, tType _min, tType _max);
+
+template<> inline bool RandGetScalar<bool>(uint32 _raw)
+{
+	return (_raw >> 31) != 0;
+}
+template<> inline float32 RandGetScalar<float32>(uint32 _raw)
+{
+	internal::iee754_f32 x;
+	x.u = _raw;
+	x.u &= 0x007fffffu;
+	x.u |= 0x3f800000u;
+	return x.f - 1.0f;
+}
+template<> inline sint32 RandGetScalar(uint32 _raw, sint32 _min, sint32 _max)
+{
+	uint64 i = (uint64)_raw * (_max - _min + 1);
+	uint32 j = (uint32)(i >> 32);
+	return (sint32)j + _min;
+}
+template<> inline float32 RandGetScalar(uint32 _raw, float32 _min, float32 _max)
+{
+	float32 f = RandGetScalar<float32>(_raw);
+	return _min + f * (_max - _min);
+}
+
+
+template<typename PRNG, typename tType> 
+inline tType RandGet(Rand<PRNG>* _rand_, ScalarT)
+{
+	return RandGetScalar<tType>(_rand_->raw());
+}
+
+template<typename PRNG, typename tType> 
+inline tType RandGet(Rand<PRNG>* _rand_, CompositeT)
+{
+	tType ret;
+	for (int i = 0; i < APT_TRAITS_COUNT(tType); ++i) {
+		ret[i] = RandGetScalar<APT_TRAITS_BASE_TYPE(tType)>(_rand_->raw());
+	}
+	return ret;
+}
+
+template<typename PRNG, typename tType>
+inline tType RandGet(Rand<PRNG>* _rand_, tType _min, tType _max, ScalarT)
+{
+	return RandGetScalar(_rand_->raw(), _min, _max);
+}
+
+template<typename PRNG, typename tType>
+inline tType RandGet(Rand<PRNG>* _rand_, tType _min, tType _max, CompositeT)
+{
+	tType ret;
+	for (int i = 0; i < APT_TRAITS_COUNT(tType); ++i) {
+		ret[i] = RandGetScalar<APT_TRAITS_BASE_TYPE(tType)>(_rand_->raw(), _min[i], _max[i]);
+	}
+	return ret;
+}
+
+} // namespace internal
+
+
+template <typename PRNG>
+template <typename tType> 
+inline tType Rand<PRNG>::get() 
+{
+	return internal::RandGet<PRNG, tType>(this, APT_TRAITS_FAMILY(tType)); 
+}
+
+template <typename PRNG>
+template <typename tType> 
+inline tType Rand<PRNG>::get(tType _min, tType _max) 
+{
+	return internal::RandGet<PRNG, tType>(this, _min, _max, APT_TRAITS_FAMILY(tType));
+}
 
 } // namespace apt

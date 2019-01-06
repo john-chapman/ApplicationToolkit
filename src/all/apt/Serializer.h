@@ -10,7 +10,8 @@ namespace apt {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Serializer
-// Base class for serialization handlers. 
+// Base class for serialization handlers. A set of Serialize() free functions
+// are also provided which implicitly log an error if the serialization fails.
 ////////////////////////////////////////////////////////////////////////////////
 class Serializer
 {
@@ -21,56 +22,62 @@ public:
 		Mode_Write
 	};
 
-	Mode         getMode() const                       { return m_mode;  }
-	void         setMode(Mode _mode)                   { onModeChange(_mode); m_mode = _mode; }
-	const char*  getError() const                      { return m_errStr.isEmpty() ? nullptr : (const char*)m_errStr; }
-	void         setError(const char* _msg, ...);
+	Mode                getMode() const                              { return m_mode;  }
+	void                setMode(Mode _mode)                          { onModeChange(_mode); m_mode = _mode; }
+	const char*         getError() const                             { return m_errStr.isEmpty() ? nullptr : (const char*)m_errStr; }
+	void                setError(const char* _msg, ...);
 
-	// Return false if _name is not found, or if the end of the current array is reached.
-	virtual bool beginObject(const char* _name = nullptr) = 0;
-	virtual void endObject() = 0;
+	// Return false if _name is not found, or if the end of the current object is reached. If in an object/array and _name is not specified,
+	// advance to the next element.
+	virtual bool        beginObject(const char* _name = nullptr) = 0;
+	virtual void        endObject() = 0;
 
-	virtual bool beginArray(uint& _length_, const char* _name = nullptr) = 0;
-	virtual void endArray() = 0;
+	// Return false if _name is not found, or if the end of the current array is reached. If in an object/array and _name is not specified,
+	// advance to the next element.
+	virtual bool        beginArray(uint& _length_, const char* _name = nullptr) = 0;
+	virtual void        endArray() = 0;
 
 	// Variant for fixed-sized arrays or cases where _length_ isn't required.
-	bool         beginArray(const char* _name = nullptr)
-	{ 
-		uint n = 0;
-		return beginArray(n, _name);
-	}
+	bool                beginArray(const char* _name = nullptr)      { uint n = 0; return beginArray(n, _name); }
 
-	virtual bool value(bool&       _value_, const char* _name = nullptr) = 0;
-	virtual bool value(sint8&      _value_, const char* _name = nullptr) = 0;
-	virtual bool value(uint8&      _value_, const char* _name = nullptr) = 0;
-	virtual bool value(sint16&     _value_, const char* _name = nullptr) = 0;
-	virtual bool value(uint16&     _value_, const char* _name = nullptr) = 0;
-	virtual bool value(sint32&     _value_, const char* _name = nullptr) = 0;
-	virtual bool value(uint32&     _value_, const char* _name = nullptr) = 0;
-	virtual bool value(sint64&     _value_, const char* _name = nullptr) = 0;
-	virtual bool value(uint64&     _value_, const char* _name = nullptr) = 0;
-	virtual bool value(float32&    _value_, const char* _name = nullptr) = 0;
-	virtual bool value(float64&    _value_, const char* _name = nullptr) = 0;
-	virtual bool value(StringBase& _value_, const char* _name = nullptr) = 0;
+	// Get the name of the current value. Return "" if the current value is an array member.
+	virtual const char* getName() const = 0;
+
+	// Get the index of the current value.
+	virtual uint32      getIndex() const = 0;
+
+	// Serialize a value. If in an object/array and _name is not specified, advance to the next element.
+	virtual bool        value(bool&       _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(sint8&      _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(uint8&      _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(sint16&     _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(uint16&     _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(sint32&     _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(uint32&     _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(sint64&     _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(uint64&     _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(float32&    _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(float64&    _value_, const char* _name = nullptr) = 0;
+	virtual bool        value(StringBase& _value_, const char* _name = nullptr) = 0;
 	
 	// vec* and mat* variants are implemented in terms of beginArray/endArray and value(float&).
-	bool         value(vec2& _value_, const char* _name = nullptr);
-	bool         value(vec3& _value_, const char* _name = nullptr);
-	bool         value(vec4& _value_, const char* _name = nullptr);
-	bool         value(mat2& _value_, const char* _name = nullptr);
-	bool         value(mat3& _value_, const char* _name = nullptr);
-	bool         value(mat4& _value_, const char* _name = nullptr);
+	bool                value(vec2& _value_, const char* _name = nullptr);
+	bool                value(vec3& _value_, const char* _name = nullptr);
+	bool                value(vec4& _value_, const char* _name = nullptr);
+	bool                value(mat2& _value_, const char* _name = nullptr);
+	bool                value(mat3& _value_, const char* _name = nullptr);
+	bool                value(mat4& _value_, const char* _name = nullptr);
 
 	// Helper to avoid explicit cast to StringBase&.
 	template <uint kCapacity>
-	bool         value(String<kCapacity>& _value_, const char* _name = nullptr)
+	bool                value(String<kCapacity>& _value_, const char* _name = nullptr)
 	{
-		return value((StringBase&)_value_, _name); 
+		 return value((StringBase&)_value_, _name); 
 	}
 
-	// Directly serialize bytes of binary data with optional compression.
-	// \note When reading, _data_ will be allocated by the function if null, and should subsequently be released via free().
-	virtual bool binary(
+	// Directly serialize bytes of binary data with optional compression. When reading, _data_ will be allocated by the function if null, and 
+	// should subsequently be released via APT_FREE().
+	virtual bool        binary(
 		void*&           _data_, 
 		uint&            _sizeBytes_, 
 		const char*      _name = nullptr, 
@@ -92,7 +99,9 @@ protected:
 	{
 	}
 
-	virtual void onModeChange(Mode _mode) {};
+	virtual void onModeChange(Mode _mode)
+	{
+	}
 
 private:
 	String<64> m_errStr;

@@ -112,6 +112,8 @@ private:
 
 };
 
+void swap(StringBase& _a_, StringBase& _b_);
+
 
 template <uint kCapacity>
 class String: public StringBase

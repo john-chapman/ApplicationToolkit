@@ -35,7 +35,6 @@
     <ClInclude Include="..\..\src\all\apt\File.h" />
     <ClInclude Include="..\..\src\all\apt\FileSystem.h" />
     <ClInclude Include="..\..\src\all\apt\Image.h" />
-    <ClInclude Include="..\..\src\all\apt\Ini.h" />
     <ClInclude Include="..\..\src\all\apt\Json.h" />
     <ClInclude Include="..\..\src\all\apt\MemoryPool.h" />
     <ClInclude Include="..\..\src\all\apt\PersistentVector.h" />
@@ -43,6 +42,7 @@
     <ClInclude Include="..\..\src\all\apt\Quadtree.h" />
     <ClInclude Include="..\..\src\all\apt\RingBuffer.h" />
     <ClInclude Include="..\..\src\all\apt\Serializer.h" />
+    <ClInclude Include="..\..\src\all\apt\StaticInitializer.h" />
     <ClInclude Include="..\..\src\all\apt\String.h" />
     <ClInclude Include="..\..\src\all\apt\StringHash.h" />
     <ClInclude Include="..\..\src\all\apt\TextParser.h" />
@@ -55,7 +55,6 @@
     <ClInclude Include="..\..\src\all\apt\math.h" />
     <ClInclude Include="..\..\src\all\apt\memory.h" />
     <ClInclude Include="..\..\src\all\apt\rand.h" />
-    <ClInclude Include="..\..\src\all\apt\static_initializer.h" />
     <ClInclude Include="..\..\src\all\apt\types.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\config\eacompiler.h">
       <Filter>extern\EABase\config</Filter>
@@ -447,7 +446,6 @@
     <ClCompile Include="..\..\src\all\apt\File.cpp" />
     <ClCompile Include="..\..\src\all\apt\FileSystem.cpp" />
     <ClCompile Include="..\..\src\all\apt\Image.cpp" />
-    <ClCompile Include="..\..\src\all\apt\Ini.cpp" />
     <ClCompile Include="..\..\src\all\apt\Json.cpp" />
     <ClCompile Include="..\..\src\all\apt\MemoryPool.cpp" />
     <ClCompile Include="..\..\src\all\apt\Serializer.cpp" />

@@ -2,9 +2,9 @@
 
 #include <apt/apt.h>
 #include <apt/memory.h>
-#include <apt/static_initializer.h>
 #include <apt/File.h>
 #include <apt/String.h>
+#include <apt/StaticInitializer.h>
 #include <apt/Time.h>
 
 #include <EASTL/vector.h>

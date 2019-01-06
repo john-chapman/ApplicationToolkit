@@ -50,4 +50,6 @@ private:
 
 };
 
+void swap(MemoryPool& _a, MemoryPool& _b);
+
 } // namespace apt

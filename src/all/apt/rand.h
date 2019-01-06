@@ -98,4 +98,27 @@ private:
 	PRNG m_prng;
 };
 
+// Van der Corput sequence.
+inline float RadicalInverse(uint32 _seed)
+{
+	uint32 s = _seed;
+	#if 0
+		s = (s << 16u) | (s >> 16u);
+		s = ((s & 0x55555555u) << 1u) | ((s & 0xaaaaaaaau) >> 1u);
+		s = ((s & 0x33333333u) << 2u) | ((s & 0xccccccccu) >> 2u);
+		s = ((s & 0x0f0f0f0fu) << 4u) | ((s & 0xf0f0f0f0u) >> 4u);
+		s = ((s & 0x00ff00ffu) << 8u) | ((s & 0xff00ff00u) >> 8u);
+	#else
+		s = BitfieldReverse(s);
+	#endif
+	return (float)(s * 2.3283064365386963e-10); // / 0x100000000
+}
+
+// Hammersley sequence at _i given 1/N (N is the number of points in the sequence).
+inline vec2 Hammersley2d(uint32 _i, float _rn)
+{
+	return vec2(float(_i) * _rn, RadicalInverse(_i));
+}
+
+
 } // namespace apt

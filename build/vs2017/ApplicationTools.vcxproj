@@ -212,6 +212,7 @@
     <ClInclude Include="..\..\src\all\extern\EABase\earesult.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\eastdarg.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\eaunits.h" />
+    <ClInclude Include="..\..\src\all\extern\EABase\int128.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\nullptr.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\version.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\algorithm.h" />
@@ -226,6 +227,7 @@
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\compressed_pair.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\fixed_ring_buffer.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\fixed_string_abstract.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\bonus\fixed_tuple_vector.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\intrusive_sdlist.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\intrusive_slist.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\list_map.h" />
@@ -233,11 +235,13 @@
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\sort_extra.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\sparse_matrix.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\bonus\string_abstract.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\bonus\tuple_vector.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\chrono.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\core_allocator.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\core_allocator_adapter.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\deque.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\fixed_allocator.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\fixed_function.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\fixed_hash_map.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\fixed_hash_set.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\fixed_list.h" />
@@ -261,6 +265,8 @@
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\fill_help.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\fixed_pool.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\function.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\internal\function_detail.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\internal\function_help.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\functional_base.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\generic_iterator.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\hashtable.h" />
@@ -268,8 +274,11 @@
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\integer_sequence.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\intrusive_hashtable.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\mem_fn.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\internal\memory_base.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\internal\meta.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\move_help.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\pair_fwd_decls.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\internal\piecewise_construct_t.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\red_black_tree.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\smart_ptr.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\internal\thread_support.h" />
@@ -289,6 +298,7 @@
     <ClInclude Include="..\..\src\all\extern\EASTL\list.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\map.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\memory.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\meta.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\numeric.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\numeric_limits.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\optional.h" />
@@ -305,6 +315,7 @@
     <ClInclude Include="..\..\src\all\extern\EASTL\shared_ptr.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\slist.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\sort.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\span.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\stack.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\string.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\string_hash_map.h" />
@@ -316,6 +327,7 @@
     <ClInclude Include="..\..\src\all\extern\EASTL\unordered_map.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\unordered_set.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\utility.h" />
+    <ClInclude Include="..\..\src\all\extern\EASTL\variant.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\vector.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\vector_map.h" />
     <ClInclude Include="..\..\src\all\extern\EASTL\vector_multimap.h" />
@@ -383,7 +395,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\all\extern\EASTL\EASTL.natvis" />
+    <Natvis Include="..\..\src\all\extern\EASTL\EASTL.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

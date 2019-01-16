@@ -5,7 +5,6 @@
 #include <apt/types.h>
 #include <apt/math.h>
 
-#include <EASTL/functional.h>
 #include <EASTL/fixed_vector.h>
 #include <EASTL/vector.h>
 
@@ -46,7 +45,6 @@ class Quadtree
 public:
 	typedef tIndex Index;
 	typedef tNode  Node;
-	typedef eastl::function<bool(Index _nodeIndex, int _nodeLevel)> OnVisit;
 	static constexpr Index Index_Invalid  = ~Index(0);
 
 	// Absolute max number of levels given number of index bits = bits/2.
@@ -81,7 +79,8 @@ public:
 	~Quadtree();
 
 	// Depth-first traversal of the quadtree starting at _root, call _onVisit for each node. Traversal proceeds to a node's children only if _onVisit returns true.
-	void        traverse(OnVisit _onVisit, Index _rootIndex = 0);
+	template<typename OnVisit>
+	void        traverse(OnVisit&& _onVisit, Index _rootIndex = 0);
 
 	// Find a valid neighbor at _offsetX, _offsetY from the given node.
 	Index       findValidNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, Node _invalidNode = Node());
@@ -236,7 +235,8 @@ tIndex APT_QUADTREE_CLASS_DECL::findValidNeighbor(Index _nodeIndex, int _nodeLev
 }
 
 APT_QUADTREE_TEMPLATE_DECL 
-void APT_QUADTREE_CLASS_DECL::traverse(OnVisit _onVisit, Index _root)
+template<typename OnVisit>
+void APT_QUADTREE_CLASS_DECL::traverse(OnVisit&& _onVisit, Index _root)
 {
 	struct NodeAddr { Index m_index; int m_level; }; // store level in the stack, avoid calling FindLevel()
 	eastl::fixed_vector<NodeAddr, GetAbsoluteMaxLevelCount() * 4> tstack; // depth-first traversal has a small upper limit on the stack size
@@ -245,8 +245,7 @@ void APT_QUADTREE_CLASS_DECL::traverse(OnVisit _onVisit, Index _root)
 	{
 		auto node = tstack.back();
 		tstack.pop_back();
-
-		if (_onVisit(node.m_index, node.m_level) && node.m_level < m_levelCount - 1) 
+		if (eastl::forward<OnVisit>(_onVisit)(node.m_index, node.m_level) && node.m_level < m_levelCount - 1) 
 		{
 			auto i = getFirstChildIndex(node.m_index, node.m_level);
 			tstack.push_back({ i + 0u, node.m_level + 1 });

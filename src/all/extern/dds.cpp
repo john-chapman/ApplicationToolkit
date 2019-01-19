@@ -660,15 +660,13 @@ bool Image::ReadDds(Image& img_, const char* _data, uint _dataSize)
 	unsigned doff = sizeof(DWORD) + sizeof(DDS_HEADER) + (dxt10h ? sizeof(DDS_HEADER_DXT10) : 0);
 	if (img_.m_depth > 1 && img_.m_mipmapCount > 1) {
 	 // 3d textures are stored mip-wise (all slices for mip0 followed by all slices for mip1, etc).
-		const char* src = _data + doff + img_.m_mipSizes[0];
+		const char* src = _data + doff;
+		char* dst = img_.m_data;
 		for (unsigned i = 0; i < img_.m_mipmapCount; ++i) {
-			char* dst = img_.m_data;
-			dst += i > 0 ? img_.m_mipSizes[i - 1] : 0;
-			for (unsigned j = 0; j < img_.m_depth; ++j) {
-				memcpy(dst, src, img_.m_mipSizes[i]);
-				src += img_.m_mipSizes[i];
-				dst += img_.m_arrayLayerSize;
-			}
+			const auto mipSize = img_.m_mipSizes[i];
+			memcpy(dst, src, mipSize);
+			dst += mipSize;
+			src += mipSize;
 		}
 	} else {
 	 // non-3d textures are stored slice-wise (all mips for slice0 followed by all mips for slice1, etc).
@@ -848,13 +846,12 @@ bool Image::WriteDds(File& file_, const Image& _img)
 	dst = buf + sizeof(DWORD) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
 	if (_img.m_depth > 1 && _img.m_mipmapCount > 1) {
 	 // 3d textures are stored mip-wise (all slices for mip0 followed by all slices for mip1, etc).
+		src = _img.m_data;
 		for (unsigned i = 0; i < _img.m_mipmapCount; ++i) {
-			src = _img.m_data;
-			src += i > 0 ? _img.m_mipSizes[i - 1] : 0;
-			for (unsigned j = 0; j < _img.m_depth; ++j) {
-				memcpy(dst, src, _img.m_mipSizes[i]);
-				dst += _img.m_arrayLayerSize;
-			}
+			const auto mipSize = _img.m_mipSizes[i];
+			memcpy(dst, src, mipSize);
+			dst += mipSize;
+			src += mipSize;
 		}
 	} else {
 	 // non-3d textures are stored slice-wise (all mips for slice0 followed by all mips for slice1, etc).

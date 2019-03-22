@@ -181,7 +181,7 @@ PathStr FileSystem::MakeRelative(const char* _path, int _root)
 		tmp += 2;
 	}	
 	PathStr ret(tmp);
-	ret.replace('\\', kPathSeparator);
+	ret.replace('\\', '/');
 	return ret;
 }
 
@@ -208,7 +208,7 @@ PathStr FileSystem::StripRoot(const char* _path)
 		const char* rootBeg = strstr(path, pathRoot);
 		if (rootBeg != nullptr) {
 			PathStr ret(path + strlen(pathRoot) + 1);
-			ret.replace('\\', kPathSeparator);
+			ret.replace('\\', '/');
 			return ret;
 		}
 	}
@@ -241,7 +241,7 @@ bool FileSystem::PlatformSelect(PathStr& ret_, std::initializer_list<const char*
 		s_filterIndex = ofn.nFilterIndex;
 	 // parse s_output into results_
 		ret_.set(s_output);
-		ret_.replace('\\', '/'); // sanitize path for display
+		Sanitize(ret_);
 		return true;
 	} else {
 		DWORD err = CommDlgExtendedError();
@@ -284,7 +284,7 @@ int FileSystem::PlatformSelectMulti(PathStr retList_[], int _maxResults, std::in
 				break;
 			}
 			retList_[ret].appendf("%s\\%s", s_output, (const char*)tp);
-			retList_[ret].replace('\\', '/'); // sanitize path for display
+			Sanitize(retList_[ret]);
 			++ret;
 		}
 		return ret;
@@ -307,7 +307,7 @@ int FileSystem::ListFiles(PathStr retList_[], int _maxResults, const char* _path
 	while (!dirs.empty()) {
 		PathStr root = (PathStr&&)dirs.back();
 		dirs.pop_back();
-		root.replace('/', '\\');
+		root.replace('/', '\\'); // opposite of Sanitize()
 		PathStr search = root;
 		search.appendf("\\*"); // ignore filter here, need to catch dirs for recursion
 
@@ -332,6 +332,7 @@ int FileSystem::ListFiles(PathStr retList_[], int _maxResults, const char* _path
 					if (MatchesMulti(_filterList, (const char*)ffd.cFileName)) {
 						if (ret < _maxResults) {
 							retList_[ret].setf("%s\\%s", (const char*)root, ffd.cFileName);
+							Sanitize(retList_[ret]);
 						}
 						++ret;
 					}
@@ -386,6 +387,7 @@ int FileSystem::ListDirs(PathStr retList_[], int _maxResults, const char* _path,
 					if (MatchesMulti(_filterList, (const char*)ffd.cFileName)) {
 						if (ret < _maxResults) {
 							retList_[ret].setf("%s\\%s", (const char*)root, ffd.cFileName);
+							Sanitize(retList_[ret]);
 						}
 						++ret;
 					}
@@ -415,6 +417,7 @@ namespace {
 	- Other processes may modify files in arbitrary, unpredictable ways e.g. writing to a new file, deleting the old one
 	  and renaming the new one. You may therefore get a FileAction_Created event where you were expecting a FileAction_Modified.
 	  See the comments on this page: https://qualapps.blogspot.com/2010/05/understanding-readdirectorychangesw_19.html
+		- \todo potentially fix this by detecting if a file is deleted and then immediately created again?
 */
 	struct Watch
 	{
@@ -423,6 +426,7 @@ namespace {
 		DWORD      m_filter     = 0;
 		UINT       m_bufSize    = 1024 * 32; // 32kb
 		BYTE*      m_buf        = NULL;
+		PathStr    m_dirPath    = "";
 
 		eastl::pair<PathStr, FileSystem::FileAction> m_prevAction;
 		FileSystem::FileActionCallback* m_dispatchCallback;
@@ -527,6 +531,7 @@ void FileSystem::BeginNotifications(const char* _dir, FileActionCallback* _callb
 	CreateDirectoryA(_dir, NULL); // create if it doesn't already exist
 
 	Watch* watch = s_WatchPool.alloc();
+	watch->m_dirPath = _dir;
 	watch->m_hDir = CreateFileA(
 		_dir,                                                    // path
 		FILE_LIST_DIRECTORY,                                     // desired access
@@ -593,7 +598,8 @@ void FileSystem::DispatchNotifications(const char* _dir)
 		auto it = s_WatchMap.find(StringHash(_dir));
 		Watch& watch = *it->second;
 		for (auto& file : watch.m_dispatchQueue) {
-			watch.m_dispatchCallback(file.first.c_str(), file.second);
+			PathStr filePath("%s/%s", watch.m_dirPath.c_str(), file.first.c_str());
+			watch.m_dispatchCallback(filePath.c_str(), file.second);
 		}
 		watch.m_dispatchQueue.clear();
 
@@ -601,7 +607,8 @@ void FileSystem::DispatchNotifications(const char* _dir)
 		for (auto& it : s_WatchMap) {
 			Watch& watch = *it.second;
 			for (auto& file : watch.m_dispatchQueue) {
-				watch.m_dispatchCallback(file.first.c_str(), file.second);
+				PathStr filePath("%s/%s", watch.m_dirPath.c_str(), file.first.c_str());
+				watch.m_dispatchCallback(filePath.c_str(), file.second);
 			}
 			watch.m_dispatchQueue.clear();
 		}

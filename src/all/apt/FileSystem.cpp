@@ -22,6 +22,7 @@ int FileSystem::AddRoot(const char* _path)
 	
 	int ret = (int)s_roots->size();
 	s_roots->push_back(_path);
+	Sanitize(s_roots->back());
 	return ret;
 }
 
@@ -33,7 +34,8 @@ bool FileSystem::Read(File& file_, const char* _path, int _root)
 		//APT_ASSERT(false);
 		return false;
 	}
-	return File::Read(file_, (const char*)fullPath);
+	file_.setPath(fullPath.c_str());
+	return File::Read(file_);
 }
 
 bool FileSystem::ReadIfExists(File& file_, const char* _path, int _root)
@@ -42,7 +44,8 @@ bool FileSystem::ReadIfExists(File& file_, const char* _path, int _root)
 	if (!FindExisting(fullPath, _path ? _path : file_.getPath(), _root)) {
 		return false;
 	}
-	return File::Read(file_, (const char*)fullPath);
+	file_.setPath(fullPath.c_str());
+	return File::Read(file_);
 }
 
 bool FileSystem::Write(const File& _file, const char* _path, int _root)
@@ -120,15 +123,17 @@ PathStr FileSystem::MakePath(const char* _path, int _root)
 {
 	APT_ASSERT(_root < (int)s_roots->size());
 	const auto& root = (*s_roots)[_root];
+	PathStr ret = _path;
 	bool useRoot = !root.isEmpty() && !IsAbsolute(_path);
 	if (useRoot) {
 	 // check if the root already exists in path as a directory
 		const char* r = strstr((const char*)root, _path);
-		if (!r || *(r + root.getLength()) != kPathSeparator) {
-			return PathStr("%s%c%s", (const char*)root, kPathSeparator, _path);
+		if (!r || *(r + root.getLength()) != '/') {
+			ret.setf("%s%c%s", (const char*)root, '/', _path);
 		}
 	}
-	return PathStr(_path);
+	Sanitize(ret);
+	return ret;
 }
 
 PathStr FileSystem::StripPath(const char* _path)

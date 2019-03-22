@@ -83,6 +83,10 @@ public:
 	// Strip path from _path.
 	static PathStr     StripPath(const char* _path);
 
+	// Replace '\' with '/'.
+	static void        Sanitize(PathStr& _path_)   { _path_.replace('\\', '/'); }
+	static PathStr     Sanitize(const char* _path) { PathStr ret = _path; ret.replace('\\', '/'); return ret; }
+
 	// Extract path from _path (remove file name + extension).
 	static PathStr     GetPath(const char* _path);
 	// Extract file name from _path (remove path + extension).
@@ -133,7 +137,6 @@ public:
 private:
 	static int s_defaultRoot;
 	static storage<eastl::vector<PathStr> > s_roots;
-	static constexpr char kPathSeparator = '/';
 	
 	APT_DECLARE_STATIC_INIT_FRIEND(FileSystem);
 	static void Init();

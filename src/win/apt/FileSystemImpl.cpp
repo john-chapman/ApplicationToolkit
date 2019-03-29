@@ -10,6 +10,7 @@
 #include <apt/TextParser.h>
 
 #include <Shlwapi.h>
+#include <ShlObj.h>
 #include <commdlg.h>
 #include <cstring>
 
@@ -250,6 +251,30 @@ bool FileSystem::PlatformSelect(PathStr& ret_, std::initializer_list<const char*
 			APT_ASSERT(false);
 		}		
 	}
+	return false;
+}
+
+bool FileSystem::PlatformSelectDir(PathStr& ret_)
+{
+	BROWSEINFO bi = { 0 };
+	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+	bi.lParam  = (LPARAM)ret_.c_str();
+	
+    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+	if (pidl != 0 ) {
+        TCHAR path[MAX_PATH];
+        SHGetPathFromIDList(pidl, path);
+		ret_ = Sanitize(path);		
+
+        IMalloc* imalloc = nullptr;
+        if (SUCCEEDED(SHGetMalloc(&imalloc))) {
+            imalloc->Free(pidl);
+            imalloc->Release();
+        }
+
+        return true;
+    }
+
 	return false;
 }
 

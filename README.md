@@ -26,6 +26,7 @@ Embedded dependencies:
 - [tinyexr](https://github.com/syoyo/tinyexr)
 
 ## Change Log ##
+- `2019-03-31 (v0.19):` String: removed internal use of `strncpy` to support strings which contain internal null chars.
 - `2018-09-15 (v0.18):` Compile fixes for GNU. Removed `Ini`. Renamed `static_initializer` -> `StaticInitializer`.
 - `2018-09-07 (v0.17):` Improved `static_initializer` to allow use of private static functions for init/shutdown. 
 - `2018-09-07 (v0.16):` `FileSystem` supports arbitrary search paths (roots), removed `RootType` enum.

@@ -28,7 +28,7 @@ uint StringBase::set(const char* _src, uint _count)
 	if (m_capacity < srclen + 1) {
 		alloc(srclen + 1);
 	}
-	strncpy(m_buf, _src, srclen);
+	memcpy(m_buf, _src, srclen);
 	m_buf[srclen] = '\0';
 	m_length = srclen;
 	return srclen;
@@ -81,7 +81,7 @@ uint StringBase::append(const char* _src, uint _count)
 	if (m_capacity < len + srclen + 1) {
 		realloc(len + srclen + 1);
 	}
-	strncpy(m_buf + len, _src, srclen);
+	memcpy(m_buf + len, _src, srclen);
 	len += srclen;
 	m_buf[len] = '\0';
 	m_length = len;
@@ -319,7 +319,7 @@ StringBase::StringBase(StringBase&& _rhs_)
 {
 	if (_rhs_.isLocal()) {
 	 // _rhs_ is local, copy contents (m_buf is guranteed to be large enough)
-		strncpy(m_buf, _rhs_.m_buf, _rhs_.m_length + 1);
+		memcpy(m_buf, _rhs_.m_buf, _rhs_.m_length + 1);
 	} else {
 	 // _rhs_ is not local, take ownership of it's heap-allocated buffer
 		m_buf = _rhs_.m_buf;
@@ -341,7 +341,7 @@ StringBase& StringBase::operator=(StringBase&& _rhs_)
 		if (!m_buf) {
 			m_buf = getLocalBuf();
 		}
-		strncpy(m_buf, _rhs_.getLocalBuf(), _rhs_.m_length + 1);
+		memcpy(m_buf, _rhs_.getLocalBuf(), _rhs_.m_length + 1);
 	} else {	 
 	 // _rhs_ is not local, take ownership of it's heap-allocated buffer
 		if (!isLocal()) {
@@ -382,7 +382,7 @@ void StringBase::realloc(uint _capacity)
 {
 	if (!m_buf || isLocal()) {
 		m_buf = (char*)APT_MALLOC(_capacity * sizeof(char));
-		strncpy(m_buf, getLocalBuf(), m_length + 1);
+		memcpy(m_buf, getLocalBuf(), m_length + 1);
 		m_capacity = _capacity;
 	
 	} else {

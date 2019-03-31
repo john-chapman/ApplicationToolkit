@@ -254,11 +254,12 @@ bool FileSystem::PlatformSelect(PathStr& ret_, std::initializer_list<const char*
 	return false;
 }
 
-bool FileSystem::PlatformSelectDir(PathStr& ret_)
+bool FileSystem::PlatformSelectDir(PathStr& ret_, const char* _prompt)
 {
 	BROWSEINFO bi = { 0 };
-	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
-	bi.lParam  = (LPARAM)ret_.c_str();
+	bi.lpszTitle  = _prompt;
+	bi.ulFlags    = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+	bi.lParam     = (LPARAM)ret_.c_str();
 	
     LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
 	if (pidl != 0 ) {

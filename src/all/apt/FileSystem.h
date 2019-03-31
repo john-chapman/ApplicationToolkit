@@ -105,7 +105,7 @@ public:
 	static bool        PlatformSelect(PathStr& ret_, std::initializer_list<const char*> _filterList = { "*" });
 	static int         PlatformSelectMulti(PathStr retList_[], int _maxResults, std::initializer_list<const char*> _filterList = { "*" });
 	// Select a dir via the platform UI.
-	static bool        PlatformSelectDir(PathStr& ret_);
+	static bool        PlatformSelectDir(PathStr& ret_, const char* _prompt = "");
 
  // Inspection
 

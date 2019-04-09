@@ -111,7 +111,11 @@ struct Json::Impl
 	void reset()
 	{
 		m_containerStack.clear();
-		m_containerStack.push_back({ &m_dom, "", -1 });
+		//m_containerStack.push_back({ &m_dom, "", -1 }); // doesn't compile VS2015
+		m_containerStack.push_back();
+			m_containerStack.back().m_value = &m_dom;
+			m_containerStack.back().m_name = "";
+			m_containerStack.back().m_index = -1;
 		m_currentValue = Value();
 	}
 

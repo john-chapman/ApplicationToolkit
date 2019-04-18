@@ -90,6 +90,10 @@ namespace apt {
 	vec3 ToEulerXYZ(const mat3& _m);
 	mat3 FromEulerXYZ(const vec3& _euler);
 
+	// Convert between spherical and Cartesian coordinates.
+	vec3 SphericalToCartesian(float _radius, float _azimuth, float _elevation);
+	vec3 CartesianToSpherical(const vec3& _cartesian); // return value is vec3(_radius, _azimuth, _elevation)
+
 	// Return the transpose of a matrix.
 	mat4 Transpose(const mat4& _m);
 	mat3 Transpose(const mat3& _m);

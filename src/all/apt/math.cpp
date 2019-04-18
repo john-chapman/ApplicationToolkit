@@ -145,6 +145,25 @@ mat3 apt::FromEulerXYZ(const vec3& _euler)
 		);
 }
 
+vec3 apt::SphericalToCartesian(float _radius, float _azimuth, float _elevation)
+{
+	return vec3(
+		_radius * cos(_azimuth) * sin(_elevation),
+		_radius * cos(_elevation),
+		_radius * sin(_azimuth) * sin(_elevation)
+		);
+}
+
+vec3 apt::CartesianToSpherical(const vec3& _cartesian)
+{
+	float radius = Max(FLT_EPSILON, Length(_cartesian));
+	return vec3(
+		radius,
+		atan2(_cartesian.z, _cartesian.x),
+		acos(_cartesian.y / radius)
+		);
+}
+
 mat4 apt::Transpose(const mat4& _m)
 {
 	return linalg::transpose(_m);

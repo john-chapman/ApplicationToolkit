@@ -629,22 +629,30 @@ bool Image::ReadDds(Image& img_, const char* _data, uint _dataSize)
 		}
 	} else {
 		if (ddsh->ddspf.dwFlags & DDS_FOURCC) {
-		 // compressed format
+		 // special format
 			switch (ddsh->ddspf.dwFourCC) {
-				case MAKEFOURCC('D','X','T','1'): img_.m_layout = Image::Layout_RGB;  img_.m_compression = Image::Compression_BC1; break; // layout could also be rgba
-				case MAKEFOURCC('D','X','T','2'): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_BC2; break;
-				case MAKEFOURCC('D','X','T','3'): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_BC2; break;
-				case MAKEFOURCC('D','X','T','4'): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_BC3; break;
-				case MAKEFOURCC('D','X','T','5'): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_BC3; break;
+			 // compressed
+				case MAKEFOURCC('D','X','T','1'): img_.m_layout = Image::Layout_RGB;  img_.m_compression = Image::Compression_BC1;  img_.m_dataType = DataType_Invalid; break; // layout could also be rgba
+				case MAKEFOURCC('D','X','T','2'): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_BC2;  img_.m_dataType = DataType_Invalid; break;
+				case MAKEFOURCC('D','X','T','3'): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_BC2;  img_.m_dataType = DataType_Invalid; break;
+				case MAKEFOURCC('D','X','T','4'): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_BC3;  img_.m_dataType = DataType_Invalid; break;
+				case MAKEFOURCC('D','X','T','5'): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_BC3;  img_.m_dataType = DataType_Invalid; break;
 				case MAKEFOURCC('B','C','4','S'):
-				case MAKEFOURCC('B','C','4','U'): img_.m_layout = Image::Layout_R;    img_.m_compression = Image::Compression_BC4; break;
+				case MAKEFOURCC('B','C','4','U'): img_.m_layout = Image::Layout_R;    img_.m_compression = Image::Compression_BC4;  img_.m_dataType = DataType_Invalid; break;
 				case MAKEFOURCC('B','C','5','S'):
-				case MAKEFOURCC('B','C','5','U'): img_.m_layout = Image::Layout_RG;   img_.m_compression = Image::Compression_BC5; break;
+				case MAKEFOURCC('B','C','5','U'): img_.m_layout = Image::Layout_RG;   img_.m_compression = Image::Compression_BC5;  img_.m_dataType = DataType_Invalid; break;
+				
+			 // Nvidia DDS exporter for Photoshop doesn't write the DXT10 header and instead uses some esoteric fourcc codes for special formats >:'(
+				case MAKEFOURCC('o',  0,  0,  0): img_.m_layout = Image::Layout_R;    img_.m_compression = Image::Compression_None; img_.m_dataType = DataType_Float16; break;
+				case MAKEFOURCC('r',  0,  0,  0): img_.m_layout = Image::Layout_R;    img_.m_compression = Image::Compression_None; img_.m_dataType = DataType_Float32; break;
+				case MAKEFOURCC('q',  0,  0,  0): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_None; img_.m_dataType = DataType_Float16; break;
+				case MAKEFOURCC('t',  0,  0,  0): img_.m_layout = Image::Layout_RGBA; img_.m_compression = Image::Compression_None; img_.m_dataType = DataType_Float32; break;
+				
 				default: APT_LOG_ERR("DDS: Unsupported format (ddsh->ddspf.dwFourCC = %d)", ddsh->ddspf.dwFourCC); return false;
 			};
-			img_.m_dataType = DataType_Invalid;
+			
 		} else {
-		 // uncompressed format
+		 // standard format
 			switch (ddsh->ddspf.dwRGBBitCount) {
 				case 8:   img_.m_layout = Image::Layout_R; break;
 				case 16:  img_.m_layout = Image::Layout_RG; break;

@@ -37,6 +37,10 @@ public:
 	// Return true if # used objects is consistent with # accessible free objects.
 	bool validate() const;
 
+	uint getCapacity() const  { return m_blockSize * m_blockCount; }
+	uint getUsedCount() const { return m_usedCount; }
+	uint getFreeCount() const { return getCapacity() - m_usedCount; }
+
 	friend void swap(MemoryPool& _a, MemoryPool& _b);
 	
 private:

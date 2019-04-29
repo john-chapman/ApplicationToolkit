@@ -470,8 +470,14 @@ namespace {
 		if (_err == ERROR_OPERATION_ABORTED) { // CancellIo was called
 			return;
 		}
-		APT_ASSERT(_err == ERROR_SUCCESS);
-		APT_ASSERT(_bytes != 0); // overflow? notifications lost in this case?
+		if (_err != ERROR_SUCCESS) {
+			APT_LOG_ERR("FileSystem: completion routine error '%s'", GetPlatformErrorString(_err));
+			return;
+		}
+		if (_bytes == 0) { // overflow? notifications lost in this case?
+			APT_LOG("FileSystem: completion routine called with 0 bytes");
+			return;
+		}
 //APT_LOG_DBG("---");
 		Watch* watch = (Watch*)_overlapped; // m_overlapped is the first member, so this works
 
@@ -553,7 +559,6 @@ void FileSystem::BeginNotifications(const char* _dir, FileActionCallback* _callb
 		APT_ASSERT(false);
 		return;
 	}
-
 	CreateDirectoryA(_dir, NULL); // create if it doesn't already exist
 
 	Watch* watch = s_WatchPool.alloc();

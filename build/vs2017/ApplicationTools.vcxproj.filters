@@ -537,6 +537,9 @@
     <ClInclude Include="..\..\src\win\apt\win.h">
       <Filter>win\apt</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\all\apt\Octree.h">
+      <Filter>all\apt</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\all\apt\ArgList.cpp">

@@ -185,6 +185,7 @@
     <ClInclude Include="..\..\src\all\apt\Image.h" />
     <ClInclude Include="..\..\src\all\apt\Json.h" />
     <ClInclude Include="..\..\src\all\apt\MemoryPool.h" />
+    <ClInclude Include="..\..\src\all\apt\Octree.h" />
     <ClInclude Include="..\..\src\all\apt\PersistentVector.h" />
     <ClInclude Include="..\..\src\all\apt\Pool.h" />
     <ClInclude Include="..\..\src\all\apt\Quadtree.h" />

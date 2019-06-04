@@ -11,36 +11,32 @@
 namespace apt {
 
 ///////////////////////////////////////////////////////////////////////////////
-// Quadtree
-// Generic linear quadtree.
+// Octree
+// Generic linear octree.
 //
 // tIndex is the type used for indexing nodes and determines the absolute max
 // level of subdivision possible. This should be a uint* type (uint8, uint16, 
 // uint32, uint64).
 //
 // tNode is the node type. Typically this will be a pointer or index into a
-// separate node data pool. Use the _init arg of the ctor to init the quadtree
+// separate node data pool. Use the _init arg of the ctor to init the octree
 // with 'invalid' nodes.
 //
 // Internally each level is stored sequentially with the root level at index 0.
 // Within each level, nodes are laid out in Morton order:
-//  +---+---+
-//  | 0 | 2 |
-//  +---+---+
-//  | 1 | 3 |
-//  +---+---+
+//          
+//  +---+---+    +---+---+
+//  | 0 | 2 |    | 4 | 6 |
+//  +---+---+ -> +---+---+
+//  | 1 | 3 |    | 5 | 7 |
+//  +---+---+    +---+---+
 // Use linearize()/delinearize() functions to convert to/from a linear layout
 // e.g. for conversion to a texture.
 //
-// \todo (also applies to Octree.h)
-// - Split out the bit interleaving code into a Morton helper (fast path for index sizes that case use magic bits https://graphics.stanford.edu/~seander/bithacks.html).
-// - Implement linearize/delinearize.
-// - Bitmap specialization for tNode == bool.
-// - Make static functions private.
-// - Better implementation of FindNeighbor()?
+// \todo (see Quadtree.h)
 ///////////////////////////////////////////////////////////////////////////////
 template <typename tIndex, typename tNode>
-class Quadtree
+class Octree
 {
 	int                  m_levelCount;
 	eastl::vector<tNode> m_nodes;
@@ -50,47 +46,47 @@ public:
 	typedef tNode  Node;
 	static constexpr Index Index_Invalid  = ~Index(0);
 
-	// Absolute max number of levels given number of index bits = bits/2.
-	static constexpr int    GetAbsoluteMaxLevelCount()                                        { return (int)(sizeof(Index) * CHAR_BIT) / 2; }
+	// Absolute max number of levels given number of index bits = bits/3.
+	static constexpr int    GetAbsoluteMaxLevelCount()                                        { return (int)(sizeof(Index) * CHAR_BIT) / 3; }
 
-	// Node count at _level = 4^_level.
-	static constexpr Index  GetNodeCount(int _level)                                          { return 1 << (2 * _level); }
+	// Node count at _level = 8^_level.
+	static constexpr Index  GetNodeCount(int _level)                                          { return 1 << (3 * _level); }
 
 	// Width (in nodes) at _level = sqrt(GetNodeCount(_level)).
 	static constexpr Index  GetWidth(int _level)                                              { return 1 << _level; }
 
-	// Total node count = 4*(leafCount - 1)/3+1.
-	static constexpr Index  GetTotalNodeCount(int _levelCount)                                { return 4 * (GetNodeCount(_levelCount - 1) - 1) / 3 + 1; }
+	// Total node count = 8*(leafCount - 1)/7+1.
+	static constexpr Index  GetTotalNodeCount(int _levelCount)                                { return 8 * (GetNodeCount(_levelCount - 1) - 1) / 7 + 1; }
 
 	// Index of first node at _level.
 	static constexpr Index  GetLevelStartIndex(int _level)                                    { return (_level == 0) ? 0 : GetTotalNodeCount(_level); } 
 
-	// Neighbor at signed offset from _nodeIndex (or Index_Invalid if offset is outside the quadtree).
-	static           Index  FindNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY);
+	// Neighbor at signed offset from _nodeIndex (or Index_Invalid if offset is outside the octree).
+	static           Index  FindNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, int _offsetZ);
 
-	// Given _index, find the quadtree level.
+	// Given _index, find the octree level.
 	static           int    FindLevel(Index _nodeIndex);
 
 	// Convert _nodeIndex to a Cartesian offset relative to the quadtree origin at _nodeLevel.
-	static           uvec2  ToCartesian(Index _nodeIndex, int _nodeLevel);
+	static           uvec3  ToCartesian(Index _nodeIndex, int _nodeLevel);
 
 	// Convert Cartesian coordinates to an index.
-	static           Index  ToIndex(Index _x, Index _y, int _nodeLevel);
+	static           Index  ToIndex(Index _x, Index _y, Index _z, int _nodeLevel);
 
 
-	Quadtree(int _levelCount = GetAbsoluteMaxLevelCount(), Node _init = Node());
-	~Quadtree();
+	Octree(int _levelCount = GetAbsoluteMaxLevelCount(), Node _init = Node());
+	~Octree();
 
-	// Depth-first traversal of the quadtree starting at _root, call _onVisit for each node. 
+	// Depth-first traversal of the octree starting at _root, call _onVisit for each node. 
 	// _onVisit should be of the form ()(tIndex _nodeIndex, int _nodeLevel) -> bool.
 	// Traversal proceeds to a node's children only if _onVisit returns true.
 	template<typename OnVisit>
 	void        traverse(OnVisit&& _onVisit, Index _rootIndex = 0);
 
 	// Find a valid neighbor at _offsetX, _offsetY from the given node.
-	Index       findValidNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, Node _invalidNode = Node());
+	Index       findValidNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, int _offsetZ, Node _invalidNode = Node());
 
-	// Width of a node in leaf nodes at _levelIndex (e.g. quadtree width at level 0, 1 at max level).
+	// Width of a node in leaf nodes at _levelIndex (e.g. octree width at level 0, 1 at max level).
 	Index       getNodeWidth(int _levelIndex) const                                          { return GetWidth(APT_MAX(m_levelCount - _levelIndex - 1, 0)); }
 
 	// Node access.
@@ -115,26 +111,26 @@ public:
 
 /*******************************************************************************
 
-                                  Quadtree
+                                  Octree
 
 *******************************************************************************/
 
-#define APT_QUADTREE_TEMPLATE_DECL template <typename tIndex, typename tNode>
-#define APT_QUADTREE_CLASS_DECL    Quadtree<tIndex, tNode>
+#define APT_OCTREE_TEMPLATE_DECL template <typename tIndex, typename tNode>
+#define APT_OCTREE_CLASS_DECL    Octree<tIndex, tNode>
 
-APT_QUADTREE_TEMPLATE_DECL 
-tIndex APT_QUADTREE_CLASS_DECL::FindNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY)
+APT_OCTREE_TEMPLATE_DECL 
+tIndex APT_OCTREE_CLASS_DECL::FindNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, int _offsetZ)
 {
 	if (_nodeIndex == Index_Invalid)
 	{
 		return Index_Invalid;
 	}
-	uvec2 offset = ToCartesian(_nodeIndex, _nodeLevel) + uvec2(_offsetX, _offsetY);
-	return ToIndex(offset.x, offset.y, _nodeLevel);
+	uvec3 offset = ToCartesian(_nodeIndex, _nodeLevel) + uvec3(_offsetX, _offsetY, _offsetZ);
+	return ToIndex(offset.x, offset.y, offset.z, _nodeLevel);
 }
 
-APT_QUADTREE_TEMPLATE_DECL 
-int APT_QUADTREE_CLASS_DECL::FindLevel(Index _nodeIndex)
+APT_OCTREE_TEMPLATE_DECL 
+int APT_OCTREE_CLASS_DECL::FindLevel(Index _nodeIndex)
 {
 	for (int i = 0, n = GetAbsoluteMaxLevelCount(); i < n; ++i)
 	{
@@ -146,50 +142,53 @@ int APT_QUADTREE_CLASS_DECL::FindLevel(Index _nodeIndex)
 	return -1;
 }
 
-APT_QUADTREE_TEMPLATE_DECL 
-uvec2 APT_QUADTREE_CLASS_DECL::ToCartesian(Index _nodeIndex, int _nodeLevel)
+APT_OCTREE_TEMPLATE_DECL 
+uvec3 APT_OCTREE_CLASS_DECL::ToCartesian(Index _nodeIndex, int _nodeLevel)
 {
  // traverse the index LSB -> MSB summing node width (node width = number of leaf nodes covered, start at 1) 
 	_nodeIndex -= GetLevelStartIndex(_nodeLevel);
 	Index width = 1;
-	uvec2 ret = uvec2(0u);
+	uvec3 ret = uvec3(0u);
 	for (int i = 0; i < _nodeLevel; ++i, width *= 2)
 	{
 		ret.y += (_nodeIndex & 1) * width; 
 		_nodeIndex = _nodeIndex >> 1;
 		ret.x += (_nodeIndex & 1) * width;
 		_nodeIndex = _nodeIndex >> 1;
+		ret.z += (_nodeIndex & 1) * width;
+		_nodeIndex = _nodeIndex >> 1;
 	}
 	return ret;
 }
 
-APT_QUADTREE_TEMPLATE_DECL 
-tIndex APT_QUADTREE_CLASS_DECL::ToIndex(Index _x, Index _y, int _nodeLevel)
+APT_OCTREE_TEMPLATE_DECL 
+tIndex APT_OCTREE_CLASS_DECL::ToIndex(Index _x, Index _y, Index _z, int _nodeLevel)
 {
- // _x or _y are outside the quadtree
+ // _x, _y or _z are outside the octree
 	Index w = GetWidth(_nodeLevel);
-	if (_x >= w || _y >= w)
+	if (_x >= w || _y >= w || _z >= w)
 	{
 		return Index_Invalid;
 	}
 
- // interleave _x and _y to produce the Morton code, add level offset
+ // interleave _x, _y and _z to produce the Morton code, add level offset
 	Index ret = 0;
 	for (Index i = 0; i < (sizeof(Index) * CHAR_BIT); ++i)
 	{
 		const Index mask = 1 << i;
-		const Index base = i;
+		const Index base = i << 1;
 		ret = ret 
-			| (_y & mask) << (base + 0) 
+			| (_y & mask) << (base + 0)
 			| (_x & mask) << (base + 1)
+			| (_z & mask) << (base + 2)
 			;
 	}
 	return ret + GetLevelStartIndex(_nodeLevel);
 }
 
 
-APT_QUADTREE_TEMPLATE_DECL 
-APT_QUADTREE_CLASS_DECL::Quadtree(int _levelCount, Node _init)
+APT_OCTREE_TEMPLATE_DECL 
+APT_OCTREE_CLASS_DECL::Octree(int _levelCount, Node _init)
 	: m_levelCount(_levelCount)
 {
 	APT_STATIC_ASSERT(!DataTypeIsSigned(APT_DATA_TYPE_TO_ENUM(Index))); // use an unsigned type
@@ -203,14 +202,14 @@ APT_QUADTREE_CLASS_DECL::Quadtree(int _levelCount, Node _init)
 	}
 }
 
-APT_QUADTREE_TEMPLATE_DECL 
-APT_QUADTREE_CLASS_DECL::~Quadtree()
+APT_OCTREE_TEMPLATE_DECL 
+APT_OCTREE_CLASS_DECL::~Octree()
 {
 	m_nodes.clear();
 }
 
-APT_QUADTREE_TEMPLATE_DECL 
-tIndex APT_QUADTREE_CLASS_DECL::getParentIndex(Index _childIndex, int _childLevel) const
+APT_OCTREE_TEMPLATE_DECL 
+tIndex APT_OCTREE_CLASS_DECL::getParentIndex(Index _childIndex, int _childLevel) const
 {
 	if (_childLevel == 0) 
 	{
@@ -218,11 +217,11 @@ tIndex APT_QUADTREE_CLASS_DECL::getParentIndex(Index _childIndex, int _childLeve
 	}
 	Index  childOffset  = GetLevelStartIndex(_childLevel);
 	Index  parentOffset = GetLevelStartIndex(APT_MAX(_childLevel - 1, 0));
-	return parentOffset + ((_childIndex - childOffset) >> 2);
+	return parentOffset + ((_childIndex - childOffset) >> 3);
 }
 
-APT_QUADTREE_TEMPLATE_DECL 
-tIndex APT_QUADTREE_CLASS_DECL::getFirstChildIndex(Index _parentIndex, int _parentLevel) const
+APT_OCTREE_TEMPLATE_DECL 
+tIndex APT_OCTREE_CLASS_DECL::getFirstChildIndex(Index _parentIndex, int _parentLevel) const
 {
 	if (_parentLevel >= m_levelCount -1)
 	{
@@ -230,13 +229,13 @@ tIndex APT_QUADTREE_CLASS_DECL::getFirstChildIndex(Index _parentIndex, int _pare
 	}
 	Index  parentOffset = GetLevelStartIndex(_parentLevel);
 	Index  childOffset  = GetLevelStartIndex(_parentLevel + 1);
-	return childOffset + ((_parentIndex - parentOffset) << 2);
+	return childOffset + ((_parentIndex - parentOffset) << 3);
 }
 
-APT_QUADTREE_TEMPLATE_DECL
-tIndex APT_QUADTREE_CLASS_DECL::findValidNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, Node _invalidNode)
+APT_OCTREE_TEMPLATE_DECL
+tIndex APT_OCTREE_CLASS_DECL::findValidNeighbor(Index _nodeIndex, int _nodeLevel, int _offsetX, int _offsetY, int _offsetZ, Node _invalidNode)
 {
-	Index ret = FindNeighbor(_nodeIndex, _nodeLevel, _offsetX, _offsetY); // get neighbor index at the same level
+	Index ret = FindNeighbor(_nodeIndex, _nodeLevel, _offsetX, _offsetY, _offsetZ); // get neighbor index at the same level
 	while (ret != Index_Invalid && m_nodes[ret] == _invalidNode) // search up the tree until a valid node is found
 	{
 		ret = getParentIndex(ret, _nodeLevel--);
@@ -244,9 +243,9 @@ tIndex APT_QUADTREE_CLASS_DECL::findValidNeighbor(Index _nodeIndex, int _nodeLev
 	return ret;
 }
 
-APT_QUADTREE_TEMPLATE_DECL 
+APT_OCTREE_TEMPLATE_DECL 
 template<typename OnVisit>
-void APT_QUADTREE_CLASS_DECL::traverse(OnVisit&& _onVisit, Index _root)
+void APT_OCTREE_CLASS_DECL::traverse(OnVisit&& _onVisit, Index _root)
 {
 	struct NodeAddr { Index m_index; int m_level; }; // store level in the stack, avoid calling FindLevel()
 	eastl::fixed_vector<NodeAddr, GetAbsoluteMaxLevelCount() * 4> tstack; // depth-first traversal has a small upper limit on the stack size
@@ -262,11 +261,15 @@ void APT_QUADTREE_CLASS_DECL::traverse(OnVisit&& _onVisit, Index _root)
 			tstack.push_back({ firstChildIndex + 1u, node.m_level + 1 });
 			tstack.push_back({ firstChildIndex + 2u, node.m_level + 1 });
 			tstack.push_back({ firstChildIndex + 3u, node.m_level + 1 });
+			tstack.push_back({ firstChildIndex + 4u, node.m_level + 1 });
+			tstack.push_back({ firstChildIndex + 5u, node.m_level + 1 });
+			tstack.push_back({ firstChildIndex + 6u, node.m_level + 1 });
+			tstack.push_back({ firstChildIndex + 7u, node.m_level + 1 });
 		}
 	}
 }
 
-#undef APT_QUADTREE_TEMPLATE_DECL
-#undef APT_QUADTREE_CLASS_DECL
+#undef APT_OCTREE_TEMPLATE_DECL
+#undef APT_OCTREE_CLASS_DECL
 
 } // namespace apt

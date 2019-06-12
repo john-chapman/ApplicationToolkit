@@ -60,6 +60,9 @@
     <ClInclude Include="..\..\src\all\apt\MemoryPool.h">
       <Filter>all\apt</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\all\apt\Octree.h">
+      <Filter>all\apt</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\all\apt\PersistentVector.h">
       <Filter>all\apt</Filter>
     </ClInclude>
@@ -109,6 +112,9 @@
       <Filter>all\apt</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\all\apt\memory.h">
+      <Filter>all\apt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\all\apt\platform.h">
       <Filter>all\apt</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\all\apt\rand.h">
@@ -531,14 +537,8 @@
     <ClInclude Include="..\..\src\all\extern\tinyexr.h">
       <Filter>all\extern</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\win\apt\platform.h">
-      <Filter>win\apt</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\win\apt\win.h">
       <Filter>win\apt</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\all\apt\Octree.h">
-      <Filter>all\apt</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

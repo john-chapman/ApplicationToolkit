@@ -203,6 +203,7 @@
     <ClInclude Include="..\..\src\all\apt\log.h" />
     <ClInclude Include="..\..\src\all\apt\math.h" />
     <ClInclude Include="..\..\src\all\apt\memory.h" />
+    <ClInclude Include="..\..\src\all\apt\platform.h" />
     <ClInclude Include="..\..\src\all\apt\rand.h" />
     <ClInclude Include="..\..\src\all\apt\types.h" />
     <ClInclude Include="..\..\src\all\extern\EABase\config\eacompiler.h" />
@@ -343,7 +344,6 @@
     <ClInclude Include="..\..\src\all\extern\stb_image.h" />
     <ClInclude Include="..\..\src\all\extern\stb_image_write.h" />
     <ClInclude Include="..\..\src\all\extern\tinyexr.h" />
-    <ClInclude Include="..\..\src\win\apt\platform.h" />
     <ClInclude Include="..\..\src\win\apt\win.h" />
   </ItemGroup>
   <ItemGroup>

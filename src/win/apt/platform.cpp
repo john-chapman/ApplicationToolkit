@@ -8,7 +8,9 @@
 
 #pragma comment(lib, "version")
 
-const char* apt::GetPlatformErrorString(uint64 _err)
+namespace apt {
+
+const char* GetPlatformErrorString(uint64 _err)
 {
 	static thread_local String<1024> ret;
 	ret.setf("(%llu) ", _err);
@@ -26,7 +28,7 @@ const char* apt::GetPlatformErrorString(uint64 _err)
 	return (const char*)ret;
 }
 
-const char* apt::GetPlatformInfoString()
+const char* GetPlatformInfoString()
 {
 	static thread_local String<1024> ret;
 
@@ -93,3 +95,40 @@ const char* apt::GetPlatformInfoString()
 
 	return (const char*)ret;
 }
+
+PlatformHandle PlatformForkProcess(const char* _command)
+{
+	STARTUPINFOA sinfo = { 0 };
+	sinfo.cb           = sizeof(sinfo);
+	sinfo.dwFlags      = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+	sinfo.wShowWindow  = 0;
+	sinfo.hStdInput    = GetStdHandle(STD_INPUT_HANDLE);
+	sinfo.hStdOutput   = GetStdHandle(STD_OUTPUT_HANDLE);
+	sinfo.hStdError    = GetStdHandle(STD_ERROR_HANDLE);
+
+	PROCESS_INFORMATION pinfo = {};
+	APT_PLATFORM_VERIFY(CreateProcessA(NULL, (char*)_command, NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pinfo));
+	//APT_PLATFORM_VERIFY(CloseHandle(sinfo.hStdInput)); // apparently it's incorrect to close handles returned by GetStdHandle? 
+	//APT_PLATFORM_VERIFY(CloseHandle(sinfo.hStdOutput));
+	//APT_PLATFORM_VERIFY(CloseHandle(sinfo.hStdError));
+	APT_PLATFORM_VERIFY(CloseHandle(pinfo.hThread));
+
+	return (void*)pinfo.hProcess;
+}
+
+int PlatformJoinProcess(PlatformHandle _handle, int _timeoutMilliseconds)
+{
+	if (WaitForSingleObject((HANDLE)_handle, (DWORD)_timeoutMilliseconds) == WAIT_TIMEOUT)
+	{
+		return PlatformJoinProcess_Timeout;
+	}
+
+	DWORD ret;
+	APT_PLATFORM_VERIFY(GetExitCodeProcess((HANDLE)_handle, &ret));
+	APT_PLATFORM_VERIFY(CloseHandle(_handle));
+	APT_ASSERT(ret != (DWORD)PlatformJoinProcess_Timeout); // conflicts with the retval meaning 'timed out'
+	
+	return (int)ret;
+}
+
+} // namespace apt

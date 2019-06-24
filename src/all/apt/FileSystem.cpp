@@ -201,6 +201,20 @@ bool FileSystem::CompareExtension(const char* _ext, const char* _path)
 	return false;
 }
 
+void FileSystem::SetExtension(PathStr& _path_, const char* _ext)
+{
+	if (*_ext == '.') {
+		++_ext;
+	}
+	const char* ext = FindExtension(_path_.c_str());
+	ext = ext ? ext : _path_.end();
+	if (_stricmp(_ext, ext) == 0) {
+		return;
+	}
+	_path_.setLength(ext - _path_.begin() - 1); // -1 for '.'
+	_path_.appendf(".%s", _ext);
+}
+
 const char* FileSystem::FindFileNameAndExtension(const char* _path)
 {
 	const char* ret = _path;

@@ -100,6 +100,8 @@ public:
 	static const char* FindFileNameAndExtension(const char* _path);
 	// Compare _ext with the extension from _path (case insensitive).
 	static bool        CompareExtension(const char* _ext, const char* _path);
+	// Set the extension.
+	static void        SetExtension(PathStr& _path_, const char* _ext);
 	
 	// Select a file/files via the platform UI.
 	static bool        PlatformSelect(PathStr& ret_, std::initializer_list<const char*> _filterList = { "*" });

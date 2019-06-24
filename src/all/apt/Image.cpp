@@ -678,7 +678,8 @@ bool Image::ReadExr(Image& img_, const char* _data, uint _dataSize)
 {
 	bool ret = true;
 	const char* err = nullptr;
-	float* data = (float*)img_.m_data;
+	char* data = nullptr;
+	uint32 dataTypeSizeBytes = 1;
 	
 	EXRVersion version = {};
 	EXRHeader header = {};
@@ -703,9 +704,11 @@ bool Image::ReadExr(Image& img_, const char* _data, uint _dataSize)
 		err = "Tiled EXR not supported";
 		ret = false;
 		goto Image_ReadExr_end;
-	}	
+	}
 	for (int i = 0; i < header.num_channels; ++i) {
-		header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+		//header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+		header.requested_pixel_types[i] = header.channels[i].pixel_type;
+		APT_ASSERT(header.channels[i].pixel_type == header.channels[0].pixel_type); // require homogneous pixel type across all channels
 	}
 	if (LoadEXRImageFromMemory(&exr, &header, (const unsigned char*)_data, _dataSize, &err) != TINYEXR_SUCCESS) {
 		ret = false;
@@ -719,20 +722,27 @@ bool Image::ReadExr(Image& img_, const char* _data, uint _dataSize)
 		case 4: img_.m_layout = Layout_RGBA; break;
 		default: err = "Unsupported # channels"; ret = false; goto Image_ReadExr_end; 
 	};
+	switch (header.channels[0].pixel_type) {
+		case TINYEXR_PIXELTYPE_FLOAT: img_.m_dataType = DataType_Float32; break;
+		case TINYEXR_PIXELTYPE_HALF:  img_.m_dataType = DataType_Float16; break;
+		case TINYEXR_PIXELTYPE_UINT:  img_.m_dataType = DataType_Uint32;  break;
+		default: err = "Unsupported pixel type"; ret = false; goto Image_ReadExr_end;
+	};
+	dataTypeSizeBytes = DataTypeSizeBytes(img_.m_dataType);
 
 	img_.m_width       = exr.width;
 	img_.m_height      = exr.height;
 	img_.m_depth       = img_.m_arrayCount = img_.m_mipmapCount = 1;
-	img_.m_type        = Type_2d;
-	img_.m_dataType    = DataType_Float32;
+	img_.m_type        = Type_2d; 
 	img_.m_compression = Compression_None;
 	img_.alloc();
 
+	data = (char*)img_.m_data;
 	for (uint i = 0, n = img_.m_width * img_.m_height; i < n; ++i) {
 	 // \hack read the channels in reverse order (convert ABGR -> RGBA)
-	 // \todo inspect the channel names directly
-		for (int j = exr.num_channels - 1; j >= 0; --j, ++data) {
-			*data = ((float*)exr.images[j])[i];
+	 // \todo inspect the channel names directly, assume ABGR
+		for (int j = exr.num_channels - 1; j >= 0; --j, data += dataTypeSizeBytes) {
+			memcpy(data, exr.images[j] + (i * dataTypeSizeBytes), dataTypeSizeBytes);
 		}
 	}
 

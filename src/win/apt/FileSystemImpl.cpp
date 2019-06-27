@@ -163,6 +163,11 @@ bool FileSystem::CreateDir(const char* _path)
 
 PathStr FileSystem::MakeRelative(const char* _path, int _root)
 {
+ // \todo fix this function! it needs to work correctly in the following cases:
+ // 1. _path contains *any* of the application roots = strip the path up to and including the root dir.
+ // 2. _path contains *no* application roots but has a common prefix with the app path = make a relative path with ../
+ // 3. As .2 but with no common prefix, path is absolute so do nothing.
+
 	TCHAR root[MAX_PATH] = {};
 	if (IsAbsolute((const char*)(*s_roots)[_root])) {
 		APT_PLATFORM_VERIFY(GetFullPathName((const char*)(*s_roots)[_root], MAX_PATH, root, NULL));
@@ -178,9 +183,9 @@ PathStr FileSystem::MakeRelative(const char* _path, int _root)
 	char* tmp = tmpbuf;
  // PathRelativePathTo will fail if tmp and root don't share a common prefix
 	APT_VERIFY(PathRelativePathTo(tmp, root, FILE_ATTRIBUTE_DIRECTORY, path, PathIsDirectory(path) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL));
-	if (strncmp(tmp, ".\\", 2) == 0) { // remove "./" from the path start - not strictly necessary but it makes nicer looking relative paths for the most common case
-		tmp += 2;
-	}	
+	while (*tmp == '.' || *tmp == '\\' || *tmp == '/') {
+		++tmp;
+	}
 	PathStr ret(tmp);
 	ret.replace('\\', '/');
 	return ret;

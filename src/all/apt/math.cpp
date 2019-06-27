@@ -14,10 +14,7 @@ mat4 apt::TransformationMatrix(const vec3& _translation, const mat3& _rotationSc
 
 mat4 apt::TransformationMatrix(const vec3& _translation, const quat& _rotation, const vec3& _scale)
 {
-	mat4 ret = linalg::rotation_matrix(_rotation);
-	ret[0].x *= _scale.x;
-	ret[1].y *= _scale.y;
-	ret[2].z *= _scale.z;
+	mat4 ret = linalg::rotation_matrix(_rotation) * linalg::scaling_matrix(_scale);
 	ret[3] = vec4(_translation, 1.0f);
 	return ret;
 }

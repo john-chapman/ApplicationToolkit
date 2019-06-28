@@ -12,6 +12,46 @@
 	#define va_copy(_dst, _src) (_dst = _src)
 #endif
 
+static char* _stristr(const char* _str1, const char* _str2)
+{
+	const char* p1 = _str1;
+	const char* p2 = _str2;
+	const char* r = *p2 == 0 ? _str1 : 0;
+
+	while (*p1 != 0 && *p2 != 0)
+	{
+		if (tolower((unsigned char)*p1) == tolower((unsigned char)*p2))
+		{
+			if (r == 0)
+			{
+				r = p1;
+			}
+			p2++;
+		}
+		else
+		{
+			p2 = _str2;
+			if(r != 0)
+			{
+				p1 = r + 1;
+			}
+
+			if (tolower((unsigned char)*p1 ) == tolower((unsigned char)*p2 ))
+			{
+				r = p1;
+				p2++;
+			}
+			else
+			{
+				r = 0;
+			}
+		}
+		p1++;
+	}
+
+	return *p2 == 0 ? (char*)r : 0;
+}
+
 using namespace apt;
 
 // PUBLIC
@@ -200,6 +240,61 @@ uint StringBase::replacefv(const char* _find, const char* _fmt, va_list _args)
 	String<64> tmp;
 	tmp.setfv(_fmt, _args);
 	return replace(_find, (const char*)tmp);
+}
+
+uint StringBase::replacei(char _find, char _replace)
+{
+	_find = tolower(_find);
+	char* tmp = m_buf;
+	uint ret = 0;
+	for (; *tmp != '\0'; ++tmp) {
+		if (tolower(*tmp) == _find) {
+			*tmp = _replace;
+			++ret;
+		}
+	}
+	return ret;
+}
+
+uint StringBase::replacei(const char* _find, const char* _replace)
+{
+	String<256> tmp;
+	const uint findlen = strlen(_find);
+	char* beg = m_buf;
+	char* end = nullptr;
+	uint ret = 0;
+	while (end = _stristr(beg, _find)) {
+		if (end - beg > 0) {
+			tmp.append(beg, end - beg);
+		}
+		tmp.append(_replace);
+		beg = end + findlen;
+		++ret;
+		if (*beg == 0) {
+			break;
+		}
+	}
+	tmp.append(beg);
+	if (ret) {
+		swap(*this, tmp);
+	}
+	return ret;
+}
+
+uint StringBase::replaceif(const char* _find, const char* _fmt, ...)
+{
+	va_list args;
+	va_start(args, _fmt);
+	uint ret = replaceifv(_find, _fmt, args);
+	va_end(args);
+	return ret;
+}
+
+uint StringBase::replaceifv(const char* _find, const char* _fmt, va_list _args)
+{
+	String<64> tmp;
+	tmp.setfv(_fmt, _args);
+	return replacei(_find, (const char*)tmp);
 }
 
 void StringBase::toLowerCase()

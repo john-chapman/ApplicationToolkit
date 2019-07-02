@@ -503,8 +503,6 @@ bool Image::IsDataTypeBpc(DataType _type, int _bpc)
 #include <stb_image_write.h>
 static void StbiWriteFile(void* file_, void* _data, int _size)
 {
- // \todo need a better approach here, as many calls to appendData is slow (it just calls realloc() on the internal buffer). Maybe use a smart 
- // reallocation scheme or allocate an initial scratch buffer with an estimated file size to reduce the number of reallocations.
 	if (_size == 0) {
 		return;
 	}
@@ -815,6 +813,7 @@ bool Image::WriteExr(File& file_, const Image& _img)
 
 bool Image::WriteBmp(File& file_, const Image& _img)
 {
+	file_.reserveData(_img.getRawImageSize());
 	if (!stbi_write_bmp_to_func(StbiWriteFile, &file_, (int)_img.m_width, (int)_img.m_height, (int)GetComponentCount(_img.m_layout), _img.m_data)) {
 		APT_LOG_ERR("stbi_write_bmp_to_func() failed");
 		return false;
@@ -823,6 +822,7 @@ bool Image::WriteBmp(File& file_, const Image& _img)
 }
 bool Image::WriteTga(File& file_, const Image& _img)
 {
+	file_.reserveData(_img.getRawImageSize());
 	if (!stbi_write_tga_to_func(StbiWriteFile, &file_, (int)_img.m_width, (int)_img.m_height, (int)GetComponentCount(_img.m_layout), _img.m_data)) {
 		APT_LOG_ERR("stbi_write_tga_to_func() failed");
 		return false;
@@ -831,6 +831,7 @@ bool Image::WriteTga(File& file_, const Image& _img)
 }
 bool Image::WriteHdr(File& file_, const Image& _img)
 {
+	file_.reserveData(_img.getRawImageSize());
 	if (!stbi_write_hdr_to_func(StbiWriteFile, &file_, (int)_img.m_width, (int)_img.m_height, (int)GetComponentCount(_img.m_layout), (float*)_img.m_data)) {
 		APT_LOG_ERR("stbi_write_hdr_to_func() failed");
 		return false;

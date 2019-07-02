@@ -2,52 +2,34 @@
 
 #include <apt/memory.h>
 
-using namespace apt;
+namespace apt {
 
 // PUBLIC
 
-void File::setData(const char* _data, uint64 _size)
+void File::setData(const char* _data, uint _size)
 {
-	if (m_data) {
-		if (_size > m_dataSize || _size == 0) {
-			free(m_data);
-			m_data = 0;
-		}
+	m_data.resize(_size + 1);
+	if (_data)
+	{
+		m_data.assign(_data, _data + _size);
 	}
-
-	if (!m_data && _size > 0) {
-		m_data = (char*)APT_MALLOC(_size);
-		APT_ASSERT(m_data);
-	}
-	if (_data) {
-		memcpy(m_data, _data, _size);
-	}
-	m_dataSize = _size;
+	m_data.back() = '\0';
 }
 
-void File::appendData(const char* _data, uint64 _size)
+void File::appendData(const char* _data, uint _size)
 {
-	m_data = (char*)realloc(m_data, m_dataSize + _size);
-	if (_data) {
-		memcpy(m_data + m_dataSize, _data, _size);
+	uint currentSize = getDataSize();
+	if (currentSize + (_size + 1) > m_data.capacity())
+	{
+		m_data.resize(currentSize + (_size + 1));
 	}
-	m_dataSize += _size;
+	m_data.insert(m_data.data() + currentSize, _data, _data + _size);
+	m_data.back() = '\0';	
 }
 
-
-// PRIVATE
-
-void File::ctorCommon()
+void File::reserveData(uint _capacity)
 {
-	m_data = nullptr;
-	m_dataSize = 0;
-	m_impl = nullptr;
+	m_data.reserve(_capacity);
 }
 
-void File::dtorCommon()
-{
-	if (m_data) {
-		APT_FREE(m_data);
-		m_data = nullptr;
-	}
-}
+} // namespace apt

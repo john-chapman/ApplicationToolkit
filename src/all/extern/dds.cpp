@@ -696,7 +696,7 @@ bool Image::WriteDds(File& file_, const Image& _img)
 	size_t count = _img.isCubemap() ? _img.m_arrayCount * 6 : _img.m_arrayCount;
 	size_t buflen = _img.m_arrayLayerSize * count;
 	buflen += sizeof(DDS_MAGIC) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-	file_.setDataSize(buflen);
+	file_.setData(nullptr, buflen);
 	char* buf = file_.getData();
 	if (!buf) {
 		APT_LOG_ERR("Failed to allocate %d bytes writing %s", buflen, file_.getPath());

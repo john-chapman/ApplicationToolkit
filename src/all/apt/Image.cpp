@@ -726,7 +726,7 @@ bool Image::ReadExr(Image& img_, const char* _data, uint _dataSize)
 		case TINYEXR_PIXELTYPE_UINT:  img_.m_dataType = DataType_Uint32;  break;
 		default: err = "Unsupported pixel type"; ret = false; goto Image_ReadExr_end;
 	};
-	dataTypeSizeBytes = DataTypeSizeBytes(img_.m_dataType);
+	dataTypeSizeBytes = (uint32)DataTypeSizeBytes(img_.m_dataType);
 
 	img_.m_width       = exr.width;
 	img_.m_height      = exr.height;

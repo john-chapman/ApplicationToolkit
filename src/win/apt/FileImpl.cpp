@@ -14,7 +14,7 @@ namespace apt {
 
 File::File()
 {
-	m_data.push_back('\0');
+	//m_data.push_back('\0');
 	m_impl = INVALID_HANDLE_VALUE;
 }
 
@@ -79,14 +79,13 @@ bool File::Read(File& file_, const char* _path)
 		err = GetLastError();
 		goto File_Read_end;
 	}
-	data.resize((uint)li.QuadPart + 1);
+	data.resize((uint)li.QuadPart);
 
 	if (!ReadFile(h, data.data(), (DWORD)data.size() - 1, &bytesRead, 0)) // ReadFile can only read DWORD bytes
 	{
 		err = GetLastError();
 		goto File_Read_end;
 	}
-	data.back() = '\0';
 
 	ret = true;
 	

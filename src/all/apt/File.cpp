@@ -8,23 +8,29 @@ namespace apt {
 
 void File::setData(const char* _data, uint _size)
 {
-	m_data.resize(_size + 1);
+	m_data.reserve(_size);
 	if (_data)
 	{
 		m_data.assign(_data, _data + _size);
 	}
-	m_data.back() = '\0';
+	else
+	{
+		m_data.assign(_size, '\0');
+	}
 }
 
 void File::appendData(const char* _data, uint _size)
 {
 	uint currentSize = getDataSize();
-	if (currentSize + (_size + 1) > m_data.capacity())
+	m_data.reserve(currentSize + _size);
+	if (_data)
 	{
-		m_data.resize(currentSize + (_size + 1));
+		m_data.insert(m_data.begin() + currentSize, _data, _data + _size);
 	}
-	m_data.insert(m_data.data() + currentSize, _data, _data + _size);
-	m_data.back() = '\0';	
+	else
+	{
+		m_data.insert(m_data.begin() + currentSize, _size, '\0');
+	}
 }
 
 void File::reserveData(uint _capacity)

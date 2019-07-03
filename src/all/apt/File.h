@@ -9,6 +9,8 @@ namespace apt {
 
 ////////////////////////////////////////////////////////////////////////////////
 // File
+// An implicit null character is appended to the file data on read, so it is 
+// safe to interpret the file as a C string.
 // \todo API should include some interface for either writing to the internal 
 //   buffer directly, or setting the buffer ptr without copying all the data
 //   (prefer the former, buffer ownership issues in the latter case).

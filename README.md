@@ -26,7 +26,7 @@ Embedded dependencies:
 - [tinyexr](https://github.com/syoyo/tinyexr)
 
 ## Change Log ##
-- `2019-07-03 (v0.20):` File: removed implicit internal null terminator, fixed setData/appendData when _data is nullptr. 
+- `2019-07-03 (v0.20):` File: fixed setData/appendData when _data is nullptr, trim trailing null chars on write.
 - `2019-03-31 (v0.19):` String: removed internal use of `strncpy` to support strings which contain internal null chars.
 - `2018-09-15 (v0.18):` Compile fixes for GNU. Removed `Ini`. Renamed `static_initializer` -> `StaticInitializer`.
 - `2018-09-07 (v0.17):` Improved `static_initializer` to allow use of private static functions for init/shutdown. 

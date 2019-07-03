@@ -151,16 +151,12 @@ bool File::Write(const File& _file, const char* _path)
 	}
 
 	DWORD dataSize = (DWORD)_file.getDataSize();
-	while (dataSize > 0 && _file.m_data[dataSize - 1] == '\0')
-	{
-		--dataSize;
-	} 
 	DWORD bytesWritten;
 	if (!WriteFile(h, _file.getData(), dataSize, &bytesWritten, NULL))
 	{
 		goto File_Write_end;
 	}
-	APT_ASSERT(bytesWritten == _file.getDataSize());
+	APT_ASSERT(bytesWritten == dataSize);
 
 	ret = true;
 

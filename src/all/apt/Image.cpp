@@ -822,6 +822,7 @@ bool Image::WriteBmp(File& file_, const Image& _img)
 }
 bool Image::WriteTga(File& file_, const Image& _img)
 {
+	stbi_write_tga_with_rle = 0; // encoding speed can be extremely slow with RLE enabled
 	file_.reserveData(_img.getRawImageSize());
 	if (!stbi_write_tga_to_func(StbiWriteFile, &file_, (int)_img.m_width, (int)_img.m_height, (int)GetComponentCount(_img.m_layout), _img.m_data)) {
 		APT_LOG_ERR("stbi_write_tga_to_func() failed");

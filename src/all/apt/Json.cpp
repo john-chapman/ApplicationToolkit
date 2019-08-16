@@ -750,7 +750,7 @@ bool SerializerJson::beginObject(const char* _name)
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
 			if (!m_json->find(_name)) {
-				setError("Error serializing object: '%s' not found", _name);
+				//setError("Error serializing object: '%s' not found", _name);
 				return false;
 			}
 		} else {
@@ -785,7 +785,7 @@ bool SerializerJson::beginArray(uint& _length_, const char* _name)
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
 			if (!m_json->find(_name)) {
-				setError("Error serializing array: '%s' not found", _name);
+				//setError("Error serializing array: '%s' not found", _name);
 				return false;
 			}
 		} else {
@@ -838,7 +838,7 @@ static bool ValueImpl(SerializerJson& _serializer_, tType& _value_, const char* 
 	if (_serializer_.getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
 			if (!json->find(_name)) {
-				_serializer_.setError("Error serializing %s: '%s' not found", Serializer::ValueTypeToStr<tType>(), _name);
+				//_serializer_.setError("Error serializing %s: '%s' not found", Serializer::ValueTypeToStr<tType>(), _name);
 				return false;
 			}
 		} else {
@@ -880,7 +880,7 @@ bool SerializerJson::value(StringBase& _value_, const char* _name)
 	if (getMode() == SerializerJson::Mode_Read) {
 		if (_name) {
 			if (!m_json->find(_name)) {
-				setError("Error serializing StringBase; '%s' not found", _name);
+				//setError("Error serializing StringBase; '%s' not found", _name);
 				return false;
 			}
 		} else {

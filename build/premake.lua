@@ -2,7 +2,7 @@ dofile "ApplicationTools_premake.lua"
 
 workspace "ApplicationTools"
 	location(_ACTION)
-	platforms { "Win64", "Linux" }
+	platforms { "Win64" }
 	staticruntime "On"
 	filter { "platforms:Win64" }
 		system "windows"

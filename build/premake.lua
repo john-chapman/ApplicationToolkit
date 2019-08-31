@@ -8,10 +8,6 @@ workspace "ApplicationTools"
 		system "windows"
 		architecture "x86_64"
 	filter {}
-	filter { "platforms:Linux" }
-		system "linux"
-		architecture "x86_64"
-	filter {}
 
 	configurations { "Debug", "Release" }
 	filter { "configurations:Debug" }

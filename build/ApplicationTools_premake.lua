@@ -50,8 +50,6 @@ local ALL_SRC_DIR       = SRC_DIR       .. "all/"
 local ALL_EXTERN_DIR    = ALL_SRC_DIR   .. "extern/"
 local WIN_SRC_DIR       = SRC_DIR       .. "win/"
 local WIN_EXTERN_DIR    = WIN_SRC_DIR   .. "extern/"
-local LINUX_SRC_DIR     = SRC_DIR       .. "linux/"
-local LINUX_EXTERN_DIR  = LINUX_SRC_DIR .. "extern/"
 
 local function ApplicationTools_SetPaths(_root)
 	SRC_DIR         = _root .. SRC_DIR
@@ -96,12 +94,6 @@ local function ApplicationTools_Globals()
 			WIN_EXTERN_DIR,
 			})
 	filter {}
-	filter { "platforms:Linux" }
-		includedirs({
-			LINUX_SRC_DIR,
-			LINUX_EXTERN_DIR,
-			})
-	filter {}
 end
 
 function ApplicationTools_Project(_root, _targetDir, _config)
@@ -119,7 +111,6 @@ function ApplicationTools_Project(_root, _targetDir, _config)
 			["*"]        = ALL_SRC_DIR    .. "apt/**",
 			["extern/*"] = ALL_EXTERN_DIR .. "**",
 			["win"]      = WIN_SRC_DIR    .. "apt/**",
-			["linux"]    = LINUX_SRC_DIR  .. "apt/**",
 			})
 
 		files({
@@ -145,16 +136,6 @@ function ApplicationTools_Project(_root, _targetDir, _config)
 				WIN_SRC_DIR    .. "**.cpp",
 				WIN_EXTERN_DIR .. "**.c",
 				WIN_EXTERN_DIR .. "**.cpp",
-				})
-		filter {}
-		filter { "platforms:Linux" }
-			files({
-				LINUX_SRC_DIR    .. "**.h",
-				LINUX_SRC_DIR    .. "**.hpp",
-				LINUX_SRC_DIR    .. "**.c",
-				LINUX_SRC_DIR    .. "**.cpp",
-				LINUX_EXTERN_DIR .. "**.c",
-				LINUX_EXTERN_DIR .. "**.cpp",
 				})
 		filter {}
 

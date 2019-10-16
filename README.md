@@ -1,3 +1,6 @@
+**This project has been merged into [GfxSampleFramework](https://github.com/john-chapman/GfxSampleFramework) and is no longer maintained.**
+
+---
 Common application tools:
 
 - Platform, compiler and architecture defines + related macros.
